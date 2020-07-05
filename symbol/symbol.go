@@ -9,3 +9,7 @@ const (
 )
 
 type Prices map[Symbol]float64
+
+func (s Symbol) String() string {
+	return []string{"BTCTHB", "USDTTHB", "USDTHB"}[s]
+}
