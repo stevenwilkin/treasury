@@ -1,8 +1,11 @@
 package main
 
 import (
+	"encoding/json"
 	"log"
+	"net"
 	"net/http"
+	"os"
 
 	"github.com/stevenwilkin/treasury/bitkub"
 	"github.com/stevenwilkin/treasury/symbol"
@@ -14,6 +17,10 @@ import (
 type pricesMessage struct {
 	Prices map[string]float64 `json:"prices"`
 }
+
+const (
+	socketPath = "/tmp/treasuryd.sock"
+)
 
 var (
 	bitkubExchange = &bitkub.BitKub{}
@@ -99,8 +106,44 @@ func initWeb() {
 	log.Fatal(http.ListenAndServe(":8080", nil))
 }
 
+func pricesHandler(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+
+	pm := pricesMessage{Prices: map[string]float64{}}
+	for s, p := range prices {
+		pm.Prices[s.String()] = p
+	}
+
+	b, err := json.Marshal(pm)
+	if err != nil {
+		log.Println("error:", err)
+	}
+
+	w.Write(b)
+}
+
+func initControlSocket() {
+	log.Println("Initialising control socket", socketPath)
+
+	if err := os.RemoveAll(socketPath); err != nil {
+		log.Fatal(err)
+	}
+
+	l, err := net.Listen("unix", socketPath)
+	if err != nil {
+		log.Fatal("listen error:", err)
+	}
+	defer l.Close()
+
+	mux := http.NewServeMux()
+	mux.Handle("/prices", http.HandlerFunc(pricesHandler))
+
+	log.Fatal(http.Serve(l, mux))
+}
+
 func main() {
 	initPrices()
 	go initPriceFeeds()
+	go initControlSocket()
 	initWeb()
 }
