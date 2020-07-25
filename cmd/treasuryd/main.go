@@ -1,7 +1,6 @@
 package main
 
 import (
-	"encoding/json"
 	"log"
 	"net"
 	"net/http"
@@ -106,22 +105,6 @@ func initWeb() {
 	log.Fatal(http.ListenAndServe(":8080", nil))
 }
 
-func pricesHandler(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Content-Type", "application/json")
-
-	pm := pricesMessage{Prices: map[string]float64{}}
-	for s, p := range prices {
-		pm.Prices[s.String()] = p
-	}
-
-	b, err := json.Marshal(pm)
-	if err != nil {
-		log.Println("error:", err)
-	}
-
-	w.Write(b)
-}
-
 func initControlSocket() {
 	log.Println("Initialising control socket", socketPath)
 
@@ -135,9 +118,7 @@ func initControlSocket() {
 	}
 	defer l.Close()
 
-	mux := http.NewServeMux()
-	mux.Handle("/prices", http.HandlerFunc(pricesHandler))
-
+	mux := controlHandlers()
 	log.Fatal(http.Serve(l, mux))
 }
 
