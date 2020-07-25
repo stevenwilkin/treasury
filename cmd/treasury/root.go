@@ -11,4 +11,5 @@ var rootCmd = &cobra.Command{
 
 func init() {
 	rootCmd.AddCommand(pricesCmd)
+	rootCmd.AddCommand(setCmd)
 }

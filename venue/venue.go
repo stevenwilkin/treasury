@@ -1,6 +1,9 @@
 package venue
 
-import "strings"
+import (
+	"errors"
+	"strings"
+)
 
 type Venue int
 
@@ -26,4 +29,13 @@ func Exists(name string) bool {
 		}
 	}
 	return false
+}
+
+func FromString(s string) (Venue, error) {
+	for i, venue := range venues() {
+		if strings.ToLower(s) == strings.ToLower(venue) {
+			return Venue(i), nil
+		}
+	}
+	return Venue(0), errors.New("Invalid venue")
 }

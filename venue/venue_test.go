@@ -21,3 +21,20 @@ func TestExists(t *testing.T) {
 		}
 	}
 }
+
+func TestFromStringInvalidVenue(t *testing.T) {
+	_, err := FromString("fake")
+	if err == nil {
+		t.Errorf("Should return an error")
+	}
+}
+
+func TestFromStringValidVenue(t *testing.T) {
+	v, err := FromString("nexo")
+	if err != nil {
+		t.Errorf("Should not return an error")
+	}
+	if v != Nexo {
+		t.Errorf("Unexpected venue %s", v)
+	}
+}

@@ -6,8 +6,10 @@ import (
 	"net/http"
 	"os"
 
+	"github.com/stevenwilkin/treasury/asset"
 	"github.com/stevenwilkin/treasury/bitkub"
 	"github.com/stevenwilkin/treasury/symbol"
+	"github.com/stevenwilkin/treasury/venue"
 
 	"github.com/gorilla/websocket"
 	_ "github.com/joho/godotenv/autoload"
@@ -22,6 +24,7 @@ const (
 )
 
 var (
+	assets         = map[venue.Venue]map[asset.Asset]float64{}
 	bitkubExchange = &bitkub.BitKub{}
 	conns          = map[*websocket.Conn]bool{}
 	prices         = symbol.Prices{}
