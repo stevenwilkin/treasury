@@ -19,6 +19,10 @@ type pricesMessage struct {
 	Prices map[string]float64 `json:"prices"`
 }
 
+type assetsMessage struct {
+	Assets map[string]map[string]float64 `json:"assets"`
+}
+
 const (
 	socketPath = "/tmp/treasuryd.sock"
 )

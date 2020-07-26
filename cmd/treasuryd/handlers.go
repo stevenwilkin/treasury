@@ -26,6 +26,25 @@ func pricesHandler(w http.ResponseWriter, r *http.Request) {
 	w.Write(b)
 }
 
+func assetsHandler(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+
+	am := assetsMessage{Assets: map[string]map[string]float64{}}
+	for v, balances := range assets {
+		am.Assets[v.String()] = map[string]float64{}
+		for a, q := range balances {
+			am.Assets[v.String()][a.String()] = q
+		}
+	}
+
+	b, err := json.Marshal(am)
+	if err != nil {
+		log.Println("error:", err)
+	}
+
+	w.Write(b)
+}
+
 func setHandler(w http.ResponseWriter, r *http.Request) {
 	v, err := venue.FromString(r.FormValue("venue"))
 	if err != nil {
@@ -57,6 +76,7 @@ func setHandler(w http.ResponseWriter, r *http.Request) {
 func controlHandlers() *http.ServeMux {
 	mux := http.NewServeMux()
 	mux.HandleFunc("/prices", pricesHandler)
+	mux.HandleFunc("/assets", assetsHandler)
 	mux.HandleFunc("/set", setHandler)
 
 	return mux
