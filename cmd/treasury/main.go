@@ -1,9 +1,23 @@
 package main
 
 import (
-	"github.com/stevenwilkin/treasury/cmd/treasury/cmd"
+	"context"
+	"net"
+	"net/http"
 )
 
+const (
+	socketPath = "/tmp/treasuryd.sock"
+)
+
+var client = http.Client{
+	Transport: &http.Transport{
+		DialContext: func(_ context.Context, _, _ string) (net.Conn, error) {
+			return net.Dial("unix", socketPath)
+		},
+	},
+}
+
 func main() {
-	cmd.Execute()
+	rootCmd.Execute()
 }
