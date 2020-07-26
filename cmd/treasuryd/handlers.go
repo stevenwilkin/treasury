@@ -73,11 +73,24 @@ func setHandler(w http.ResponseWriter, r *http.Request) {
 	assets[v][a] = q
 }
 
+func costHandler(w http.ResponseWriter, r *http.Request) {
+	c, err := strconv.ParseFloat(r.FormValue("cost"), 64)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+
+	log.Printf("Cost - %f\n", c)
+
+	cost = c
+}
+
 func controlHandlers() *http.ServeMux {
 	mux := http.NewServeMux()
 	mux.HandleFunc("/prices", pricesHandler)
 	mux.HandleFunc("/assets", assetsHandler)
 	mux.HandleFunc("/set", setHandler)
+	mux.HandleFunc("/cost", costHandler)
 
 	return mux
 }

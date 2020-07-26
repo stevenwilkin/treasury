@@ -80,3 +80,22 @@ func TestSetHandlerSetsAsset(t *testing.T) {
 		t.Errorf("Unexpected asset value %f", assets[venue.Nexo][asset.BTC])
 	}
 }
+
+func TestCostHandler(t *testing.T) {
+	params := url.Values{"cost": {"123.45"}}
+	body := strings.NewReader(params.Encode())
+
+	r, err := http.NewRequest("POST", "/cost", body)
+	if err != nil {
+		t.Fatal(err)
+	}
+	r.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+
+	w := httptest.NewRecorder()
+	handler := http.HandlerFunc(costHandler)
+	handler.ServeHTTP(w, r)
+
+	if cost != 123.45 {
+		t.Errorf("Unexpected cost %f", cost)
+	}
+}

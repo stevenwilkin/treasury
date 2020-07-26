@@ -33,6 +33,7 @@ var (
 	conns          = map[*websocket.Conn]bool{}
 	prices         = symbol.Prices{}
 	upgrader       = websocket.Upgrader{}
+	cost           float64
 )
 
 func sendState(c *websocket.Conn) {
