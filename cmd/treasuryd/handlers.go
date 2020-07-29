@@ -85,12 +85,31 @@ func costHandler(w http.ResponseWriter, r *http.Request) {
 	cost = c
 }
 
+func pnlHandler(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+
+	pm := pnlMessage{
+		Cost:          cost,
+		Value:         totalValue(),
+		Pnl:           pnl(),
+		PnlPercentage: pnlPercentage(),
+	}
+
+	b, err := json.Marshal(pm)
+	if err != nil {
+		log.Println("error:", err)
+	}
+
+	w.Write(b)
+}
+
 func controlHandlers() *http.ServeMux {
 	mux := http.NewServeMux()
 	mux.HandleFunc("/prices", pricesHandler)
 	mux.HandleFunc("/assets", assetsHandler)
 	mux.HandleFunc("/set", setHandler)
 	mux.HandleFunc("/cost", costHandler)
+	mux.HandleFunc("/pnl", pnlHandler)
 
 	return mux
 }
