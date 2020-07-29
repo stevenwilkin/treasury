@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"log"
 	"net"
 	"net/http"
@@ -35,6 +36,21 @@ var (
 	upgrader       = websocket.Upgrader{}
 	cost           float64
 )
+
+func totalValue() float64 {
+	total := 0.0
+
+	for _, balances := range assets {
+		for a, quantity := range balances {
+			sym, err := symbol.FromString(fmt.Sprintf("%sTHB", a))
+			if err == nil {
+				total += quantity * prices[sym]
+			}
+		}
+	}
+
+	return total
+}
 
 func sendState(c *websocket.Conn) {
 	log.Println("Sending initial state")

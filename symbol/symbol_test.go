@@ -10,3 +10,20 @@ func TestSymbolToString(t *testing.T) {
 		}
 	}
 }
+
+func TestFromStringInvalidSymbol(t *testing.T) {
+	_, err := FromString("fake")
+	if err == nil {
+		t.Errorf("Should return an error")
+	}
+}
+
+func TestFromStringValidSymbol(t *testing.T) {
+	a, err := FromString("btcthb")
+	if err != nil {
+		t.Errorf("Should not return an error")
+	}
+	if a != BTCTHB {
+		t.Errorf("Unexpected symbol %s", a)
+	}
+}

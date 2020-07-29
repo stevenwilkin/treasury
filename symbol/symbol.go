@@ -1,5 +1,10 @@
 package symbol
 
+import (
+	"errors"
+	"strings"
+)
+
 type Symbol int
 
 const (
@@ -10,6 +15,19 @@ const (
 
 type Prices map[Symbol]float64
 
+func symbols() []string {
+	return []string{"BTCTHB", "USDTTHB", "USDTHB"}
+}
+
 func (s Symbol) String() string {
-	return []string{"BTCTHB", "USDTTHB", "USDTHB"}[s]
+	return symbols()[s]
+}
+
+func FromString(s string) (Symbol, error) {
+	for i, symbol := range symbols() {
+		if strings.ToLower(s) == strings.ToLower(symbol) {
+			return Symbol(i), nil
+		}
+	}
+	return Symbol(0), errors.New("Invalid symbol")
 }
