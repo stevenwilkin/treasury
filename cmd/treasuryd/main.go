@@ -52,6 +52,18 @@ func totalValue() float64 {
 	return total
 }
 
+func pnl() float64 {
+	return totalValue() - cost
+}
+
+func pnlPercentage() float64 {
+	if cost == 0 {
+		return 0
+	}
+
+	return (pnl() / cost) * 100
+}
+
 func sendState(c *websocket.Conn) {
 	log.Println("Sending initial state")
 
