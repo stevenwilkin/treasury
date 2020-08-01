@@ -12,7 +12,7 @@ func TestSetAsset(t *testing.T) {
 	s := NewState()
 	s.SetAsset(venue.Nexo, asset.BTC, 1.2)
 
-	if s.assets[venue.Nexo][asset.BTC] != 1.2 {
+	if s.Assets[venue.Nexo][asset.BTC] != 1.2 {
 		t.Error("Asset should be set")
 	}
 }
@@ -22,7 +22,7 @@ func TestSetAssetTwiceForVenue(t *testing.T) {
 	s.SetAsset(venue.Nexo, asset.BTC, 1.2)
 	s.SetAsset(venue.Nexo, asset.USDT, 1000)
 
-	if s.assets[venue.Nexo][asset.BTC] != 1.2 {
+	if s.Assets[venue.Nexo][asset.BTC] != 1.2 {
 		t.Error("Asset quantity should not be overwritten")
 	}
 }
@@ -40,7 +40,7 @@ func TestSetSymbol(t *testing.T) {
 	s := NewState()
 	s.SetSymbol(symbol.BTCTHB, 300000)
 
-	if s.symbols[symbol.BTCTHB] != 300000 {
+	if s.Symbols[symbol.BTCTHB] != 300000 {
 		t.Error("Symbol should be set")
 	}
 }
