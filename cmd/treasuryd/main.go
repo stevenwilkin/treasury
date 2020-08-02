@@ -5,6 +5,7 @@ import (
 	"net"
 	"net/http"
 	"os"
+	"time"
 
 	"github.com/stevenwilkin/treasury/bitkub"
 	"github.com/stevenwilkin/treasury/state"
@@ -92,6 +93,16 @@ func initPriceFeeds() {
 func initState() {
 	log.Println("Initialising state")
 	statum = state.NewState()
+	statum.Load()
+
+	ticker := time.NewTicker(1 * time.Second)
+	go func() {
+		for {
+			<-ticker.C
+			log.Println("Persisting state")
+			statum.Save()
+		}
+	}()
 }
 
 func serveWs(w http.ResponseWriter, r *http.Request) {
