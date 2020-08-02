@@ -8,6 +8,7 @@ import (
 	"testing"
 
 	"github.com/stevenwilkin/treasury/asset"
+	"github.com/stevenwilkin/treasury/state"
 	"github.com/stevenwilkin/treasury/venue"
 )
 
@@ -60,6 +61,8 @@ func TestSetHandlerInvalidAsset(t *testing.T) {
 }
 
 func TestSetHandlerSetsAsset(t *testing.T) {
+	statum = state.NewState()
+
 	params := url.Values{}
 	params.Set("venue", "nexo")
 	params.Set("asset", "btc")
@@ -76,8 +79,8 @@ func TestSetHandlerSetsAsset(t *testing.T) {
 	handler := http.HandlerFunc(setHandler)
 	handler.ServeHTTP(w, r)
 
-	if assets[venue.Nexo][asset.BTC] != 1.23 {
-		t.Errorf("Unexpected asset value %f", assets[venue.Nexo][asset.BTC])
+	if statum.Asset(venue.Nexo, asset.BTC) != 1.23 {
+		t.Errorf("Unexpected asset value %f", statum.Assets[venue.Nexo][asset.BTC])
 	}
 }
 
@@ -95,7 +98,7 @@ func TestCostHandler(t *testing.T) {
 	handler := http.HandlerFunc(costHandler)
 	handler.ServeHTTP(w, r)
 
-	if cost != 123.45 {
-		t.Errorf("Unexpected cost %f", cost)
+	if statum.Cost != 123.45 {
+		t.Errorf("Unexpected cost %f", statum.Cost)
 	}
 }

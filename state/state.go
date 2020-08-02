@@ -2,6 +2,7 @@ package state
 
 import (
 	"encoding/json"
+	"fmt"
 	"io/ioutil"
 	"os"
 
@@ -11,6 +12,7 @@ import (
 )
 
 type State struct {
+	Cost    float64
 	Assets  map[venue.Venue]map[asset.Asset]float64
 	Symbols map[symbol.Symbol]float64
 }
@@ -43,6 +45,37 @@ func (s *State) SetSymbol(sym symbol.Symbol, v float64) {
 
 func (s *State) Symbol(sym symbol.Symbol) float64 {
 	return s.Symbols[sym]
+}
+
+func (s *State) SetCost(c float64) {
+	s.Cost = c
+}
+
+func (s *State) TotalValue() float64 {
+	total := 0.0
+
+	for _, balances := range s.Assets {
+		for a, quantity := range balances {
+			sym, err := symbol.FromString(fmt.Sprintf("%sTHB", a))
+			if err == nil {
+				total += quantity * s.Symbols[sym]
+			}
+		}
+	}
+
+	return total
+}
+
+func (s *State) Pnl() float64 {
+	return s.TotalValue() - s.Cost
+}
+
+func (s *State) PnlPercentage() float64 {
+	if s.Cost == 0 {
+		return 0
+	}
+
+	return (s.Pnl() / s.Cost) * 100
 }
 
 func (s *State) Save() error {

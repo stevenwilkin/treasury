@@ -1,16 +1,14 @@
 package main
 
 import (
-	"fmt"
 	"log"
 	"net"
 	"net/http"
 	"os"
 
-	"github.com/stevenwilkin/treasury/asset"
 	"github.com/stevenwilkin/treasury/bitkub"
+	"github.com/stevenwilkin/treasury/state"
 	"github.com/stevenwilkin/treasury/symbol"
-	"github.com/stevenwilkin/treasury/venue"
 
 	"github.com/gorilla/websocket"
 	_ "github.com/joho/godotenv/autoload"
@@ -36,46 +34,17 @@ const (
 )
 
 var (
-	assets         = map[venue.Venue]map[asset.Asset]float64{}
+	statum         *state.State
 	bitkubExchange = &bitkub.BitKub{}
 	conns          = map[*websocket.Conn]bool{}
-	prices         = symbol.Prices{}
 	upgrader       = websocket.Upgrader{}
-	cost           float64
 )
-
-func totalValue() float64 {
-	total := 0.0
-
-	for _, balances := range assets {
-		for a, quantity := range balances {
-			sym, err := symbol.FromString(fmt.Sprintf("%sTHB", a))
-			if err == nil {
-				total += quantity * prices[sym]
-			}
-		}
-	}
-
-	return total
-}
-
-func pnl() float64 {
-	return totalValue() - cost
-}
-
-func pnlPercentage() float64 {
-	if cost == 0 {
-		return 0
-	}
-
-	return (pnl() / cost) * 100
-}
 
 func sendState(c *websocket.Conn) {
 	log.Println("Sending initial state")
 
 	pm := pricesMessage{Prices: map[string]float64{}}
-	for s, p := range prices {
+	for s, p := range statum.Symbols {
 		//log.Printf("%s - %f\n", s, p)
 		pm.Prices[s.String()] = p
 	}
@@ -89,7 +58,7 @@ func sendState(c *websocket.Conn) {
 
 func updatePrice(s symbol.Symbol, price float64) {
 	log.Printf("updatePrice - %s - %f\n", s, price)
-	prices[s] = price
+	statum.SetSymbol(s, price)
 
 	for c, _ := range conns {
 		pm := pricesMessage{Prices: map[string]float64{s.String(): price}}
@@ -120,10 +89,9 @@ func initPriceFeeds() {
 	}
 }
 
-func initPrices() {
-	log.Println("Initialising prices")
-	prices[symbol.BTCTHB] = 0
-	prices[symbol.USDTTHB] = 0
+func initState() {
+	log.Println("Initialising state")
+	statum = state.NewState()
 }
 
 func serveWs(w http.ResponseWriter, r *http.Request) {
@@ -166,7 +134,7 @@ func initControlSocket() {
 }
 
 func main() {
-	initPrices()
+	initState()
 	go initPriceFeeds()
 	go initControlSocket()
 	initWeb()

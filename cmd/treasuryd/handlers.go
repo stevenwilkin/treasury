@@ -14,7 +14,7 @@ func pricesHandler(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 
 	pm := pricesMessage{Prices: map[string]float64{}}
-	for s, p := range prices {
+	for s, p := range statum.Symbols {
 		pm.Prices[s.String()] = p
 	}
 
@@ -30,7 +30,7 @@ func assetsHandler(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 
 	am := assetsMessage{Assets: map[string]map[string]float64{}}
-	for v, balances := range assets {
+	for v, balances := range statum.Assets {
 		am.Assets[v.String()] = map[string]float64{}
 		for a, q := range balances {
 			am.Assets[v.String()][a.String()] = q
@@ -66,11 +66,7 @@ func setHandler(w http.ResponseWriter, r *http.Request) {
 
 	log.Printf("Set %s:%s to %f\n", v, a, q)
 
-	if _, ok := assets[v]; !ok {
-		assets[v] = map[asset.Asset]float64{}
-	}
-
-	assets[v][a] = q
+	statum.SetAsset(v, a, q)
 }
 
 func costHandler(w http.ResponseWriter, r *http.Request) {
@@ -82,17 +78,17 @@ func costHandler(w http.ResponseWriter, r *http.Request) {
 
 	log.Printf("Cost - %f\n", c)
 
-	cost = c
+	statum.SetCost(c)
 }
 
 func pnlHandler(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 
 	pm := pnlMessage{
-		Cost:          cost,
-		Value:         totalValue(),
-		Pnl:           pnl(),
-		PnlPercentage: pnlPercentage(),
+		Cost:          statum.Cost,
+		Value:         statum.TotalValue(),
+		Pnl:           statum.Pnl(),
+		PnlPercentage: statum.PnlPercentage(),
 	}
 
 	b, err := json.Marshal(pm)

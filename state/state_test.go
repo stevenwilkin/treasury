@@ -53,3 +53,49 @@ func TestSymbol(t *testing.T) {
 		t.Error("Symbol value should be returned")
 	}
 }
+
+func TestTotalValue(t *testing.T) {
+	s := NewState()
+	s.SetAsset(venue.Nexo, asset.BTC, 1.1)
+	s.SetAsset(venue.Nexo, asset.USDT, 1000)
+	s.SetAsset(venue.FTX, asset.BTC, 0.1)
+	s.SetSymbol(symbol.BTCTHB, 300000)
+	s.SetSymbol(symbol.USDTTHB, 31)
+
+	if s.TotalValue() != 391000 {
+		t.Errorf("Expected total value to be %d, got %f", 391000, s.TotalValue())
+	}
+}
+
+func TestPnl(t *testing.T) {
+	s := NewState()
+	s.SetAsset(venue.Nexo, asset.BTC, 1)
+	s.SetSymbol(symbol.BTCTHB, 300000)
+	s.SetCost(200000)
+
+	if s.Pnl() != 100000 {
+		t.Errorf("Expected PnL to be %d, got %f", 100000, s.Pnl())
+	}
+}
+
+func TestPnlPercentageWhenNoCost(t *testing.T) {
+	s := NewState()
+	s.SetAsset(venue.Nexo, asset.BTC, 1)
+	s.SetSymbol(symbol.BTCTHB, 300000)
+	s.SetCost(0)
+
+	if s.PnlPercentage() != 0 {
+		t.Errorf("Expected PnL %% to be %d, got %f", 0, s.PnlPercentage())
+	}
+}
+
+func TestPnlPercentage(t *testing.T) {
+	s := NewState()
+	s.SetAsset(venue.Nexo, asset.BTC, 1)
+	s.SetSymbol(symbol.BTCTHB, 220000)
+	s.SetCost(200000)
+
+	if s.PnlPercentage() != 10 {
+		t.Errorf("Expected PnL %% to be %d, got %f", 10, s.PnlPercentage())
+	}
+}
