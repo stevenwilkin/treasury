@@ -1,7 +1,6 @@
 package main
 
 import (
-	"log"
 	"net"
 	"net/http"
 	"os"
@@ -13,6 +12,7 @@ import (
 
 	"github.com/gorilla/websocket"
 	_ "github.com/joho/godotenv/autoload"
+	log "github.com/sirupsen/logrus"
 )
 
 type pricesMessage struct {
@@ -42,7 +42,7 @@ var (
 )
 
 func sendState(c *websocket.Conn) {
-	log.Println("Sending initial state")
+	log.Debug("Sending initial state")
 
 	pm := pricesMessage{Prices: map[string]float64{}}
 	for s, p := range statum.Symbols {
@@ -53,12 +53,12 @@ func sendState(c *websocket.Conn) {
 
 	err := c.WriteJSON(pm)
 	if err != nil {
-		log.Println("write:", err)
+		log.Error(err)
 	}
 }
 
 func updatePrice(s symbol.Symbol, price float64) {
-	log.Printf("updatePrice - %s - %f\n", s, price)
+	log.Debugf("updatePrice - %s - %f\n", s, price)
 	statum.SetSymbol(s, price)
 
 	for c, _ := range conns {
@@ -66,14 +66,14 @@ func updatePrice(s symbol.Symbol, price float64) {
 
 		err := c.WriteJSON(pm)
 		if err != nil {
-			log.Println("write:", err)
+			log.Error(err)
 			delete(conns, c)
 		}
 	}
 }
 
 func initPriceFeeds() {
-	log.Println("Initialising price feeds")
+	log.Info("Initialising price feeds")
 
 	btcThbPrices := make(chan float64, 1)
 	usdtThbPrices := make(chan float64, 1)
@@ -91,7 +91,7 @@ func initPriceFeeds() {
 }
 
 func initState() {
-	log.Println("Initialising state")
+	log.Info("Initialising state")
 	statum = state.NewState()
 	statum.Load()
 
@@ -99,18 +99,18 @@ func initState() {
 	go func() {
 		for {
 			<-ticker.C
-			log.Println("Persisting state")
+			log.Debug("Persisting state")
 			statum.Save()
 		}
 	}()
 }
 
 func serveWs(w http.ResponseWriter, r *http.Request) {
-	log.Println("Accepting connection")
+	log.Debug("Accepting connection")
 
 	c, err := upgrader.Upgrade(w, r, nil)
 	if err != nil {
-		log.Print("upgrade:", err)
+		log.Error(err)
 		return
 	}
 
@@ -123,12 +123,12 @@ func initWeb() {
 	fs := http.FileServer(http.Dir("./www"))
 	http.Handle("/", fs)
 	http.HandleFunc("/ws", serveWs)
-	log.Println("Listening on 0.0.0.0:8080")
+	log.Info("Listening on 0.0.0.0:8080")
 	log.Fatal(http.ListenAndServe(":8080", nil))
 }
 
 func initControlSocket() {
-	log.Println("Initialising control socket", socketPath)
+	log.Info("Initialising control socket", socketPath)
 
 	if err := os.RemoveAll(socketPath); err != nil {
 		log.Fatal(err)
@@ -144,7 +144,14 @@ func initControlSocket() {
 	log.Fatal(http.Serve(l, mux))
 }
 
+func initLogger() {
+	if level, err := log.ParseLevel(os.Getenv("LOG_LEVEL")); err == nil {
+		log.SetLevel(level)
+	}
+}
+
 func main() {
+	initLogger()
 	initState()
 	go initPriceFeeds()
 	go initControlSocket()

@@ -2,12 +2,13 @@ package main
 
 import (
 	"encoding/json"
-	"log"
 	"net/http"
 	"strconv"
 
 	"github.com/stevenwilkin/treasury/asset"
 	"github.com/stevenwilkin/treasury/venue"
+
+	log "github.com/sirupsen/logrus"
 )
 
 func pricesHandler(w http.ResponseWriter, r *http.Request) {
@@ -20,7 +21,7 @@ func pricesHandler(w http.ResponseWriter, r *http.Request) {
 
 	b, err := json.Marshal(pm)
 	if err != nil {
-		log.Println("error:", err)
+		log.Error(err)
 	}
 
 	w.Write(b)
@@ -39,7 +40,7 @@ func assetsHandler(w http.ResponseWriter, r *http.Request) {
 
 	b, err := json.Marshal(am)
 	if err != nil {
-		log.Println("error:", err)
+		log.Error(err)
 	}
 
 	w.Write(b)
@@ -64,7 +65,7 @@ func setHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	log.Printf("Set %s:%s to %f\n", v, a, q)
+	log.Infof("Set %s:%s to %f\n", v, a, q)
 
 	statum.SetAsset(v, a, q)
 }
@@ -76,7 +77,7 @@ func costHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	log.Printf("Cost - %f\n", c)
+	log.Infof("Cost - %f\n", c)
 
 	statum.SetCost(c)
 }
@@ -93,7 +94,7 @@ func pnlHandler(w http.ResponseWriter, r *http.Request) {
 
 	b, err := json.Marshal(pm)
 	if err != nil {
-		log.Println("error:", err)
+		log.Error(err)
 	}
 
 	w.Write(b)
