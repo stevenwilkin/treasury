@@ -138,10 +138,13 @@ func initControlSocket() {
 	if err != nil {
 		log.Fatal("listen error:", err)
 	}
-	defer l.Close()
 
 	mux := controlHandlers()
-	log.Fatal(http.Serve(l, mux))
+
+	go func() {
+		defer l.Close()
+		log.Fatal(http.Serve(l, mux))
+	}()
 }
 
 func initLogger() {
@@ -154,6 +157,6 @@ func main() {
 	initLogger()
 	initState()
 	initPriceFeeds()
-	go initControlSocket()
+	initControlSocket()
 	initWeb()
 }
