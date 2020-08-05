@@ -9,19 +9,19 @@ import (
 	"github.com/stevenwilkin/treasury/symbol"
 
 	_ "github.com/joho/godotenv/autoload"
+	log "github.com/sirupsen/logrus"
 )
 
 func main() {
+	log.SetLevel(log.PanicLevel)
+
 	bitkub := &bitkub.BitKub{}
 	oanda := &oanda.Oanda{
 		AccountId: os.Getenv("OANDA_ACCOUNT_ID"),
 		ApiKey:    os.Getenv("OANDA_API_KEY")}
 
-	usdtPrice := make(chan float64, 1)
-	go bitkub.Price(symbol.USDTTHB, usdtPrice)
-
 	usdThb := oanda.Price(symbol.USDTHB)
-	usdtThb := <-usdtPrice
+	usdtThb := <-bitkub.Price(symbol.USDTTHB)
 	difference := ((usdtThb - usdThb) / usdThb) * 100
 
 	fmt.Printf("USDTTHB: %.2f\n", usdtThb)

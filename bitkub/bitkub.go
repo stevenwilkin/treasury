@@ -8,6 +8,7 @@ import (
 	"github.com/stevenwilkin/treasury/symbol"
 
 	"github.com/gorilla/websocket"
+	log "github.com/sirupsen/logrus"
 )
 
 type BitKub struct{}
@@ -16,7 +17,12 @@ type tickerMessage struct {
 	Last float64
 }
 
-func (b *BitKub) Price(s symbol.Symbol, price chan<- float64) {
+func (b *BitKub) Price(s symbol.Symbol) chan float64 {
+	log.WithFields(log.Fields{
+		"venue":  "bitkub",
+		"symbol": s,
+	}).Info("Subscribing to price")
+
 	var tickerString string
 
 	switch s {
@@ -31,22 +37,27 @@ func (b *BitKub) Price(s symbol.Symbol, price chan<- float64) {
 
 	c, _, err := websocket.DefaultDialer.Dial(u.String(), nil)
 	if err != nil {
-		panic(err.Error())
+		log.Panic(err.Error())
 	}
-	defer c.Close()
 
-	for {
-		_, message, err := c.ReadMessage()
-		if err != nil {
-			fmt.Println("read:", err)
-			break
+	ch := make(chan float64)
+
+	go func() {
+		defer c.Close()
+
+		for {
+			_, message, err := c.ReadMessage()
+			if err != nil {
+				log.Error(err)
+				break
+			}
+
+			var ticker tickerMessage
+			json.Unmarshal(message, &ticker)
+
+			ch <- ticker.Last
 		}
-		//fmt.Printf("recv: %s\n", message)
+	}()
 
-		var ticker tickerMessage
-		json.Unmarshal(message, &ticker)
-
-		//fmt.Println(ticker.Last)
-		price <- ticker.Last
-	}
+	return ch
 }

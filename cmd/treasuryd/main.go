@@ -75,19 +75,19 @@ func updatePrice(s symbol.Symbol, price float64) {
 func initPriceFeeds() {
 	log.Info("Initialising price feeds")
 
-	btcThbPrices := make(chan float64, 1)
-	usdtThbPrices := make(chan float64, 1)
-	go bitkubExchange.Price(symbol.BTCTHB, btcThbPrices)
-	go bitkubExchange.Price(symbol.USDTTHB, usdtThbPrices)
+	btcThbPrices := bitkubExchange.Price(symbol.BTCTHB)
+	usdtThbPrices := bitkubExchange.Price(symbol.USDTTHB)
 
-	for {
-		select {
-		case btcThb := <-btcThbPrices:
-			updatePrice(symbol.BTCTHB, btcThb)
-		case usdtThb := <-usdtThbPrices:
-			updatePrice(symbol.USDTTHB, usdtThb)
+	go func() {
+		for {
+			select {
+			case btcThb := <-btcThbPrices:
+				updatePrice(symbol.BTCTHB, btcThb)
+			case usdtThb := <-usdtThbPrices:
+				updatePrice(symbol.USDTTHB, usdtThb)
+			}
 		}
-	}
+	}()
 }
 
 func initState() {
@@ -153,7 +153,7 @@ func initLogger() {
 func main() {
 	initLogger()
 	initState()
-	go initPriceFeeds()
+	initPriceFeeds()
 	go initControlSocket()
 	initWeb()
 }
