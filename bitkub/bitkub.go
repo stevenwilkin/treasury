@@ -55,6 +55,11 @@ func (b *BitKub) Price(s symbol.Symbol) chan float64 {
 			var ticker tickerMessage
 			json.Unmarshal(message, &ticker)
 
+			log.WithFields(log.Fields{
+				"venue":  "bitkub",
+				"symbol": s,
+				"value":  ticker.Last,
+			}).Debug("Received price")
 			ch <- ticker.Last
 		}
 	}()

@@ -3,6 +3,8 @@ package main
 import (
 	"net/http"
 
+	"github.com/stevenwilkin/treasury/symbol"
+
 	"github.com/gorilla/websocket"
 	log "github.com/sirupsen/logrus"
 )
@@ -27,6 +29,23 @@ func sendState(c *websocket.Conn) {
 	err := c.WriteJSON(pm)
 	if err != nil {
 		log.Error(err)
+	}
+}
+
+func sendPrice(s symbol.Symbol, price float64) {
+	log.WithFields(log.Fields{
+		"symbol": s,
+		"value":  price,
+	}).Debug("Sending price to websockets")
+
+	for c, _ := range conns {
+		pm := pricesMessage{Prices: map[string]float64{s.String(): price}}
+
+		err := c.WriteJSON(pm)
+		if err != nil {
+			log.Error(err)
+			delete(conns, c)
+		}
 	}
 }
 

@@ -23,21 +23,6 @@ var (
 	bitkubExchange = &bitkub.BitKub{}
 )
 
-func updatePrice(s symbol.Symbol, price float64) {
-	log.Debugf("updatePrice - %s - %f\n", s, price)
-	statum.SetSymbol(s, price)
-
-	for c, _ := range conns {
-		pm := pricesMessage{Prices: map[string]float64{s.String(): price}}
-
-		err := c.WriteJSON(pm)
-		if err != nil {
-			log.Error(err)
-			delete(conns, c)
-		}
-	}
-}
-
 func initPriceFeeds() {
 	log.Info("Initialising price feeds")
 
@@ -48,10 +33,23 @@ func initPriceFeeds() {
 		for {
 			select {
 			case btcThb := <-btcThbPrices:
-				updatePrice(symbol.BTCTHB, btcThb)
+				statum.SetSymbol(symbol.BTCTHB, btcThb)
 			case usdtThb := <-usdtThbPrices:
-				updatePrice(symbol.USDTTHB, usdtThb)
+				statum.SetSymbol(symbol.USDTTHB, usdtThb)
 			}
+		}
+	}()
+}
+
+func initWS() {
+	http.HandleFunc("/ws", serveWs)
+
+	ch := statum.SubscribeToSymbols()
+
+	go func() {
+		for {
+			sn := <-ch
+			sendPrice(sn.Symbol, sn.Value)
 		}
 	}()
 }
@@ -74,7 +72,6 @@ func initState() {
 func initWeb() {
 	fs := http.FileServer(http.Dir("./www"))
 	http.Handle("/", fs)
-	http.HandleFunc("/ws", serveWs)
 	log.Info("Listening on 0.0.0.0:8080")
 	log.Fatal(http.ListenAndServe(":8080", nil))
 }
@@ -110,5 +107,6 @@ func main() {
 	initState()
 	initPriceFeeds()
 	initControlSocket()
+	initWS()
 	initWeb()
 }
