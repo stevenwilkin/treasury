@@ -42,8 +42,13 @@ func (s *State) Asset(v venue.Venue, a asset.Asset) float64 {
 }
 
 func (s *State) SetSymbol(sym symbol.Symbol, v float64) {
+	old := s.Symbols[sym]
+
 	s.Symbols[sym] = v
-	s.NotifySymbolSubscribers(sym, v)
+
+	if old != v {
+		s.NotifySymbolSubscribers(sym, v)
+	}
 }
 
 func (s *State) Symbol(sym symbol.Symbol) float64 {
