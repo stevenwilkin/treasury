@@ -6,9 +6,12 @@ import (
 	"os"
 	"time"
 
+	"github.com/stevenwilkin/treasury/asset"
 	"github.com/stevenwilkin/treasury/bitkub"
+	"github.com/stevenwilkin/treasury/deribit"
 	"github.com/stevenwilkin/treasury/state"
 	"github.com/stevenwilkin/treasury/symbol"
+	"github.com/stevenwilkin/treasury/venue"
 
 	_ "github.com/joho/godotenv/autoload"
 	log "github.com/sirupsen/logrus"
@@ -19,15 +22,20 @@ const (
 )
 
 var (
-	statum         *state.State
-	bitkubExchange = &bitkub.BitKub{}
+	statum *state.State
 )
 
 func initPriceFeeds() {
 	log.Info("Initialising price feeds")
 
+	bitkubExchange := &bitkub.BitKub{}
+	deribitExchange := &deribit.Deribit{
+		ApiId:     os.Getenv("DERIBIT_API_ID"),
+		ApiSecret: os.Getenv("DERIBIT_API_SECRET")}
+
 	btcThbPrices := bitkubExchange.Price(symbol.BTCTHB)
 	usdtThbPrices := bitkubExchange.Price(symbol.USDTTHB)
+	deribitEquity := deribitExchange.Equity()
 
 	go func() {
 		for {
@@ -36,6 +44,8 @@ func initPriceFeeds() {
 				statum.SetSymbol(symbol.BTCTHB, btcThb)
 			case usdtThb := <-usdtThbPrices:
 				statum.SetSymbol(symbol.USDTTHB, usdtThb)
+			case deribitBtc := <-deribitEquity:
+				statum.SetAsset(venue.Deribit, asset.BTC, deribitBtc)
 			}
 		}
 	}()

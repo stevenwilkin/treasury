@@ -32,6 +32,12 @@ func NewState() *State {
 }
 
 func (s *State) SetAsset(v venue.Venue, a asset.Asset, q float64) {
+	log.WithFields(log.Fields{
+		"venue":    v,
+		"asset":    a,
+		"quantity": q,
+	}).Debug("Updating state")
+
 	if _, ok := s.Assets[v]; !ok {
 		s.Assets[v] = map[asset.Asset]float64{}
 	}
