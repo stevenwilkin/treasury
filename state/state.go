@@ -9,6 +9,8 @@ import (
 	"github.com/stevenwilkin/treasury/asset"
 	"github.com/stevenwilkin/treasury/symbol"
 	"github.com/stevenwilkin/treasury/venue"
+
+	log "github.com/sirupsen/logrus"
 )
 
 type State struct {
@@ -42,13 +44,16 @@ func (s *State) Asset(v venue.Venue, a asset.Asset) float64 {
 }
 
 func (s *State) SetSymbol(sym symbol.Symbol, v float64) {
-	old := s.Symbols[sym]
-
-	s.Symbols[sym] = v
-
-	if old != v {
-		s.NotifySymbolSubscribers(sym, v)
+	if s.Symbols[sym] == v {
+		return
 	}
+
+	log.WithFields(log.Fields{
+		"symbol": sym,
+		"value":  v,
+	}).Debug("Updating state")
+	s.Symbols[sym] = v
+	s.NotifySymbolSubscribers(sym, v)
 }
 
 func (s *State) Symbol(sym symbol.Symbol) float64 {
