@@ -14,17 +14,6 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
-type assetsMessage struct {
-	Assets map[string]map[string]float64 `json:"assets"`
-}
-
-type pnlMessage struct {
-	Cost          float64 `json:"cost"`
-	Value         float64 `json:"value"`
-	Pnl           float64 `json:"pnl"`
-	PnlPercentage float64 `json:"pnl_percentage"`
-}
-
 const (
 	socketPath = "/tmp/treasuryd.sock"
 )
