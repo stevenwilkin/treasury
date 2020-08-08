@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"os"
+	"strings"
 
 	"github.com/stevenwilkin/treasury/asset"
 	"github.com/stevenwilkin/treasury/symbol"
@@ -41,7 +42,7 @@ func (s *State) SetAsset(v venue.Venue, a asset.Asset, q float64) {
 	}
 
 	log.WithFields(log.Fields{
-		"venue":    v,
+		"venue":    strings.ToLower(v.String()),
 		"asset":    a,
 		"quantity": q,
 	}).Debug("Updating state")
