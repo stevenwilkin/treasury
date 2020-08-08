@@ -8,6 +8,7 @@ import (
 
 	"github.com/stevenwilkin/treasury/asset"
 	"github.com/stevenwilkin/treasury/bitkub"
+	"github.com/stevenwilkin/treasury/bybit"
 	"github.com/stevenwilkin/treasury/deribit"
 	"github.com/stevenwilkin/treasury/state"
 	"github.com/stevenwilkin/treasury/symbol"
@@ -32,10 +33,14 @@ func initPriceFeeds() {
 	deribitExchange := &deribit.Deribit{
 		ApiId:     os.Getenv("DERIBIT_API_ID"),
 		ApiSecret: os.Getenv("DERIBIT_API_SECRET")}
+	bybitExchange := &bybit.Bybit{
+		ApiKey:    os.Getenv("BYBIT_API_KEY"),
+		ApiSecret: os.Getenv("BYBIT_API_SECRET")}
 
 	btcThbPrices := bitkubExchange.Price(symbol.BTCTHB)
 	usdtThbPrices := bitkubExchange.Price(symbol.USDTTHB)
 	deribitEquity := deribitExchange.Equity()
+	bybitEquity := bybitExchange.Equity()
 
 	go func() {
 		for {
@@ -46,6 +51,8 @@ func initPriceFeeds() {
 				statum.SetSymbol(symbol.USDTTHB, usdtThb)
 			case deribitBtc := <-deribitEquity:
 				statum.SetAsset(venue.Deribit, asset.BTC, deribitBtc)
+			case bybitBtc := <-bybitEquity:
+				statum.SetAsset(venue.Bybit, asset.BTC, bybitBtc)
 			}
 		}
 	}()
