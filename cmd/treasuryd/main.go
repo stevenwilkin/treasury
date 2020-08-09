@@ -4,6 +4,8 @@ import (
 	"net"
 	"net/http"
 	"os"
+	"os/signal"
+	"syscall"
 	"time"
 
 	"github.com/stevenwilkin/treasury/asset"
@@ -89,8 +91,11 @@ func initState() {
 func initWeb() {
 	fs := http.FileServer(http.Dir("./www"))
 	http.Handle("/", fs)
-	log.Info("Listening on 0.0.0.0:8080")
-	log.Fatal(http.ListenAndServe(":8080", nil))
+
+	go func() {
+		log.Info("Listening on 0.0.0.0:8080")
+		log.Fatal(http.ListenAndServe(":8080", nil))
+	}()
 }
 
 func initControlSocket() {
@@ -119,6 +124,13 @@ func initLogger() {
 	}
 }
 
+func trapSigInt() {
+	c := make(chan os.Signal, 1)
+	signal.Notify(c, os.Interrupt, syscall.SIGINT)
+	<-c
+	log.Info("Shutting down")
+}
+
 func main() {
 	initLogger()
 	initState()
@@ -126,4 +138,5 @@ func main() {
 	initControlSocket()
 	initWS()
 	initWeb()
+	trapSigInt()
 }
