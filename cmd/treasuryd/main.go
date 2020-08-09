@@ -60,19 +60,6 @@ func initPriceFeeds() {
 	}()
 }
 
-func initWS() {
-	http.HandleFunc("/ws", serveWs)
-
-	ch := statum.SubscribeToSymbols()
-
-	go func() {
-		for {
-			sn := <-ch
-			sendPrice(sn.Symbol, sn.Value)
-		}
-	}()
-}
-
 func initState() {
 	log.Info("Initialising state")
 	statum = state.NewState()
@@ -85,16 +72,6 @@ func initState() {
 			log.Debug("Persisting state")
 			statum.Save()
 		}
-	}()
-}
-
-func initWeb() {
-	fs := http.FileServer(http.Dir("./www"))
-	http.Handle("/", fs)
-
-	go func() {
-		log.Info("Listening on 0.0.0.0:8080")
-		log.Fatal(http.ListenAndServe(":8080", nil))
 	}()
 }
 
