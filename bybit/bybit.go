@@ -28,6 +28,13 @@ type equityResponse struct {
 	}
 }
 
+type fundingResponse struct {
+	Result []struct {
+		FundingRate          string `json:"funding_rate"`
+		PredictedFundingRate string `json:"predicted_funding_rate"`
+	} `json:"result"`
+}
+
 func getSignature(params map[string]string, key string) string {
 	keys := make([]string, len(params))
 	i := 0
@@ -101,4 +108,26 @@ func (b *Bybit) Equity() chan float64 {
 	}()
 
 	return ch
+}
+
+func (b *Bybit) GetFundingRate() (float64, float64) {
+	url := "https://api.bybit.com/v2/public/tickers?symbol=BTCUSD"
+	resp, err := http.Get(url)
+	if err != nil {
+		log.Panic(err.Error())
+	}
+	defer resp.Body.Close()
+
+	body, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		log.Panic(err.Error())
+	}
+
+	var response fundingResponse
+	json.Unmarshal(body, &response)
+
+	funding, _ := strconv.ParseFloat(response.Result[0].FundingRate, 64)
+	predicted, _ := strconv.ParseFloat(response.Result[0].PredictedFundingRate, 64)
+
+	return funding, predicted
 }
