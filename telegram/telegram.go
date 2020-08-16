@@ -6,6 +6,8 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net/http"
+
+	"github.com/stevenwilkin/treasury/alert"
 )
 
 type Telegram struct {
@@ -56,3 +58,5 @@ func (t *Telegram) Notify(text string) bool {
 
 	return response.Ok
 }
+
+var _ alert.Notifier = &Telegram{}
