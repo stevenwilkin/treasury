@@ -22,7 +22,7 @@ type sendMessageResponse struct {
 	Ok bool
 }
 
-func (t *Telegram) Alert(text string) bool {
+func (t *Telegram) Notify(text string) bool {
 	url := fmt.Sprintf("https://api.telegram.org/bot%s/sendMessage", t.ApiToken)
 
 	params := sendMessageParams{ChatId: t.ChatId, Text: text}
@@ -50,8 +50,6 @@ func (t *Telegram) Alert(text string) bool {
 	if err != nil {
 		panic(err.Error())
 	}
-
-	//fmt.Println(string(body))
 
 	var response sendMessageResponse
 	json.Unmarshal(body, &response)
