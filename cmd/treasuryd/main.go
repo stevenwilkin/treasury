@@ -15,6 +15,7 @@ import (
 	"github.com/stevenwilkin/treasury/bitkub"
 	"github.com/stevenwilkin/treasury/bybit"
 	"github.com/stevenwilkin/treasury/deribit"
+	"github.com/stevenwilkin/treasury/oanda"
 	"github.com/stevenwilkin/treasury/state"
 	"github.com/stevenwilkin/treasury/symbol"
 	"github.com/stevenwilkin/treasury/telegram"
@@ -44,10 +45,14 @@ func initPriceFeeds() {
 	bybitExchange := &bybit.Bybit{
 		ApiKey:    os.Getenv("BYBIT_API_KEY"),
 		ApiSecret: os.Getenv("BYBIT_API_SECRET")}
+	oanda := &oanda.Oanda{
+		AccountId: os.Getenv("OANDA_ACCOUNT_ID"),
+		ApiKey:    os.Getenv("OANDA_API_KEY")}
 
 	btcUsdtPrices := binanceExchange.Price()
 	btcThbPrices := bitkubExchange.Price(symbol.BTCTHB)
 	usdtThbPrices := bitkubExchange.Price(symbol.USDTTHB)
+	usdThbPrices := oanda.Price(symbol.USDTHB)
 	deribitEquity := deribitExchange.Equity()
 	bybitEquity := bybitExchange.Equity()
 
@@ -60,6 +65,8 @@ func initPriceFeeds() {
 				statum.SetSymbol(symbol.BTCTHB, btcThb)
 			case usdtThb := <-usdtThbPrices:
 				statum.SetSymbol(symbol.USDTTHB, usdtThb)
+			case usdThb := <-usdThbPrices:
+				statum.SetSymbol(symbol.USDTHB, usdThb)
 			case deribitBtc := <-deribitEquity:
 				statum.SetAsset(venue.Deribit, asset.BTC, deribitBtc)
 			case bybitBtc := <-bybitEquity:

@@ -6,8 +6,11 @@ import (
 	"io/ioutil"
 	"net/http"
 	"strconv"
+	"time"
 
 	"github.com/stevenwilkin/treasury/symbol"
+
+	log "github.com/sirupsen/logrus"
 )
 
 type Oanda struct {
@@ -26,7 +29,7 @@ type priceResponse struct {
 	}
 }
 
-func (o *Oanda) Price(s symbol.Symbol) float64 {
+func (o *Oanda) GetPrice(s symbol.Symbol) float64 {
 	var ticker string
 
 	switch s {
@@ -68,4 +71,30 @@ func (o *Oanda) Price(s symbol.Symbol) float64 {
 	price := (bid + ask) / 2
 
 	return price
+}
+
+func (o *Oanda) Price(s symbol.Symbol) chan float64 {
+	log.WithFields(log.Fields{
+		"venue":  "oanda",
+		"symbol": s,
+	}).Info("Polling price")
+
+	ch := make(chan float64)
+	ticker := time.NewTicker(1 * time.Second)
+
+	go func() {
+		for {
+			price := o.GetPrice(s)
+			log.WithFields(log.Fields{
+				"venue":  "oanda",
+				"symbol": s,
+				"value":  price,
+			}).Debug("Received price")
+
+			ch <- price
+			<-ticker.C
+		}
+	}()
+
+	return ch
 }
