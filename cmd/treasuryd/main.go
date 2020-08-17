@@ -37,24 +37,24 @@ var (
 func initPriceFeeds() {
 	log.Info("Initialising price feeds")
 
-	binanceExchange := &binance.Binance{}
-	bitkubExchange := &bitkub.BitKub{}
-	deribitExchange := &deribit.Deribit{
+	binance := &binance.Binance{}
+	bitkub := &bitkub.BitKub{}
+	deribit := &deribit.Deribit{
 		ApiId:     os.Getenv("DERIBIT_API_ID"),
 		ApiSecret: os.Getenv("DERIBIT_API_SECRET")}
-	bybitExchange := &bybit.Bybit{
+	bybit := &bybit.Bybit{
 		ApiKey:    os.Getenv("BYBIT_API_KEY"),
 		ApiSecret: os.Getenv("BYBIT_API_SECRET")}
 	oanda := &oanda.Oanda{
 		AccountId: os.Getenv("OANDA_ACCOUNT_ID"),
 		ApiKey:    os.Getenv("OANDA_API_KEY")}
 
-	btcUsdtPrices := binanceExchange.Price()
-	btcThbPrices := bitkubExchange.Price(symbol.BTCTHB)
-	usdtThbPrices := bitkubExchange.Price(symbol.USDTTHB)
+	btcUsdtPrices := binance.Price()
+	btcThbPrices := bitkub.Price(symbol.BTCTHB)
+	usdtThbPrices := bitkub.Price(symbol.USDTTHB)
 	usdThbPrices := oanda.Price(symbol.USDTHB)
-	deribitEquity := deribitExchange.Equity()
-	bybitEquity := bybitExchange.Equity()
+	deribitEquity := deribit.Equity()
+	bybitEquity := bybit.Equity()
 
 	go func() {
 		for {
