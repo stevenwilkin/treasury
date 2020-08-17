@@ -5,6 +5,7 @@ import (
 	"net/http"
 	"os"
 	"os/signal"
+	"strconv"
 	"syscall"
 	"time"
 
@@ -16,6 +17,7 @@ import (
 	"github.com/stevenwilkin/treasury/deribit"
 	"github.com/stevenwilkin/treasury/state"
 	"github.com/stevenwilkin/treasury/symbol"
+	"github.com/stevenwilkin/treasury/telegram"
 	"github.com/stevenwilkin/treasury/venue"
 
 	_ "github.com/joho/godotenv/autoload"
@@ -82,6 +84,30 @@ func initState() {
 	}()
 }
 
+func initAlerter() {
+	log.Info("Initialising alerter")
+
+	chatId, err := strconv.Atoi(os.Getenv("TELEGRAM_CHAT_ID"))
+	if err != nil {
+		log.Panic(err.Error())
+	}
+
+	notifier := &telegram.Telegram{
+		ApiToken: os.Getenv("TELEGRAM_API_TOKEN"),
+		ChatId:   chatId}
+
+	alerter = alert.NewAlerter(notifier)
+
+	ticker := time.NewTicker(1 * time.Second)
+	go func() {
+		for {
+			<-ticker.C
+			log.Debug("Checking alerts")
+			alerter.CheckAlerts()
+		}
+	}()
+}
+
 func initControlSocket() {
 	log.Info("Initialising control socket", socketPath)
 
@@ -118,6 +144,7 @@ func trapSigInt() {
 func main() {
 	initLogger()
 	initState()
+	initAlerter()
 	initPriceFeeds()
 	initControlSocket()
 	initWS()
