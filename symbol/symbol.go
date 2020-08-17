@@ -11,12 +11,13 @@ const (
 	BTCTHB Symbol = iota
 	USDTTHB
 	USDTHB
+	BTCUSDT
 )
 
 type Prices map[Symbol]float64
 
 func symbols() []string {
-	return []string{"BTCTHB", "USDTTHB", "USDTHB"}
+	return []string{"BTCTHB", "USDTTHB", "USDTHB", "BTCUSDT"}
 }
 
 func (s Symbol) String() string {

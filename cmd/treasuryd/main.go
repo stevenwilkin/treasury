@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/stevenwilkin/treasury/asset"
+	"github.com/stevenwilkin/treasury/binance"
 	"github.com/stevenwilkin/treasury/bitkub"
 	"github.com/stevenwilkin/treasury/bybit"
 	"github.com/stevenwilkin/treasury/deribit"
@@ -31,6 +32,7 @@ var (
 func initPriceFeeds() {
 	log.Info("Initialising price feeds")
 
+	binanceExchange := &binance.Binance{}
 	bitkubExchange := &bitkub.BitKub{}
 	deribitExchange := &deribit.Deribit{
 		ApiId:     os.Getenv("DERIBIT_API_ID"),
@@ -39,6 +41,7 @@ func initPriceFeeds() {
 		ApiKey:    os.Getenv("BYBIT_API_KEY"),
 		ApiSecret: os.Getenv("BYBIT_API_SECRET")}
 
+	btcUsdtPrices := binanceExchange.Price()
 	btcThbPrices := bitkubExchange.Price(symbol.BTCTHB)
 	usdtThbPrices := bitkubExchange.Price(symbol.USDTTHB)
 	deribitEquity := deribitExchange.Equity()
@@ -47,6 +50,8 @@ func initPriceFeeds() {
 	go func() {
 		for {
 			select {
+			case btcUsdt := <-btcUsdtPrices:
+				statum.SetSymbol(symbol.BTCUSDT, btcUsdt)
 			case btcThb := <-btcThbPrices:
 				statum.SetSymbol(symbol.BTCTHB, btcThb)
 			case usdtThb := <-usdtThbPrices:
