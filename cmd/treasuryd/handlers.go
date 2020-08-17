@@ -5,7 +5,9 @@ import (
 	"net/http"
 	"strconv"
 
+	"github.com/stevenwilkin/treasury/alert"
 	"github.com/stevenwilkin/treasury/asset"
+	"github.com/stevenwilkin/treasury/symbol"
 	"github.com/stevenwilkin/treasury/venue"
 
 	log "github.com/sirupsen/logrus"
@@ -20,6 +22,11 @@ type pnlMessage struct {
 	Value         float64 `json:"value"`
 	Pnl           float64 `json:"pnl"`
 	PnlPercentage float64 `json:"pnl_percentage"`
+}
+
+type alertMessage struct {
+	Active      bool   `json:"active"`
+	Description string `json:"description"`
 }
 
 func pricesHandler(w http.ResponseWriter, r *http.Request) {
@@ -111,6 +118,44 @@ func pnlHandler(w http.ResponseWriter, r *http.Request) {
 	w.Write(b)
 }
 
+func alertsHandler(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+
+	alerts := alerter.Alerts()
+	am := make([]alertMessage, len(alerts))
+
+	for i, alert := range alerts {
+		am[i] = alertMessage{
+			Active:      alert.Active(),
+			Description: alert.Description()}
+	}
+
+	b, err := json.Marshal(am)
+	if err != nil {
+		log.Error(err)
+	}
+
+	w.Write(b)
+}
+
+func clearAlertsHandler(w http.ResponseWriter, r *http.Request) {
+	log.Info("Clearing alerts")
+	alerter.ClearAlerts()
+}
+
+func priceAlertsHandler(w http.ResponseWriter, r *http.Request) {
+	v, err := strconv.ParseFloat(r.FormValue("value"), 64)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+
+	log.Infof("Setting price alert - %f", v)
+
+	a := alert.NewPriceAlert(statum, symbol.BTCUSDT, v)
+	alerter.AddAlert(a)
+}
+
 func controlHandlers() *http.ServeMux {
 	mux := http.NewServeMux()
 	mux.HandleFunc("/prices", pricesHandler)
@@ -118,6 +163,9 @@ func controlHandlers() *http.ServeMux {
 	mux.HandleFunc("/set", setHandler)
 	mux.HandleFunc("/cost", costHandler)
 	mux.HandleFunc("/pnl", pnlHandler)
+	mux.HandleFunc("/alerts", alertsHandler)
+	mux.HandleFunc("/alerts/clear", clearAlertsHandler)
+	mux.HandleFunc("/alerts/price", priceAlertsHandler)
 
 	return mux
 }

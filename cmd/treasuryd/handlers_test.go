@@ -7,10 +7,15 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/stevenwilkin/treasury/alert"
 	"github.com/stevenwilkin/treasury/asset"
 	"github.com/stevenwilkin/treasury/state"
 	"github.com/stevenwilkin/treasury/venue"
 )
+
+type TestNotifier struct{}
+
+func (t *TestNotifier) Notify(s string) bool { return true }
 
 func TestSetHandlerInvalidVenue(t *testing.T) {
 	params := url.Values{}
@@ -100,5 +105,33 @@ func TestCostHandler(t *testing.T) {
 
 	if statum.Cost != 123.45 {
 		t.Errorf("Unexpected cost %f", statum.Cost)
+	}
+}
+
+func TestPriceAlertsHandler(t *testing.T) {
+	alerter = alert.NewAlerter(&TestNotifier{})
+
+	params := url.Values{"value": {"20000"}}
+	body := strings.NewReader(params.Encode())
+
+	r, err := http.NewRequest("POST", "/alerts/price", body)
+	if err != nil {
+		t.Fatal(err)
+	}
+	r.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+
+	w := httptest.NewRecorder()
+	handler := http.HandlerFunc(priceAlertsHandler)
+	handler.ServeHTTP(w, r)
+
+	if len(alerter.Alerts()) != 1 {
+		t.Error("Should set an alert")
+	}
+
+	alert := alerter.Alerts()[0]
+	expected := "Price alert at BTCUSDT 20000.00"
+
+	if alert.Description() != expected {
+		t.Errorf("Expected: '%s', got: '%s'", expected, alert.Description())
 	}
 }

@@ -8,6 +8,7 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/stevenwilkin/treasury/alert"
 	"github.com/stevenwilkin/treasury/asset"
 	"github.com/stevenwilkin/treasury/binance"
 	"github.com/stevenwilkin/treasury/bitkub"
@@ -26,7 +27,8 @@ const (
 )
 
 var (
-	statum *state.State
+	statum  *state.State
+	alerter *alert.Alerter
 )
 
 func initPriceFeeds() {

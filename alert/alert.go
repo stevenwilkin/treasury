@@ -17,6 +17,22 @@ type Alerter struct {
 	alerts   map[Alert]bool
 }
 
+func (a *Alerter) Alerts() []Alert {
+	alerts := make([]Alert, len(a.alerts))
+	i := 0
+
+	for alert := range a.alerts {
+		alerts[i] = alert
+		i++
+	}
+
+	return alerts
+}
+
+func (a *Alerter) ClearAlerts() {
+	a.alerts = map[Alert]bool{}
+}
+
 func (a *Alerter) AddAlert(alert Alert) {
 	a.alerts[alert] = true
 }

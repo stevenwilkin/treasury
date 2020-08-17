@@ -25,6 +25,27 @@ func (n *TestNotifier) Notify(s string) bool { n.message = s; return true }
 
 var _ Notifier = &TestNotifier{}
 
+func TestAlerts(t *testing.T) {
+	alerter := NewAlerter(&TestNotifier{})
+	alert := &TestAlert{}
+	alerter.AddAlert(alert)
+
+	if len(alerter.Alerts()) != 1 {
+		t.Errorf("Should return 1 alert, got %d", len(alerter.Alerts()))
+	}
+}
+
+func TestClearAlerts(t *testing.T) {
+	alerter := NewAlerter(&TestNotifier{})
+	alert := &TestAlert{}
+	alerter.AddAlert(alert)
+	alerter.ClearAlerts()
+
+	if len(alerter.Alerts()) != 0 {
+		t.Errorf("Should return 0 alerts, got %d", len(alerter.Alerts()))
+	}
+}
+
 func TestChecksActiveAlerts(t *testing.T) {
 	alerter := NewAlerter(&TestNotifier{})
 	alert := &TestAlert{active: true}
