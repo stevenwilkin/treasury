@@ -55,6 +55,7 @@ func initPriceFeeds() {
 	usdThbPrices := oanda.Price(symbol.USDTHB)
 	deribitEquity := deribit.Equity()
 	bybitEquity := bybit.Equity()
+	bybitFundingRate := bybit.FundingRate()
 
 	go func() {
 		for {
@@ -71,6 +72,8 @@ func initPriceFeeds() {
 				statum.SetAsset(venue.Deribit, asset.BTC, deribitBtc)
 			case bybitBtc := <-bybitEquity:
 				statum.SetAsset(venue.Bybit, asset.BTC, bybitBtc)
+			case funding := <-bybitFundingRate:
+				statum.SetFunding(funding[0], funding[1])
 			}
 		}
 	}()

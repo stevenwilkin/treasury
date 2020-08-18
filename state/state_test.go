@@ -54,6 +54,17 @@ func TestSymbol(t *testing.T) {
 	}
 }
 
+func TestFunding(t *testing.T) {
+	s := NewState()
+	s.SetFunding(1.1, 2.2)
+
+	current, predicted := s.Funding()
+
+	if current != 1.1 || predicted != 2.2 {
+		t.Errorf("Expected: 1.1, 2.2 - Got: %f, %f", current, predicted)
+	}
+}
+
 func TestTotalValue(t *testing.T) {
 	s := NewState()
 	s.SetAsset(venue.Nexo, asset.BTC, 1.1)

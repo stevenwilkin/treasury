@@ -131,3 +131,26 @@ func (b *Bybit) GetFundingRate() (float64, float64) {
 
 	return funding, predicted
 }
+
+func (b *Bybit) FundingRate() chan [2]float64 {
+	log.WithField("venue", "bybit").Info("Polling funding rate")
+
+	ch := make(chan [2]float64)
+	ticker := time.NewTicker(1 * time.Second)
+
+	go func() {
+		for {
+			current, predicted := b.GetFundingRate()
+			log.WithFields(log.Fields{
+				"venue":     "bybit",
+				"current":   current,
+				"predicted": predicted,
+			}).Debug("Received funding rate")
+
+			ch <- [2]float64{current, predicted}
+			<-ticker.C
+		}
+	}()
+
+	return ch
+}
