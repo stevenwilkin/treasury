@@ -135,3 +135,27 @@ func TestPriceAlertsHandler(t *testing.T) {
 		t.Errorf("Expected: '%s', got: '%s'", expected, alert.Description())
 	}
 }
+
+func TestFundingAlertsHandler(t *testing.T) {
+	alerter = alert.NewAlerter(&TestNotifier{})
+
+	r, err := http.NewRequest("POST", "/alerts/funding", nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	w := httptest.NewRecorder()
+	handler := http.HandlerFunc(fundingAlertsHandler)
+	handler.ServeHTTP(w, r)
+
+	if len(alerter.Alerts()) != 1 {
+		t.Error("Should set an alert")
+	}
+
+	alert := alerter.Alerts()[0]
+	expected := "Negative funding alert"
+
+	if alert.Description() != expected {
+		t.Errorf("Expected: '%s', got: '%s'", expected, alert.Description())
+	}
+}

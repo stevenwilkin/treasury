@@ -179,6 +179,13 @@ func fundingHandler(w http.ResponseWriter, r *http.Request) {
 	w.Write(b)
 }
 
+func fundingAlertsHandler(w http.ResponseWriter, r *http.Request) {
+	log.Infof("Setting funding alert")
+
+	a := alert.NewFundingAlert(statum)
+	alerter.AddAlert(a)
+}
+
 func controlHandlers() *http.ServeMux {
 	mux := http.NewServeMux()
 	mux.HandleFunc("/prices", pricesHandler)
@@ -189,6 +196,7 @@ func controlHandlers() *http.ServeMux {
 	mux.HandleFunc("/alerts", alertsHandler)
 	mux.HandleFunc("/alerts/clear", clearAlertsHandler)
 	mux.HandleFunc("/alerts/price", priceAlertsHandler)
+	mux.HandleFunc("/alerts/funding", fundingAlertsHandler)
 	mux.HandleFunc("/funding", fundingHandler)
 
 	return mux

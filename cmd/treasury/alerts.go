@@ -67,6 +67,18 @@ var alertsPriceCmd = &cobra.Command{
 	},
 }
 
+var alertsFundingCmd = &cobra.Command{
+	Use:   "funding",
+	Short: "Set funding alert",
+	Run: func(cmd *cobra.Command, args []string) {
+		resp, err := client.Get("http://unix/alerts/funding")
+		if err != nil {
+			panic(err)
+		}
+		defer resp.Body.Close()
+	},
+}
+
 var alertsClearCmd = &cobra.Command{
 	Use:   "clear",
 	Short: "Clear alerts",
