@@ -15,6 +15,7 @@ func init() {
 	rootCmd.AddCommand(costCmd)
 	rootCmd.AddCommand(pnlCmd)
 	rootCmd.AddCommand(alertsCmd)
+	rootCmd.AddCommand(fundingCmd)
 
 	assetsCmd.AddCommand(setAssetsCmd)
 	alertsCmd.AddCommand(alertsPriceCmd, alertsClearCmd)

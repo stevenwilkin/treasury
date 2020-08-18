@@ -29,6 +29,11 @@ type alertMessage struct {
 	Description string `json:"description"`
 }
 
+type fundingMessage struct {
+	Current   float64 `float64:"current"`
+	Predicted float64 `float64:"predicted"`
+}
+
 func pricesHandler(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 
@@ -156,6 +161,24 @@ func priceAlertsHandler(w http.ResponseWriter, r *http.Request) {
 	alerter.AddAlert(a)
 }
 
+func fundingHandler(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+
+	current, predicted := statum.Funding()
+
+	fm := fundingMessage{
+		Current:   current,
+		Predicted: predicted,
+	}
+
+	b, err := json.Marshal(fm)
+	if err != nil {
+		log.Error(err)
+	}
+
+	w.Write(b)
+}
+
 func controlHandlers() *http.ServeMux {
 	mux := http.NewServeMux()
 	mux.HandleFunc("/prices", pricesHandler)
@@ -166,6 +189,7 @@ func controlHandlers() *http.ServeMux {
 	mux.HandleFunc("/alerts", alertsHandler)
 	mux.HandleFunc("/alerts/clear", clearAlertsHandler)
 	mux.HandleFunc("/alerts/price", priceAlertsHandler)
+	mux.HandleFunc("/funding", fundingHandler)
 
 	return mux
 }
