@@ -19,4 +19,5 @@ func init() {
 
 	assetsCmd.AddCommand(setAssetsCmd)
 	alertsCmd.AddCommand(alertsPriceCmd, alertsClearCmd, alertsFundingCmd)
+	pnlCmd.AddCommand(pnlUsdCmd)
 }

@@ -123,6 +123,26 @@ func pnlHandler(w http.ResponseWriter, r *http.Request) {
 	w.Write(b)
 }
 
+func pnlUsdHandler(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+
+	usdThb := statum.Symbol(symbol.USDTHB)
+
+	pm := pnlMessage{
+		Cost:          statum.Cost / usdThb,
+		Value:         statum.TotalValue() / usdThb,
+		Pnl:           statum.Pnl() / usdThb,
+		PnlPercentage: statum.PnlPercentage(),
+	}
+
+	b, err := json.Marshal(pm)
+	if err != nil {
+		log.Error(err)
+	}
+
+	w.Write(b)
+}
+
 func alertsHandler(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 
@@ -193,6 +213,7 @@ func controlHandlers() *http.ServeMux {
 	mux.HandleFunc("/set", setHandler)
 	mux.HandleFunc("/cost", costHandler)
 	mux.HandleFunc("/pnl", pnlHandler)
+	mux.HandleFunc("/pnl/usd", pnlUsdHandler)
 	mux.HandleFunc("/alerts", alertsHandler)
 	mux.HandleFunc("/alerts/clear", clearAlertsHandler)
 	mux.HandleFunc("/alerts/price", priceAlertsHandler)
