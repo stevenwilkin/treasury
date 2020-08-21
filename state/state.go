@@ -131,9 +131,9 @@ func (s *State) Exposure() float64 {
 		}
 	}
 
-	dollarExposure := float64(s.Size()) + usdt
-	totalValueInDollars := s.TotalValue() / s.Symbol(symbol.USDTHB)
-	difference := totalValueInDollars - dollarExposure
+	tethers := float64(s.Size()) + usdt
+	totalValueInTethers := s.TotalValue() / s.Symbol(symbol.USDTTHB)
+	difference := totalValueInTethers - tethers
 
 	return difference / s.Symbol(symbol.BTCUSDT)
 }

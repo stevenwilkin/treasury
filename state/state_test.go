@@ -127,10 +127,9 @@ func TestExposure(t *testing.T) {
 	s.SetAsset(venue.Nexo, asset.USDT, 1000)
 	s.SetSymbol(symbol.BTCTHB, 300000)
 	s.SetSymbol(symbol.USDTTHB, 30)
-	s.SetSymbol(symbol.USDTHB, 30)
 	s.SetSymbol(symbol.BTCUSDT, 10000)
 
 	if s.Exposure() != 0.1 {
-		t.Errorf("Expected exposureto be %f, got %f", 0.1, s.Exposure())
+		t.Errorf("Expected exposure to be %f, got %f", 0.1, s.Exposure())
 	}
 }
