@@ -206,6 +206,22 @@ func fundingAlertsHandler(w http.ResponseWriter, r *http.Request) {
 	alerter.AddAlert(a)
 }
 
+func exposureHandler(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+
+	fm := struct {
+		Value float64 `json:"value"`
+	}{
+		Value: statum.Exposure()}
+
+	b, err := json.Marshal(fm)
+	if err != nil {
+		log.Error(err)
+	}
+
+	w.Write(b)
+}
+
 func controlHandlers() *http.ServeMux {
 	mux := http.NewServeMux()
 	mux.HandleFunc("/prices", pricesHandler)
@@ -219,6 +235,7 @@ func controlHandlers() *http.ServeMux {
 	mux.HandleFunc("/alerts/price", priceAlertsHandler)
 	mux.HandleFunc("/alerts/funding", fundingAlertsHandler)
 	mux.HandleFunc("/funding", fundingHandler)
+	mux.HandleFunc("/exposure", exposureHandler)
 
 	return mux
 }

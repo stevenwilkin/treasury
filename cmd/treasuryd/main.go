@@ -49,6 +49,8 @@ func initPriceFeeds() {
 		AccountId: os.Getenv("OANDA_ACCOUNT_ID"),
 		ApiKey:    os.Getenv("OANDA_API_KEY")}
 
+	statum.SetSize(deribit.GetSize() + bybit.GetSize())
+
 	btcUsdtPrices := binance.Price()
 	btcThbPrices := bitkub.Price(symbol.BTCTHB)
 	usdtThbPrices := bitkub.Price(symbol.USDTTHB)

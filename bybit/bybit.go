@@ -35,6 +35,12 @@ type fundingResponse struct {
 	} `json:"result"`
 }
 
+type positionResponse struct {
+	Result struct {
+		Size int `json:"size"`
+	} `json:"result"`
+}
+
 func getSignature(params map[string]string, key string) string {
 	keys := make([]string, len(params))
 	i := 0
@@ -153,4 +159,39 @@ func (b *Bybit) FundingRate() chan [2]float64 {
 	}()
 
 	return ch
+}
+
+func (b *Bybit) GetSize() int {
+	timestamp := strconv.FormatInt((time.Now().UnixNano() / int64(time.Millisecond)), 10)
+
+	params := map[string]string{
+		"api_key":   b.ApiKey,
+		"symbol":    "BTCUSD",
+		"timestamp": timestamp,
+	}
+
+	sign := getSignature(params, b.ApiSecret)
+
+	url := fmt.Sprintf(
+		"https://api.bybit.com/v2/private/position/list?api_key=%s&symbol=BTCUSD&timestamp=%s&sign=%s",
+		b.ApiKey,
+		timestamp,
+		sign,
+	)
+
+	resp, err := http.Get(url)
+	if err != nil {
+		log.Panic(err.Error())
+	}
+	defer resp.Body.Close()
+
+	body, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		log.Panic(err.Error())
+	}
+
+	var response positionResponse
+	json.Unmarshal(body, &response)
+
+	return response.Result.Size
 }

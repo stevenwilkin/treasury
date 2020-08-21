@@ -65,6 +65,15 @@ func TestFunding(t *testing.T) {
 	}
 }
 
+func TestSize(t *testing.T) {
+	s := NewState()
+	s.SetSize(10000)
+
+	if s.Size() != 10000 {
+		t.Errorf("Expected: 10000 - Got: %d", s.Size())
+	}
+}
+
 func TestTotalValue(t *testing.T) {
 	s := NewState()
 	s.SetAsset(venue.Nexo, asset.BTC, 1.1)
@@ -108,5 +117,20 @@ func TestPnlPercentage(t *testing.T) {
 
 	if s.PnlPercentage() != 10 {
 		t.Errorf("Expected PnL %% to be %d, got %f", 10, s.PnlPercentage())
+	}
+}
+
+func TestExposure(t *testing.T) {
+	s := NewState()
+	s.SetSize(9000)
+	s.SetAsset(venue.Nexo, asset.BTC, 1)
+	s.SetAsset(venue.Nexo, asset.USDT, 1000)
+	s.SetSymbol(symbol.BTCTHB, 300000)
+	s.SetSymbol(symbol.USDTTHB, 30)
+	s.SetSymbol(symbol.USDTHB, 30)
+	s.SetSymbol(symbol.BTCUSDT, 10000)
+
+	if s.Exposure() != 0.1 {
+		t.Errorf("Expected exposureto be %f, got %f", 0.1, s.Exposure())
 	}
 }

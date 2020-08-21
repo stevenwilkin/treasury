@@ -20,6 +20,7 @@ type State struct {
 	Assets            map[venue.Venue]map[asset.Asset]float64
 	Symbols           map[symbol.Symbol]float64
 	FundingRate       [2]float64
+	TotalSize         int
 }
 
 const (
@@ -84,6 +85,14 @@ func (s *State) Funding() (float64, float64) {
 	return s.FundingRate[0], s.FundingRate[1]
 }
 
+func (s *State) SetSize(size int) {
+	s.TotalSize = size
+}
+
+func (s *State) Size() int {
+	return s.TotalSize
+}
+
 func (s *State) TotalValue() float64 {
 	total := 0.0
 
@@ -109,6 +118,24 @@ func (s *State) PnlPercentage() float64 {
 	}
 
 	return (s.Pnl() / s.Cost) * 100
+}
+
+func (s *State) Exposure() float64 {
+	usdt := 0.0
+
+	for _, balances := range s.Assets {
+		for a, quantity := range balances {
+			if a == asset.USDT {
+				usdt += quantity
+			}
+		}
+	}
+
+	dollarExposure := float64(s.Size()) + usdt
+	totalValueInDollars := s.TotalValue() / s.Symbol(symbol.USDTHB)
+	difference := totalValueInDollars - dollarExposure
+
+	return difference / s.Symbol(symbol.BTCUSDT)
 }
 
 func (s *State) Save() error {

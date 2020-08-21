@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
+	"math"
 	"net/http"
 	"net/url"
 
@@ -32,13 +33,24 @@ type portfolioResponse struct {
 	} `json:"params"`
 }
 
-type Deribit struct {
-	ApiId     string
-	ApiSecret string
+type positionsResponse struct {
+	Result []struct {
+		Size float64 `json:"size"`
+	} `json:"result"`
 }
 
-func (d *Deribit) Equity() chan float64 {
-	log.WithField("venue", "deribit").Info("Subscribing to equity")
+type Deribit struct {
+	ApiId        string
+	ApiSecret    string
+	_accessToken string
+}
+
+func (d *Deribit) accessToken() string {
+	if d._accessToken != "" {
+		return d._accessToken
+	}
+
+	log.WithField("venue", "deribit").Debug("Fetching access token")
 
 	u := fmt.Sprintf(
 		"https://www.deribit.com/api/v2/public/auth?client_id=%s&client_secret=%s&grant_type=client_credentials",
@@ -65,7 +77,13 @@ func (d *Deribit) Equity() chan float64 {
 
 	var response authResponse
 	json.Unmarshal(body, &response)
-	accessToken := response.Result.AccessToken
+	d._accessToken = response.Result.AccessToken
+
+	return d._accessToken
+}
+
+func (d *Deribit) Equity() chan float64 {
+	log.WithField("venue", "deribit").Info("Subscribing to equity")
 
 	socketUrl := url.URL{Scheme: "wss", Host: "www.deribit.com", Path: "/ws/api/v2"}
 	c, _, err := websocket.DefaultDialer.Dial(socketUrl.String(), nil)
@@ -77,7 +95,7 @@ func (d *Deribit) Equity() chan float64 {
 		Method: "/private/subscribe",
 		Params: map[string]interface{}{
 			"channels":     []string{"user.portfolio.BTC"},
-			"access_token": accessToken}}
+			"access_token": d.accessToken()}}
 	jsonRequest, err := json.Marshal(request)
 	if err != nil {
 		log.Panic(err.Error())
@@ -116,4 +134,37 @@ func (d *Deribit) Equity() chan float64 {
 	}()
 
 	return ch
+}
+
+func (d *Deribit) GetSize() int {
+	u := "https://www.deribit.com/api/v2/private/get_positions?currency=BTC&kind=future"
+	req, err := http.NewRequest("GET", u, nil)
+	if err != nil {
+		log.Panic(err.Error())
+	}
+
+	req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", d.accessToken()))
+	req.Header.Set("Content-Type", "application/json")
+
+	client := &http.Client{}
+	resp, err := client.Do(req)
+	if err != nil {
+		log.Panic(err.Error())
+	}
+	defer resp.Body.Close()
+
+	body, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		log.Panic(err.Error())
+	}
+
+	var response positionsResponse
+	json.Unmarshal(body, &response)
+
+	size := 0.0
+	for _, position := range response.Result {
+		size += position.Size
+	}
+
+	return int(math.Abs(size))
 }
