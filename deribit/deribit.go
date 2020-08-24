@@ -42,6 +42,7 @@ type positionsResponse struct {
 type Deribit struct {
 	ApiId        string
 	ApiSecret    string
+	Test         bool
 	_accessToken string
 }
 
@@ -52,11 +53,18 @@ func (d *Deribit) accessToken() string {
 
 	log.WithField("venue", "deribit").Debug("Fetching access token")
 
-	u := fmt.Sprintf(
-		"https://www.deribit.com/api/v2/public/auth?client_id=%s&client_secret=%s&grant_type=client_credentials",
-		d.ApiId,
-		d.ApiSecret)
-	req, err := http.NewRequest("GET", u, nil)
+	v := url.Values{}
+	v.Set("client_id", d.ApiId)
+	v.Set("client_secret", d.ApiSecret)
+	v.Set("grant_type", "client_credentials")
+
+	u := url.URL{
+		Scheme:   "https",
+		Host:     d.hostname(),
+		Path:     "/api/v2/public/auth",
+		RawQuery: v.Encode()}
+
+	req, err := http.NewRequest("GET", u.String(), nil)
 	if err != nil {
 		log.Panic(err.Error())
 	}
@@ -82,14 +90,29 @@ func (d *Deribit) accessToken() string {
 	return d._accessToken
 }
 
-func (d *Deribit) Equity() chan float64 {
-	log.WithField("venue", "deribit").Info("Subscribing to equity")
+func (d *Deribit) hostname() string {
+	if d.Test {
+		return "test.deribit.com"
+	} else {
+		return "www.deribit.com"
+	}
+}
 
-	socketUrl := url.URL{Scheme: "wss", Host: "www.deribit.com", Path: "/ws/api/v2"}
+func (d *Deribit) connection() *websocket.Conn {
+	socketUrl := url.URL{Scheme: "wss", Host: d.hostname(), Path: "/ws/api/v2"}
+
 	c, _, err := websocket.DefaultDialer.Dial(socketUrl.String(), nil)
 	if err != nil {
 		log.Panic(err.Error())
 	}
+
+	return c
+}
+
+func (d *Deribit) Equity() chan float64 {
+	log.WithField("venue", "deribit").Info("Subscribing to equity")
+
+	c := d.connection()
 
 	request := requestMessage{
 		Method: "/private/subscribe",
