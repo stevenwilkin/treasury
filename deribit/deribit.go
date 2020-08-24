@@ -72,11 +72,26 @@ func (d *Deribit) hostname() string {
 	}
 }
 
-func (d *Deribit) connection() *websocket.Conn {
+func (d *Deribit) subscribe(channels []string) *websocket.Conn {
 	socketUrl := url.URL{Scheme: "wss", Host: d.hostname(), Path: "/ws/api/v2"}
 
 	c, _, err := websocket.DefaultDialer.Dial(socketUrl.String(), nil)
 	if err != nil {
+		log.Panic(err.Error())
+	}
+
+	request := requestMessage{
+		Method: "/private/subscribe",
+		Params: map[string]interface{}{
+			"channels":     channels,
+			"access_token": d.accessToken()}}
+
+	jsonRequest, err := json.Marshal(request)
+	if err != nil {
+		log.Panic(err.Error())
+	}
+
+	if err = c.WriteMessage(websocket.TextMessage, jsonRequest); err != nil {
 		log.Panic(err.Error())
 	}
 
@@ -86,23 +101,7 @@ func (d *Deribit) connection() *websocket.Conn {
 func (d *Deribit) Equity() chan float64 {
 	log.WithField("venue", "deribit").Info("Subscribing to equity")
 
-	c := d.connection()
-
-	request := requestMessage{
-		Method: "/private/subscribe",
-		Params: map[string]interface{}{
-			"channels":     []string{"user.portfolio.BTC"},
-			"access_token": d.accessToken()}}
-	jsonRequest, err := json.Marshal(request)
-	if err != nil {
-		log.Panic(err.Error())
-	}
-
-	err = c.WriteMessage(websocket.TextMessage, jsonRequest)
-	if err != nil {
-		log.Panic(err.Error())
-	}
-
+	c := d.subscribe([]string{"user.portfolio.BTC"})
 	ch := make(chan float64)
 
 	go func() {
