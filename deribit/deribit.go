@@ -7,6 +7,7 @@ import (
 	"math"
 	"net/http"
 	"net/url"
+	"strconv"
 
 	"github.com/gorilla/websocket"
 	_ "github.com/joho/godotenv/autoload"
@@ -163,4 +164,163 @@ func (d *Deribit) GetSize() int {
 	}
 
 	return int(math.Abs(size))
+}
+
+func (d *Deribit) PlaceOrder(instrument string, amount int, price float64, buy, reduce bool) string {
+	log.WithFields(log.Fields{
+		"venue":      "deribit",
+		"instrument": instrument,
+		"amount":     amount,
+		"price":      price,
+	}).Info("Placing order")
+
+	v := url.Values{}
+	v.Set("instrument_name", instrument)
+	v.Set("amount", strconv.Itoa(amount))
+	v.Set("price", strconv.FormatFloat(price, 'f', 2, 64))
+	v.Set("post_only", "true")
+	v.Set("reject_post_only", "true")
+
+	path := "/api/v2/private/buy"
+	if !buy {
+		path = "/api/v2/private/sell"
+	}
+
+	if reduce {
+		v.Set("reduce_only", "true")
+	}
+
+	u := url.URL{
+		Scheme:   "https",
+		Host:     d.hostname(),
+		Path:     path,
+		RawQuery: v.Encode()}
+
+	req, err := http.NewRequest("GET", u.String(), nil)
+	if err != nil {
+		log.Panic(err.Error())
+	}
+
+	req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", d.accessToken()))
+	req.Header.Set("Content-Type", "application/json")
+
+	client := &http.Client{}
+	resp, err := client.Do(req)
+	if err != nil {
+		log.Panic(err.Error())
+	}
+	defer resp.Body.Close()
+
+	body, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		log.Panic(err.Error())
+	}
+
+	var response orderResponse
+	json.Unmarshal(body, &response)
+
+	return response.Result.Order.OrderId
+}
+
+func (d *Deribit) EditOrder(orderId string, amount int, price float64, reduce bool) {
+	log.WithFields(log.Fields{
+		"venue":  "deribit",
+		"order":  orderId,
+		"amount": amount,
+		"price":  price,
+	}).Info("Updating order")
+
+	v := url.Values{}
+	v.Set("order_id", orderId)
+	v.Set("amount", strconv.Itoa(amount))
+	v.Set("price", strconv.FormatFloat(price, 'f', 2, 64))
+	v.Set("post_only", "true")
+	v.Set("reject_post_only", "true")
+
+	if reduce {
+		v.Set("reduce_only", "true")
+	}
+
+	u := url.URL{
+		Scheme:   "https",
+		Host:     d.hostname(),
+		Path:     "/api/v2/private/edit",
+		RawQuery: v.Encode()}
+
+	req, err := http.NewRequest("GET", u.String(), nil)
+	if err != nil {
+		log.Panic(err.Error())
+	}
+
+	req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", d.accessToken()))
+	req.Header.Set("Content-Type", "application/json")
+
+	client := &http.Client{}
+	if _, err = client.Do(req); err != nil {
+		log.Panic(err.Error())
+	}
+}
+
+func (d *Deribit) Trade(instrument string, contracts int, buy, reduce bool) {
+	var bestPrice, price float64
+	var orderId string
+
+	ordersChannel := fmt.Sprintf("user.orders.%s.raw", instrument)
+	quoteChannel := fmt.Sprintf("quote.%s", instrument)
+
+	c := d.subscribe([]string{ordersChannel, quoteChannel})
+	defer c.Close()
+
+	for {
+		_, message, err := c.ReadMessage()
+		if err != nil {
+			log.Error(err)
+			return
+		}
+
+		var response tradeResponse
+		json.Unmarshal(message, &response)
+
+		if response.Method != "subscription" {
+			continue
+		}
+
+		switch response.Params.Channel {
+		case quoteChannel:
+			if buy {
+				bestPrice = response.Params.Data.BestBidPrice
+			} else {
+				bestPrice = response.Params.Data.BestAskPrice
+			}
+
+			if orderId == "" {
+				price = bestPrice
+				orderId = d.PlaceOrder(instrument, contracts, price, buy, reduce)
+			} else if price != bestPrice {
+				price = bestPrice
+				d.EditOrder(orderId, contracts, price, reduce)
+			}
+		case ordersChannel:
+			switch response.Params.Data.OrderState {
+			case "open":
+				log.WithFields(log.Fields{
+					"venue":    "deribit",
+					"order":    orderId,
+					"quantity": response.Params.Data.FilledAmount,
+				}).Debug("Fill")
+			case "cancelled":
+				log.WithFields(log.Fields{
+					"venue": "deribit",
+					"order": orderId,
+				}).Debug("Order cancelled")
+				return
+			case "filled":
+				log.WithFields(log.Fields{
+					"venue": "deribit",
+					"order": orderId,
+				}).Info("Order filled")
+				return
+			}
+		}
+	}
 }
