@@ -105,6 +105,7 @@ func (b *Bybit) Equity() chan float64 {
 			equity := b.GetEquity()
 			log.WithFields(log.Fields{
 				"venue": "bybit",
+				"asset": "BTC",
 				"value": equity,
 			}).Debug("Received equity")
 

@@ -124,6 +124,7 @@ func (d *Deribit) Equity() chan float64 {
 
 			log.WithFields(log.Fields{
 				"venue": "deribit",
+				"asset": "BTC",
 				"value": response.Params.Data.Equity,
 			}).Debug("Received equity")
 			ch <- response.Params.Data.Equity
