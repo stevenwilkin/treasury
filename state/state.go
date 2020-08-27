@@ -5,13 +5,10 @@ import (
 	"fmt"
 	"io/ioutil"
 	"os"
-	"strings"
 
 	"github.com/stevenwilkin/treasury/asset"
 	"github.com/stevenwilkin/treasury/symbol"
 	"github.com/stevenwilkin/treasury/venue"
-
-	log "github.com/sirupsen/logrus"
 )
 
 type State struct {
@@ -43,12 +40,6 @@ func (s *State) SetAsset(v venue.Venue, a asset.Asset, q float64) {
 		return
 	}
 
-	log.WithFields(log.Fields{
-		"venue":    strings.ToLower(v.String()),
-		"asset":    a,
-		"quantity": q,
-	}).Debug("Updating state")
-
 	s.Assets[v][a] = q
 }
 
@@ -61,10 +52,6 @@ func (s *State) SetSymbol(sym symbol.Symbol, v float64) {
 		return
 	}
 
-	log.WithFields(log.Fields{
-		"symbol": sym,
-		"value":  v,
-	}).Debug("Updating state")
 	s.Symbols[sym] = v
 	s.NotifySymbolSubscribers(sym, v)
 }
