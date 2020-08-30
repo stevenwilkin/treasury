@@ -18,13 +18,6 @@ type FTX struct {
 	ApiSecret string
 }
 
-type walletResponse struct {
-	Result map[string][]struct {
-		Coin  string
-		Total float64
-	}
-}
-
 func (f *FTX) GetBalances() [2]float64 {
 	timestamp := time.Now().UnixNano() / int64(time.Millisecond)
 
