@@ -15,6 +15,7 @@ import (
 	"github.com/stevenwilkin/treasury/bitkub"
 	"github.com/stevenwilkin/treasury/bybit"
 	"github.com/stevenwilkin/treasury/deribit"
+	"github.com/stevenwilkin/treasury/ftx"
 	"github.com/stevenwilkin/treasury/oanda"
 	"github.com/stevenwilkin/treasury/state"
 	"github.com/stevenwilkin/treasury/symbol"
@@ -45,6 +46,9 @@ func initPriceFeeds() {
 	bybit := &bybit.Bybit{
 		ApiKey:    os.Getenv("BYBIT_API_KEY"),
 		ApiSecret: os.Getenv("BYBIT_API_SECRET")}
+	ftx := &ftx.FTX{
+		ApiKey:    os.Getenv("FTX_API_KEY"),
+		ApiSecret: os.Getenv("FTX_API_SECRET")}
 	oanda := &oanda.Oanda{
 		AccountId: os.Getenv("OANDA_ACCOUNT_ID"),
 		ApiKey:    os.Getenv("OANDA_API_KEY")}
@@ -58,6 +62,7 @@ func initPriceFeeds() {
 	deribitEquity := deribit.Equity()
 	bybitEquity := bybit.Equity()
 	bybitFundingRate := bybit.FundingRate()
+	ftxBalances := ftx.Balances()
 
 	go func() {
 		for {
@@ -76,6 +81,9 @@ func initPriceFeeds() {
 				statum.SetAsset(venue.Bybit, asset.BTC, bybitBtc)
 			case funding := <-bybitFundingRate:
 				statum.SetFunding(funding[0], funding[1])
+			case balances := <-ftxBalances:
+				statum.SetAsset(venue.FTX, asset.BTC, balances[0])
+				statum.SetAsset(venue.FTX, asset.USDT, balances[1])
 			}
 		}
 	}()

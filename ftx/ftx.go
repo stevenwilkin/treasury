@@ -10,7 +10,7 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/stevenwilkin/treasury/asset"
+	log "github.com/sirupsen/logrus"
 )
 
 type FTX struct {
@@ -25,7 +25,7 @@ type walletResponse struct {
 	}
 }
 
-func (f *FTX) Balances() asset.Balances {
+func (f *FTX) GetBalances() [2]float64 {
 	timestamp := time.Now().UnixNano() / int64(time.Millisecond)
 
 	signatureInput := fmt.Sprintf("%dGET/api/wallet/all_balances", timestamp)
@@ -58,24 +58,41 @@ func (f *FTX) Balances() asset.Balances {
 	var response walletResponse
 	json.Unmarshal(body, &response)
 
-	//fmt.Printf("%v\n", response)
-
-	result := asset.Balances{}
+	var btc, usdt float64
 
 	for _, account := range response.Result {
 		for _, coin := range account {
-			//fmt.Printf("%v\n", coin)
 			switch coin.Coin {
 			case "BTC":
-				result[asset.BTC] += coin.Total
-			case "USD":
-				result[asset.USD] += coin.Total
+				btc += coin.Total
 			case "USDT":
-				result[asset.USDT] += coin.Total
+				usdt += coin.Total
 			}
 		}
 	}
 
-	//fmt.Printf("BTC: %f USD: %f USDT: %f\n", btc, usd, usdt)
-	return result
+	return [2]float64{btc, usdt}
+}
+
+func (f *FTX) Balances() chan [2]float64 {
+	log.WithField("venue", "ftx").Info("Polling balances")
+
+	ch := make(chan [2]float64)
+	ticker := time.NewTicker(1 * time.Second)
+
+	go func() {
+		for {
+			balances := f.GetBalances()
+			log.WithFields(log.Fields{
+				"venue": "ftx",
+				"btc":   balances[0],
+				"usdt":  balances[1],
+			}).Debug("Received balances")
+
+			ch <- balances
+			<-ticker.C
+		}
+	}()
+
+	return ch
 }
