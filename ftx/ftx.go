@@ -1,6 +1,7 @@
 package ftx
 
 import (
+	"bytes"
 	"crypto/hmac"
 	"crypto/sha256"
 	"encoding/json"
@@ -18,14 +19,15 @@ type FTX struct {
 	ApiSecret string
 }
 
+func (f *FTX) sign(s string) string {
+	h := hmac.New(sha256.New, []byte(f.ApiSecret))
+	io.WriteString(h, string(s))
+	return fmt.Sprintf("%x", h.Sum(nil))
+}
+
 func (f *FTX) GetBalances() [2]float64 {
 	timestamp := time.Now().UnixNano() / int64(time.Millisecond)
-
 	signatureInput := fmt.Sprintf("%dGET/api/wallet/all_balances", timestamp)
-
-	h := hmac.New(sha256.New, []byte(f.ApiSecret))
-	io.WriteString(h, string(signatureInput))
-	signature := fmt.Sprintf("%x", h.Sum(nil))
 
 	req, err := http.NewRequest("GET", "https://ftx.com/api/wallet/all_balances", nil)
 	if err != nil {
@@ -33,7 +35,7 @@ func (f *FTX) GetBalances() [2]float64 {
 	}
 
 	req.Header.Set("FTX-KEY", f.ApiKey)
-	req.Header.Set("FTX-SIGN", signature)
+	req.Header.Set("FTX-SIGN", f.sign(signatureInput))
 	req.Header.Set("FTX-TS", fmt.Sprintf("%d", timestamp))
 
 	client := &http.Client{}
@@ -88,4 +90,110 @@ func (f *FTX) Balances() chan [2]float64 {
 	}()
 
 	return ch
+}
+
+func (f *FTX) PlaceOrder(size, price float64, buy bool) int64 {
+	side := "buy"
+	if !buy {
+		side = "sell"
+	}
+
+	or := orderRequest{
+		Market:   "BTC/USDT",
+		Side:     side,
+		Size:     size,
+		Price:    price,
+		Type:     "limit",
+		PostOnly: true}
+
+	jsonRequest, err := json.Marshal(or)
+	if err != nil {
+		log.Panic(err.Error())
+	}
+
+	timestamp := time.Now().UnixNano() / int64(time.Millisecond)
+	signatureInput := fmt.Sprintf("%dPOST/api/orders%s", timestamp, jsonRequest)
+
+	req, err := http.NewRequest(
+		"POST", "https://ftx.com/api/orders", bytes.NewBuffer(jsonRequest))
+	if err != nil {
+		log.Panic(err.Error())
+	}
+
+	req.Header.Set("Accept", "application/json")
+	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("FTX-KEY", f.ApiKey)
+	req.Header.Set("FTX-SIGN", f.sign(signatureInput))
+	req.Header.Set("FTX-TS", fmt.Sprintf("%d", timestamp))
+
+	client := &http.Client{}
+	resp, err := client.Do(req)
+	if err != nil {
+		log.Panic(err.Error())
+	}
+	defer resp.Body.Close()
+
+	body, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		log.Panic(err.Error())
+	}
+
+	var response orderResponse
+	json.Unmarshal(body, &response)
+
+	if response.Success {
+		return response.Result.Id
+	}
+
+	return 0
+}
+
+func (f *FTX) EditOrder(id int64, size, price float64) int64 {
+	or := editOrderRequest{
+		Size:  size,
+		Price: price}
+
+	jsonRequest, err := json.Marshal(or)
+	if err != nil {
+		log.Panic(err.Error())
+	}
+
+	timestamp := time.Now().UnixNano() / int64(time.Millisecond)
+	path := fmt.Sprintf("/api/orders/%d/modify", id)
+	signatureInput := fmt.Sprintf("%dPOST%s%s", timestamp, path, jsonRequest)
+
+	req, err := http.NewRequest(
+		"POST",
+		fmt.Sprintf("https://ftx.com%s", path),
+		bytes.NewBuffer(jsonRequest))
+	if err != nil {
+		log.Panic(err.Error())
+	}
+
+	req.Header.Set("Accept", "application/json")
+	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("FTX-KEY", f.ApiKey)
+	req.Header.Set("FTX-SIGN", f.sign(signatureInput))
+	req.Header.Set("FTX-TS", fmt.Sprintf("%d", timestamp))
+
+	client := &http.Client{}
+	resp, err := client.Do(req)
+	if err != nil {
+		log.Panic(err.Error())
+	}
+	defer resp.Body.Close()
+
+	body, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		log.Panic(err.Error())
+	}
+
+	var response orderResponse
+	json.Unmarshal(body, &response)
+
+	if response.Success {
+		return response.Result.Id
+	}
+
+	return 0
 }
