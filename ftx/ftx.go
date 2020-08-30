@@ -9,8 +9,10 @@ import (
 	"io"
 	"io/ioutil"
 	"net/http"
+	"net/url"
 	"time"
 
+	"github.com/gorilla/websocket"
 	log "github.com/sirupsen/logrus"
 )
 
@@ -93,6 +95,14 @@ func (f *FTX) Balances() chan [2]float64 {
 }
 
 func (f *FTX) PlaceOrder(size, price float64, buy bool) int64 {
+	log.WithFields(log.Fields{
+		"venue":  "ftx",
+		"market": "BTC/USDT",
+		"size":   size,
+		"price":  price,
+		"buy":    buy,
+	}).Info("Placing order")
+
 	side := "buy"
 	if !buy {
 		side = "sell"
@@ -149,6 +159,13 @@ func (f *FTX) PlaceOrder(size, price float64, buy bool) int64 {
 }
 
 func (f *FTX) EditOrder(id int64, size, price float64) int64 {
+	log.WithFields(log.Fields{
+		"venue": "ftx",
+		"order": id,
+		"size":  size,
+		"price": price,
+	}).Info("Updating order")
+
 	or := editOrderRequest{
 		Size:  size,
 		Price: price}
@@ -196,4 +213,87 @@ func (f *FTX) EditOrder(id int64, size, price float64) int64 {
 	}
 
 	return 0
+}
+
+func (f *FTX) Trade(size float64, buy bool) {
+	var bestPrice, price float64
+	var orderId int64
+
+	timestamp := time.Now().UnixNano() / int64(time.Millisecond)
+
+	socketUrl := url.URL{Scheme: "wss", Host: "ftx.com", Path: "/ws"}
+	c, _, err := websocket.DefaultDialer.Dial(socketUrl.String(), nil)
+	if err != nil {
+		log.Panic(err.Error())
+	}
+	defer c.Close()
+
+	request := opMessage{
+		Args: map[string]interface{}{
+			"key":  f.ApiKey,
+			"sign": f.sign(fmt.Sprintf("%dwebsocket_login", timestamp)),
+			"time": timestamp},
+		Op: "login"}
+	jsonRequest, err := json.Marshal(request)
+	if err != nil {
+		log.Panic(err.Error())
+	}
+
+	err = c.WriteMessage(websocket.TextMessage, jsonRequest)
+	if err != nil {
+		log.Panic(err.Error())
+	}
+
+	subscribe := []byte(`{"op":"subscribe","channel":"ticker","market":"BTC/USDT"}`)
+	err = c.WriteMessage(websocket.TextMessage, subscribe)
+	if err != nil {
+		log.Panic(err.Error())
+	}
+
+	subscribe = []byte(`{"op":"subscribe","channel":"orders"}`)
+	err = c.WriteMessage(websocket.TextMessage, subscribe)
+	if err != nil {
+		log.Panic(err.Error())
+	}
+
+	for {
+		var message tradeMessage
+		if err = c.ReadJSON(&message); err != nil {
+			log.Error(err)
+			return
+		}
+
+		if message.Type != "update" {
+			continue
+		}
+
+		if message.Channel == "ticker" {
+			if buy {
+				bestPrice = message.Data.Bid
+			} else {
+				bestPrice = message.Data.Ask
+			}
+
+			if orderId == 0 {
+				price = bestPrice
+				orderId = f.PlaceOrder(size, price, buy)
+			} else if price != bestPrice {
+				price = bestPrice
+				f.EditOrder(orderId, size, price)
+			}
+		} else if message.Channel == "orders" {
+			switch message.Data.Status {
+			case "new":
+				orderId = message.Data.Id
+			case "closed":
+				if message.Data.FilledSize == message.Data.Size {
+					log.WithFields(log.Fields{
+						"venue": "ftx",
+						"order": orderId,
+					}).Info("Order filled")
+					return
+				}
+			}
+		}
+	}
 }
