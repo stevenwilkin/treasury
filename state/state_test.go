@@ -87,6 +87,17 @@ func TestTotalValue(t *testing.T) {
 	}
 }
 
+func TestTotalEquity(t *testing.T) {
+	s := NewState()
+	s.SetAsset(venue.Nexo, asset.BTC, 1)
+	s.SetAsset(venue.Nexo, asset.USDT, 1000)
+	s.SetAsset(venue.FTX, asset.BTC, 2)
+
+	if s.TotalEquity() != 3 {
+		t.Errorf("Expected total equity to be %f, got %f", 3.0, s.TotalEquity())
+	}
+}
+
 func TestPnl(t *testing.T) {
 	s := NewState()
 	s.SetAsset(venue.Nexo, asset.BTC, 1)
@@ -122,14 +133,12 @@ func TestPnlPercentage(t *testing.T) {
 
 func TestExposure(t *testing.T) {
 	s := NewState()
-	s.SetSize(9000)
-	s.SetAsset(venue.Nexo, asset.BTC, 1)
+	s.SetSize(90000)
+	s.SetAsset(venue.Nexo, asset.BTC, 10)
 	s.SetAsset(venue.Nexo, asset.USDT, 1000)
-	s.SetSymbol(symbol.BTCTHB, 300000)
-	s.SetSymbol(symbol.USDTTHB, 30)
 	s.SetSymbol(symbol.BTCUSDT, 10000)
 
-	if s.Exposure() != 0.1 {
-		t.Errorf("Expected exposure to be %f, got %f", 0.1, s.Exposure())
+	if s.Exposure() != 1 {
+		t.Errorf("Expected exposure to be %f, got %f", 1.0, s.Exposure())
 	}
 }

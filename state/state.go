@@ -107,22 +107,19 @@ func (s *State) PnlPercentage() float64 {
 	return (s.Pnl() / s.Cost) * 100
 }
 
-func (s *State) Exposure() float64 {
-	usdt := 0.0
+func (s *State) TotalEquity() float64 {
+	total := 0.0
 
 	for _, balances := range s.Assets {
-		for a, quantity := range balances {
-			if a == asset.USDT {
-				usdt += quantity
-			}
-		}
+		total += balances[asset.BTC]
 	}
 
-	tethers := float64(s.Size()) + usdt
-	totalValueInTethers := s.TotalValue() / s.Symbol(symbol.USDTTHB)
-	difference := totalValueInTethers - tethers
+	return total
+}
 
-	return difference / s.Symbol(symbol.BTCUSDT)
+func (s *State) Exposure() float64 {
+	equivalentEquity := float64(s.Size()) / s.Symbol(symbol.BTCUSDT)
+	return s.TotalEquity() - equivalentEquity
 }
 
 func (s *State) Save() error {
