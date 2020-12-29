@@ -1,0 +1,12 @@
+[Unit]
+Description=Digital asset management system
+
+[Service]
+EnvironmentFile=/etc/treasuryd.env
+ExecStart=/usr/local/bin/treasuryd
+Type=simple
+User=treasury
+Group=treasury
+
+[Install]
+WantedBy=default.target
