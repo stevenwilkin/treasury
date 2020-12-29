@@ -140,6 +140,11 @@ func initControlSocket() {
 		log.Fatal("listen error:", err)
 	}
 
+	err = os.Chmod(socketPath, 0777)
+	if err != nil {
+		log.Fatal("chmod error:", err)
+	}
+
 	mux := controlHandlers()
 
 	go func() {
