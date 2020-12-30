@@ -130,7 +130,7 @@ func initAlerter() {
 }
 
 func initControlSocket() {
-	log.Info("Initialising control socket", socketPath)
+	log.Info("Initialising control socket ", socketPath)
 
 	if err := os.RemoveAll(socketPath); err != nil {
 		log.Fatal(err)
