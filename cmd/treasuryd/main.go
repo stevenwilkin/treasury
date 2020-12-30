@@ -179,7 +179,7 @@ func initLogger() {
 
 func trapSigInt() {
 	c := make(chan os.Signal, 1)
-	signal.Notify(c, os.Interrupt, syscall.SIGINT)
+	signal.Notify(c, os.Interrupt, syscall.SIGINT, syscall.SIGTERM)
 	<-c
 	log.Info("Shutting down")
 }
