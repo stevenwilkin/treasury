@@ -159,6 +159,8 @@ func initLogger() {
 		log.SetLevel(level)
 	}
 
+	log.SetFormatter(&log.TextFormatter{ForceColors: true})
+
 	port, err := strconv.Atoi(os.Getenv("PAPERTRAIL_PORT"))
 	if err != nil || os.Getenv("PAPERTRAIL_HOST") == "" {
 		return
