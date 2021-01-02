@@ -111,8 +111,10 @@ func (d *Deribit) Equity() chan float64 {
 		for {
 			_, message, err := c.ReadMessage()
 			if err != nil {
-				log.Error(err)
-				return
+				log.WithField("venue", "deribit").Info("Reconnecting to equity subscription")
+				c.Close()
+				c = d.subscribe([]string{"user.portfolio.BTC"})
+				continue
 			}
 
 			var response portfolioResponse
