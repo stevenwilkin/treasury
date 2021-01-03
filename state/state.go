@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"os"
+	"sync"
 
 	"github.com/stevenwilkin/treasury/asset"
 	"github.com/stevenwilkin/treasury/symbol"
@@ -12,6 +13,7 @@ import (
 )
 
 type State struct {
+	mu                sync.Mutex
 	symbolSubscribers map[chan SymbolNotification]bool
 	Cost              float64
 	Assets            map[venue.Venue]map[asset.Asset]float64
@@ -32,6 +34,9 @@ func NewState() *State {
 }
 
 func (s *State) SetAsset(v venue.Venue, a asset.Asset, q float64) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
 	if _, ok := s.Assets[v]; !ok {
 		s.Assets[v] = map[asset.Asset]float64{}
 	}
@@ -44,10 +49,16 @@ func (s *State) SetAsset(v venue.Venue, a asset.Asset, q float64) {
 }
 
 func (s *State) Asset(v venue.Venue, a asset.Asset) float64 {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
 	return s.Assets[v][a]
 }
 
 func (s *State) SetSymbol(sym symbol.Symbol, v float64) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
 	if s.Symbols[sym] == v {
 		return
 	}
@@ -57,6 +68,9 @@ func (s *State) SetSymbol(sym symbol.Symbol, v float64) {
 }
 
 func (s *State) Symbol(sym symbol.Symbol) float64 {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
 	return s.Symbols[sym]
 }
 
@@ -81,6 +95,9 @@ func (s *State) Size() int {
 }
 
 func (s *State) TotalValue() float64 {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
 	total := 0.0
 
 	for _, balances := range s.Assets {
@@ -108,6 +125,9 @@ func (s *State) PnlPercentage() float64 {
 }
 
 func (s *State) TotalEquity() float64 {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
 	total := 0.0
 
 	for _, balances := range s.Assets {
@@ -123,6 +143,9 @@ func (s *State) Exposure() float64 {
 }
 
 func (s *State) Save() error {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
 	b, err := json.MarshalIndent(s, "", "\t")
 	if err != nil {
 		return err
