@@ -17,12 +17,7 @@ type tickerMessage struct {
 	Last float64
 }
 
-func (b *BitKub) Price(s symbol.Symbol) chan float64 {
-	log.WithFields(log.Fields{
-		"venue":  "bitkub",
-		"symbol": s,
-	}).Info("Subscribing to price")
-
+func (b *BitKub) subscribeToPrice(s symbol.Symbol) *websocket.Conn {
 	var tickerString string
 
 	switch s {
@@ -40,6 +35,16 @@ func (b *BitKub) Price(s symbol.Symbol) chan float64 {
 		log.Panic(err.Error())
 	}
 
+	return c
+}
+
+func (b *BitKub) Price(s symbol.Symbol) chan float64 {
+	log.WithFields(log.Fields{
+		"venue":  "bitkub",
+		"symbol": s,
+	}).Info("Subscribing to price")
+
+	c := b.subscribeToPrice(s)
 	ch := make(chan float64)
 
 	go func() {
@@ -48,8 +53,10 @@ func (b *BitKub) Price(s symbol.Symbol) chan float64 {
 		for {
 			_, message, err := c.ReadMessage()
 			if err != nil {
-				log.Error(err)
-				break
+				log.WithField("venue", "bitkub").Info("Reconnecting to price subscription")
+				c.Close()
+				c = b.subscribeToPrice(s)
+				continue
 			}
 
 			var ticker tickerMessage
