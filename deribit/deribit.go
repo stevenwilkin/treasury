@@ -113,6 +113,7 @@ func (d *Deribit) Equity() chan float64 {
 			if err != nil {
 				log.WithField("venue", "deribit").Info("Reconnecting to equity subscription")
 				c.Close()
+				d._accessToken = "" // force fresh access token
 				c = d.subscribe([]string{"user.portfolio.BTC"})
 				continue
 			}
