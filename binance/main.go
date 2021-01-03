@@ -15,12 +15,7 @@ type tickerMessage struct {
 	P string
 }
 
-func (b *Binance) Price() chan float64 {
-	log.WithFields(log.Fields{
-		"venue":  "binance",
-		"symbol": "BTCUSDT",
-	}).Info("Subscribing to price")
-
+func (b *Binance) subscribeToPrice() *websocket.Conn {
 	u := url.URL{Scheme: "wss", Host: "stream.binance.com:9443", Path: "/ws/btcusdt@aggTrade"}
 
 	c, _, err := websocket.DefaultDialer.Dial(u.String(), nil)
@@ -28,6 +23,16 @@ func (b *Binance) Price() chan float64 {
 		log.Panic(err.Error())
 	}
 
+	return c
+}
+
+func (b *Binance) Price() chan float64 {
+	log.WithFields(log.Fields{
+		"venue":  "binance",
+		"symbol": "BTCUSDT",
+	}).Info("Subscribing to price")
+
+	c := b.subscribeToPrice()
 	ch := make(chan float64)
 
 	go func() {
@@ -36,8 +41,10 @@ func (b *Binance) Price() chan float64 {
 		for {
 			_, message, err := c.ReadMessage()
 			if err != nil {
-				log.Error(err)
-				return
+				log.WithField("venue", "binance").Info("Reconnecting to price subscription")
+				c.Close()
+				c = b.subscribeToPrice()
+				continue
 			}
 
 			var ticker tickerMessage
