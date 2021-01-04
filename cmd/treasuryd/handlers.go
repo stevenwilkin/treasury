@@ -88,7 +88,7 @@ func setHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	log.Infof("Set %s:%s to %f\n", v, a, q)
+	log.Infof("Set %s:%s to %f", v, a, q)
 
 	statum.SetAsset(v, a, q)
 }
@@ -100,7 +100,7 @@ func costHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	log.Infof("Cost - %f\n", c)
+	log.Infof("Cost - %f", c)
 
 	statum.SetCost(c)
 }
