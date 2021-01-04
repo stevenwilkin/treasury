@@ -23,7 +23,6 @@ import (
 	"github.com/stevenwilkin/treasury/venue"
 
 	_ "github.com/joho/godotenv/autoload"
-	"github.com/polds/logrus-papertrail-hook"
 	log "github.com/sirupsen/logrus"
 )
 
@@ -158,25 +157,6 @@ func initLogger() {
 	if level, err := log.ParseLevel(os.Getenv("LOG_LEVEL")); err == nil {
 		log.SetLevel(level)
 	}
-
-	log.SetFormatter(&log.TextFormatter{ForceColors: true})
-
-	port, err := strconv.Atoi(os.Getenv("PAPERTRAIL_PORT"))
-	if err != nil || os.Getenv("PAPERTRAIL_HOST") == "" {
-		return
-	}
-
-	hook, err := logrus_papertrail.NewPapertrailHook(&logrus_papertrail.Hook{
-		Host:    os.Getenv("PAPERTRAIL_HOST"),
-		Port:    port,
-		Appname: "treasuryd"})
-
-	if err != nil {
-		return
-	}
-
-	log.AddHook(hook)
-	log.Info("Sending logs to Papertrail")
 }
 
 func trapSigInt() {
