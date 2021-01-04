@@ -81,18 +81,23 @@ func (d *Deribit) subscribe(channels []string) *websocket.Conn {
 		log.Panic(err.Error())
 	}
 
-	request := requestMessage{
-		Method: "/private/subscribe",
+	authRequest := requestMessage{
+		Method: "/public/auth",
 		Params: map[string]interface{}{
-			"channels":     channels,
-			"access_token": d.accessToken()}}
+			"client_id":     d.ApiId,
+			"client_secret": d.ApiSecret,
+			"grant_type":    "client_credentials"}}
 
-	jsonRequest, err := json.Marshal(request)
-	if err != nil {
+	if err = c.WriteJSON(authRequest); err != nil {
 		log.Panic(err.Error())
 	}
 
-	if err = c.WriteMessage(websocket.TextMessage, jsonRequest); err != nil {
+	request := requestMessage{
+		Method: "/private/subscribe",
+		Params: map[string]interface{}{
+			"channels": channels}}
+
+	if err = c.WriteJSON(request); err != nil {
 		log.Panic(err.Error())
 	}
 
@@ -113,7 +118,6 @@ func (d *Deribit) Equity() chan float64 {
 			if err != nil {
 				log.WithField("venue", "deribit").Info("Reconnecting to equity subscription")
 				c.Close()
-				d._accessToken = "" // force fresh access token
 				c = d.subscribe([]string{"user.portfolio.BTC"})
 				continue
 			}
