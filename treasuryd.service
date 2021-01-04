@@ -7,6 +7,7 @@ ExecStart=/usr/local/bin/treasuryd
 Type=simple
 User=treasury
 Group=treasury
+Restart=on-failure
 
 [Install]
 WantedBy=default.target
