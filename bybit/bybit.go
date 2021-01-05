@@ -133,6 +133,11 @@ func (b *Bybit) GetFundingRate() (float64, float64) {
 	var response fundingResponse
 	json.Unmarshal(body, &response)
 
+	if len(response.Result) != 1 {
+		log.WithField("venue", "bybit").Error("Empty funding rate response")
+		return 0, 0
+	}
+
 	funding, _ := strconv.ParseFloat(response.Result[0].FundingRate, 64)
 	predicted, _ := strconv.ParseFloat(response.Result[0].PredictedFundingRate, 64)
 
