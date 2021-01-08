@@ -43,7 +43,8 @@ func (f *FTX) GetBalances() [2]float64 {
 	client := &http.Client{}
 	resp, err := client.Do(req)
 	if err != nil {
-		panic(err)
+		log.WithField("venue", "ftx").Error(err.Error())
+		return [2]float64{0, 0}
 	}
 	defer resp.Body.Close()
 
