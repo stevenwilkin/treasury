@@ -11,12 +11,6 @@ import (
 
 	"github.com/stevenwilkin/treasury/alert"
 	"github.com/stevenwilkin/treasury/asset"
-	"github.com/stevenwilkin/treasury/binance"
-	"github.com/stevenwilkin/treasury/bitkub"
-	"github.com/stevenwilkin/treasury/bybit"
-	"github.com/stevenwilkin/treasury/deribit"
-	"github.com/stevenwilkin/treasury/ftx"
-	"github.com/stevenwilkin/treasury/oanda"
 	"github.com/stevenwilkin/treasury/state"
 	"github.com/stevenwilkin/treasury/symbol"
 	"github.com/stevenwilkin/treasury/telegram"
@@ -33,36 +27,20 @@ const (
 var (
 	statum  *state.State
 	alerter *alert.Alerter
+	venues  Venues
 )
 
-func initPriceFeeds() {
-	log.Info("Initialising price feeds")
+func initDataFeeds() {
+	log.Info("Initialising data feeds")
 
-	binance := &binance.Binance{}
-	bitkub := &bitkub.BitKub{}
-	deribit := &deribit.Deribit{
-		ApiId:     os.Getenv("DERIBIT_API_ID"),
-		ApiSecret: os.Getenv("DERIBIT_API_SECRET")}
-	bybit := &bybit.Bybit{
-		ApiKey:    os.Getenv("BYBIT_API_KEY"),
-		ApiSecret: os.Getenv("BYBIT_API_SECRET")}
-	ftx := &ftx.FTX{
-		ApiKey:    os.Getenv("FTX_API_KEY"),
-		ApiSecret: os.Getenv("FTX_API_SECRET")}
-	oanda := &oanda.Oanda{
-		AccountId: os.Getenv("OANDA_ACCOUNT_ID"),
-		ApiKey:    os.Getenv("OANDA_API_KEY")}
-
-	statum.SetSize(deribit.GetSize() + bybit.GetSize())
-
-	btcUsdtPrices := binance.Price()
-	btcThbPrices := bitkub.Price(symbol.BTCTHB)
-	usdtThbPrices := bitkub.Price(symbol.USDTTHB)
-	usdThbPrices := oanda.Price(symbol.USDTHB)
-	deribitEquity := deribit.Equity()
-	bybitEquity := bybit.Equity()
-	bybitFundingRate := bybit.FundingRate()
-	ftxBalances := ftx.Balances()
+	btcUsdtPrices := venues.Binance.Price()
+	btcThbPrices := venues.Bitkub.Price(symbol.BTCTHB)
+	usdtThbPrices := venues.Bitkub.Price(symbol.USDTTHB)
+	usdThbPrices := venues.Oanda.Price(symbol.USDTHB)
+	deribitEquity := venues.Deribit.Equity()
+	bybitEquity := venues.Bybit.Equity()
+	bybitFundingRate := venues.Bybit.FundingRate()
+	ftxBalances := venues.Ftx.Balances()
 
 	go func() {
 		for {
@@ -170,7 +148,8 @@ func main() {
 	initLogger()
 	initState()
 	initAlerter()
-	initPriceFeeds()
+	initVenues()
+	initDataFeeds()
 	initControlSocket()
 	initWS()
 	initWeb()
