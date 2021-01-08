@@ -33,38 +33,62 @@ var (
 func initDataFeeds() {
 	log.Info("Initialising data feeds")
 
-	btcUsdtPrices := venues.Binance.Price()
-	btcThbPrices := venues.Bitkub.Price(symbol.BTCTHB)
-	usdtThbPrices := venues.Bitkub.Price(symbol.USDTTHB)
-	usdThbPrices := venues.Oanda.Price(symbol.USDTHB)
-	deribitEquity := venues.Deribit.Equity()
-	bybitEquity := venues.Bybit.Equity()
-	bybitFundingRate := venues.Bybit.FundingRate()
-	ftxBalances := venues.Ftx.Balances()
-
-	go func() {
-		for {
-			select {
-			case btcUsdt := <-btcUsdtPrices:
-				statum.SetSymbol(symbol.BTCUSDT, btcUsdt)
-			case btcThb := <-btcThbPrices:
-				statum.SetSymbol(symbol.BTCTHB, btcThb)
-			case usdtThb := <-usdtThbPrices:
-				statum.SetSymbol(symbol.USDTTHB, usdtThb)
-			case usdThb := <-usdThbPrices:
-				statum.SetSymbol(symbol.USDTHB, usdThb)
-			case deribitBtc := <-deribitEquity:
-				statum.SetAsset(venue.Deribit, asset.BTC, deribitBtc)
-			case bybitBtc := <-bybitEquity:
-				statum.SetAsset(venue.Bybit, asset.BTC, bybitBtc)
-			case funding := <-bybitFundingRate:
-				statum.SetFunding(funding[0], funding[1])
-			case balances := <-ftxBalances:
-				statum.SetAsset(venue.FTX, asset.BTC, balances[0])
-				statum.SetAsset(venue.FTX, asset.USDT, balances[1])
+	processFeed := func(chanF func() chan float64, processF func(float64)) {
+		go func() {
+			ch := chanF()
+			for {
+				processF(<-ch)
 			}
-		}
-	}()
+		}()
+	}
+
+	processFeedArray := func(chanF func() chan [2]float64, processF func([2]float64)) {
+		go func() {
+			ch := chanF()
+			for {
+				processF(<-ch)
+			}
+		}()
+	}
+
+	processFeed(venues.Binance.Price, func(btcUsdt float64) {
+		statum.SetSymbol(symbol.BTCUSDT, btcUsdt)
+	})
+
+	processFeed(func() chan float64 {
+		return venues.Bitkub.Price(symbol.BTCTHB)
+	}, func(btcThb float64) {
+		statum.SetSymbol(symbol.BTCTHB, btcThb)
+	})
+
+	processFeed(func() chan float64 {
+		return venues.Bitkub.Price(symbol.USDTTHB)
+	}, func(usdtThb float64) {
+		statum.SetSymbol(symbol.USDTTHB, usdtThb)
+	})
+
+	processFeed(func() chan float64 {
+		return venues.Oanda.Price(symbol.USDTHB)
+	}, func(usdThb float64) {
+		statum.SetSymbol(symbol.USDTHB, usdThb)
+	})
+
+	processFeed(venues.Deribit.Equity, func(deribitBtc float64) {
+		statum.SetAsset(venue.Deribit, asset.BTC, deribitBtc)
+	})
+
+	processFeed(venues.Bybit.Equity, func(bybitBtc float64) {
+		statum.SetAsset(venue.Bybit, asset.BTC, bybitBtc)
+	})
+
+	processFeedArray(venues.Bybit.FundingRate, func(funding [2]float64) {
+		statum.SetFunding(funding[0], funding[1])
+	})
+
+	processFeedArray(venues.Ftx.Balances, func(balances [2]float64) {
+		statum.SetAsset(venue.FTX, asset.BTC, balances[0])
+		statum.SetAsset(venue.FTX, asset.USDT, balances[1])
+	})
 }
 
 func initState() {
