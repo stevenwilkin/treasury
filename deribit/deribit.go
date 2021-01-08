@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"net/url"
 	"strconv"
+	"time"
 
 	"github.com/gorilla/websocket"
 	_ "github.com/joho/godotenv/autoload"
@@ -100,6 +101,18 @@ func (d *Deribit) subscribe(channels []string) *websocket.Conn {
 	if err = c.WriteJSON(request); err != nil {
 		log.Panic(err.Error())
 	}
+
+	ticker := time.NewTicker(10 * time.Second)
+	testMessage := requestMessage{Method: "/public/test"}
+
+	go func() {
+		for {
+			if err = c.WriteJSON(testMessage); err != nil {
+				log.Error(err.Error())
+			}
+			<-ticker.C
+		}
+	}()
 
 	return c
 }
