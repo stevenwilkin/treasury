@@ -222,6 +222,31 @@ func exposureHandler(w http.ResponseWriter, r *http.Request) {
 	w.Write(b)
 }
 
+func sizeHandler(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+
+	fm := struct {
+		Size int `json:"size"`
+	}{
+		Size: statum.Size()}
+
+	b, err := json.Marshal(fm)
+	if err != nil {
+		log.Error(err)
+	}
+
+	w.Write(b)
+}
+
+func updateSizeHandler(w http.ResponseWriter, r *http.Request) {
+	size := venues.Deribit.GetSize() + venues.Bybit.GetSize()
+	log.Infof("Setting size to %d", size)
+
+	statum.SetSize(size)
+
+	sizeHandler(w, r)
+}
+
 func controlHandlers() *http.ServeMux {
 	mux := http.NewServeMux()
 	mux.HandleFunc("/prices", pricesHandler)
@@ -236,6 +261,8 @@ func controlHandlers() *http.ServeMux {
 	mux.HandleFunc("/alerts/funding", fundingAlertsHandler)
 	mux.HandleFunc("/funding", fundingHandler)
 	mux.HandleFunc("/exposure", exposureHandler)
+	mux.HandleFunc("/size", sizeHandler)
+	mux.HandleFunc("/size/update", updateSizeHandler)
 
 	return mux
 }
