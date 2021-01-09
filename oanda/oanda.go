@@ -2,6 +2,7 @@ package oanda
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io/ioutil"
 	"net/http"
@@ -62,6 +63,12 @@ func (o *Oanda) GetPrice(s symbol.Symbol) (float64, error) {
 
 	var response priceResponse
 	json.Unmarshal(body, &response)
+
+	if len(response.Prices) != 1 ||
+		len(response.Prices[0].Bids) != 1 ||
+		len(response.Prices[0].Asks) != 1 {
+		return 0, errors.New("Invalid price response")
+	}
 
 	bidString := response.Prices[0].Bids[0].Price
 	askString := response.Prices[0].Asks[0].Price
