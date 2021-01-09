@@ -20,7 +20,7 @@ func main() {
 		AccountId: os.Getenv("OANDA_ACCOUNT_ID"),
 		ApiKey:    os.Getenv("OANDA_API_KEY")}
 
-	usdThb := oanda.GetPrice(symbol.USDTHB)
+	usdThb, _ := oanda.GetPrice(symbol.USDTHB)
 	usdtThb := <-bitkub.Price(symbol.USDTTHB)
 	difference := ((usdtThb - usdThb) / usdThb) * 100
 

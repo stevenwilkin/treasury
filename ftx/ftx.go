@@ -27,13 +27,13 @@ func (f *FTX) sign(s string) string {
 	return fmt.Sprintf("%x", h.Sum(nil))
 }
 
-func (f *FTX) GetBalances() [2]float64 {
+func (f *FTX) GetBalances() ([2]float64, error) {
 	timestamp := time.Now().UnixNano() / int64(time.Millisecond)
 	signatureInput := fmt.Sprintf("%dGET/api/wallet/all_balances", timestamp)
 
 	req, err := http.NewRequest("GET", "https://ftx.com/api/wallet/all_balances", nil)
 	if err != nil {
-		panic(err.Error())
+		return [2]float64{}, err
 	}
 
 	req.Header.Set("FTX-KEY", f.ApiKey)
@@ -43,14 +43,13 @@ func (f *FTX) GetBalances() [2]float64 {
 	client := &http.Client{}
 	resp, err := client.Do(req)
 	if err != nil {
-		log.WithField("venue", "ftx").Error(err.Error())
-		return [2]float64{0, 0}
+		return [2]float64{}, err
 	}
 	defer resp.Body.Close()
 
 	body, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
-		panic(err.Error())
+		return [2]float64{}, err
 	}
 
 	var response walletResponse
@@ -69,7 +68,7 @@ func (f *FTX) GetBalances() [2]float64 {
 		}
 	}
 
-	return [2]float64{btc, usdt}
+	return [2]float64{btc, usdt}, nil
 }
 
 func (f *FTX) Balances() chan [2]float64 {
@@ -80,7 +79,13 @@ func (f *FTX) Balances() chan [2]float64 {
 
 	go func() {
 		for {
-			balances := f.GetBalances()
+			balances, err := f.GetBalances()
+			if err != nil {
+				log.WithField("venue", "ftx").Error(err.Error())
+				<-ticker.C
+				continue
+			}
+
 			log.WithFields(log.Fields{
 				"venue": "ftx",
 				"btc":   balances[0],

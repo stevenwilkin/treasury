@@ -22,7 +22,7 @@ func main() {
 		AccountId: os.Getenv("OANDA_ACCOUNT_ID"),
 		ApiKey:    os.Getenv("OANDA_API_KEY")}
 
-	usdThb := oanda.GetPrice(symbol.USDTHB)
+	usdThb, _ := oanda.GetPrice(symbol.USDTHB)
 	btcThb := <-bitkub.Price(symbol.BTCTHB)
 	btcUsdt := <-binance.Price()
 

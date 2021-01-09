@@ -5,6 +5,7 @@ import (
 	"crypto/hmac"
 	"crypto/sha256"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"io/ioutil"
@@ -62,7 +63,7 @@ func (b *Bybit) timestamp() string {
 	return strconv.FormatInt((time.Now().UnixNano() / int64(time.Millisecond)), 10)
 }
 
-func (b *Bybit) GetEquity() float64 {
+func (b *Bybit) GetEquity() (float64, error) {
 	timestamp := b.timestamp()
 
 	params := map[string]interface{}{
@@ -82,19 +83,19 @@ func (b *Bybit) GetEquity() float64 {
 
 	resp, err := http.Get(url)
 	if err != nil {
-		log.Panic(err.Error())
+		return 0, err
 	}
 	defer resp.Body.Close()
 
 	body, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
-		log.Panic(err.Error())
+		return 0, err
 	}
 
 	var response equityResponse
 	json.Unmarshal(body, &response)
 
-	return response.Result.BTC.Equity
+	return response.Result.BTC.Equity, nil
 }
 
 func (b *Bybit) Equity() chan float64 {
@@ -105,7 +106,13 @@ func (b *Bybit) Equity() chan float64 {
 
 	go func() {
 		for {
-			equity := b.GetEquity()
+			equity, err := b.GetEquity()
+			if err != nil {
+				log.WithField("venue", "bybit").Error(err.Error())
+				<-ticker.C
+				continue
+			}
+
 			log.WithFields(log.Fields{
 				"venue": "bybit",
 				"asset": "BTC",
@@ -120,31 +127,30 @@ func (b *Bybit) Equity() chan float64 {
 	return ch
 }
 
-func (b *Bybit) GetFundingRate() (float64, float64) {
+func (b *Bybit) GetFundingRate() (float64, float64, error) {
 	url := "https://api.bybit.com/v2/public/tickers?symbol=BTCUSD"
 	resp, err := http.Get(url)
 	if err != nil {
-		log.Panic(err.Error())
+		return 0, 0, err
 	}
 	defer resp.Body.Close()
 
 	body, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
-		log.Panic(err.Error())
+		return 0, 0, err
 	}
 
 	var response fundingResponse
 	json.Unmarshal(body, &response)
 
 	if len(response.Result) != 1 {
-		log.WithField("venue", "bybit").Error("Empty funding rate response")
-		return 0, 0
+		return 0, 0, errors.New("Empty funding rate response")
 	}
 
 	funding, _ := strconv.ParseFloat(response.Result[0].FundingRate, 64)
 	predicted, _ := strconv.ParseFloat(response.Result[0].PredictedFundingRate, 64)
 
-	return funding, predicted
+	return funding, predicted, nil
 }
 
 func (b *Bybit) FundingRate() chan [2]float64 {
@@ -155,7 +161,13 @@ func (b *Bybit) FundingRate() chan [2]float64 {
 
 	go func() {
 		for {
-			current, predicted := b.GetFundingRate()
+			current, predicted, err := b.GetFundingRate()
+			if err != nil {
+				log.WithField("venue", "bybit").Error(err.Error())
+				<-ticker.C
+				continue
+			}
+
 			log.WithFields(log.Fields{
 				"venue":     "bybit",
 				"current":   current,

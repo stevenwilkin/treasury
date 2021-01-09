@@ -29,7 +29,7 @@ type priceResponse struct {
 	}
 }
 
-func (o *Oanda) GetPrice(s symbol.Symbol) float64 {
+func (o *Oanda) GetPrice(s symbol.Symbol) (float64, error) {
 	var ticker string
 
 	switch s {
@@ -43,7 +43,7 @@ func (o *Oanda) GetPrice(s symbol.Symbol) float64 {
 		ticker)
 	req, err := http.NewRequest("GET", url, nil)
 	if err != nil {
-		panic(err.Error())
+		return 0, err
 	}
 
 	req.Header.Set("Authorization", "Bearer "+o.ApiKey)
@@ -51,13 +51,13 @@ func (o *Oanda) GetPrice(s symbol.Symbol) float64 {
 	client := &http.Client{}
 	resp, err := client.Do(req)
 	if err != nil {
-		panic(err)
+		return 0, err
 	}
 	defer resp.Body.Close()
 
 	body, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
-		panic(err.Error())
+		return 0, err
 	}
 
 	var response priceResponse
@@ -70,7 +70,7 @@ func (o *Oanda) GetPrice(s symbol.Symbol) float64 {
 	ask, _ := strconv.ParseFloat(askString, 64)
 	price := (bid + ask) / 2
 
-	return price
+	return price, nil
 }
 
 func (o *Oanda) Price(s symbol.Symbol) chan float64 {
@@ -84,7 +84,13 @@ func (o *Oanda) Price(s symbol.Symbol) chan float64 {
 
 	go func() {
 		for {
-			price := o.GetPrice(s)
+			price, err := o.GetPrice(s)
+			if err != nil {
+				log.WithField("venue", "oanda").Error(err.Error())
+				<-ticker.C
+				continue
+			}
+
 			log.WithFields(log.Fields{
 				"venue":  "oanda",
 				"symbol": s,
