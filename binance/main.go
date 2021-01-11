@@ -11,10 +11,6 @@ import (
 
 type Binance struct{}
 
-type tickerMessage struct {
-	P string
-}
-
 func (b *Binance) subscribeToPrice() *websocket.Conn {
 	u := url.URL{Scheme: "wss", Host: "stream.binance.com:9443", Path: "/ws/btcusdt@aggTrade"}
 
