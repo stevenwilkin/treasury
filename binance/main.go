@@ -9,10 +9,33 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
-type Binance struct{}
+type Binance struct {
+	ApiKey    string
+	ApiSecret string
+	Testnet   bool
+}
+
+func (b *Binance) hostname() string {
+	if b.Testnet {
+		return "testnet.binance.vision"
+	} else {
+		return "api.binance.com"
+	}
+}
+
+func (b *Binance) wsHostname() string {
+	if b.Testnet {
+		return "testnet.binance.vision"
+	} else {
+		return "stream.binance.com:9443"
+	}
+}
 
 func (b *Binance) subscribeToPrice() *websocket.Conn {
-	u := url.URL{Scheme: "wss", Host: "stream.binance.com:9443", Path: "/ws/btcusdt@aggTrade"}
+	u := url.URL{
+		Scheme: "wss",
+		Host:   b.wsHostname(),
+		Path:   "/ws/btcusdt@aggTrade"}
 
 	c, _, err := websocket.DefaultDialer.Dial(u.String(), nil)
 	if err != nil {
