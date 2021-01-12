@@ -99,6 +99,35 @@ func (b *Binance) GetBalances() (float64, float64, error) {
 	return btc, usdt, nil
 }
 
+func (b *Binance) Balances() chan [2]float64 {
+	log.WithField("venue", "binance").Info("Polling balances")
+
+	ch := make(chan [2]float64)
+	ticker := time.NewTicker(1 * time.Second)
+
+	go func() {
+		for {
+			btc, usdt, err := b.GetBalances()
+			if err != nil {
+				log.WithField("venue", "binance").Error(err.Error())
+				<-ticker.C
+				continue
+			}
+
+			log.WithFields(log.Fields{
+				"venue": "binance",
+				"btc":   btc,
+				"usdt":  usdt,
+			}).Debug("Received balances")
+
+			ch <- [2]float64{btc, usdt}
+			<-ticker.C
+		}
+	}()
+
+	return ch
+}
+
 func (b *Binance) subscribeToPrice() *websocket.Conn {
 	u := url.URL{
 		Scheme: "wss",

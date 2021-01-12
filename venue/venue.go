@@ -14,10 +14,11 @@ const (
 	Hodlnaut
 	Deribit
 	Bybit
+	Binance
 )
 
 func venues() []string {
-	return []string{"FTX", "Nexo", "Blockfi", "Hodlnaut", "Deribit", "Bybit"}
+	return []string{"FTX", "Nexo", "Blockfi", "Hodlnaut", "Deribit", "Bybit", "Binance"}
 }
 
 func (v Venue) String() string {

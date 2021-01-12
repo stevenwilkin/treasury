@@ -25,7 +25,9 @@ type Venues struct {
 func initVenues() {
 	log.Info("Initialising venues")
 
-	venues.Binance = &binance.Binance{}
+	venues.Binance = &binance.Binance{
+		ApiKey:    os.Getenv("BINANCE_API_KEY"),
+		ApiSecret: os.Getenv("BINANCE_API_SECRET")}
 	venues.Bitkub = &bitkub.BitKub{}
 	venues.Deribit = &deribit.Deribit{
 		ApiId:     os.Getenv("DERIBIT_API_ID"),

@@ -55,6 +55,11 @@ func initDataFeeds() {
 		statum.SetSymbol(symbol.BTCUSDT, btcUsdt)
 	})
 
+	processFeedArray(venues.Binance.Balances, func(balances [2]float64) {
+		statum.SetAsset(venue.Binance, asset.BTC, balances[0])
+		statum.SetAsset(venue.Binance, asset.USDT, balances[1])
+	})
+
 	processFeed(func() chan float64 {
 		return venues.Bitkub.Price(symbol.BTCTHB)
 	}, func(btcThb float64) {
