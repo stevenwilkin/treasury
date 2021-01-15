@@ -44,21 +44,27 @@ func (b *Binance) sign(s string) string {
 	return fmt.Sprintf("%x", h.Sum(nil))
 }
 
-func (b *Binance) GetBalances() (float64, float64, error) {
-	timestamp := time.Now().UnixNano() / int64(time.Millisecond)
+func (b *Binance) doRequest(method, path string, values url.Values, sign bool) ([]byte, error) {
+	var params string
 
-	params := fmt.Sprintf("timestamp=%d", timestamp)
-	signedParams := fmt.Sprintf("%s&signature=%s", params, b.sign(params))
+	if sign {
+		timestamp := time.Now().UnixNano() / int64(time.Millisecond)
+		values.Set("timestamp", fmt.Sprintf("%d", timestamp))
+		input := values.Encode()
+		params = fmt.Sprintf("%s&signature=%s", input, b.sign(input))
+	} else {
+		params = values.Encode()
+	}
 
 	u := url.URL{
 		Scheme:   "https",
 		Host:     b.hostname(),
-		Path:     "/api/v3/account",
-		RawQuery: signedParams}
+		Path:     path,
+		RawQuery: params}
 
-	req, err := http.NewRequest("GET", u.String(), nil)
+	req, err := http.NewRequest(method, u.String(), nil)
 	if err != nil {
-		return 0, 0, err
+		return []byte{}, err
 	}
 
 	req.Header.Set("X-MBX-APIKEY", b.ApiKey)
@@ -66,11 +72,20 @@ func (b *Binance) GetBalances() (float64, float64, error) {
 	client := &http.Client{}
 	resp, err := client.Do(req)
 	if err != nil {
-		return 0, 0, err
+		return []byte{}, err
 	}
 	defer resp.Body.Close()
 
 	body, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		return []byte{}, err
+	}
+
+	return body, nil
+}
+
+func (b *Binance) GetBalances() (float64, float64, error) {
+	body, err := b.doRequest("GET", "/api/v3/account", url.Values{}, true)
 	if err != nil {
 		return 0, 0, err
 	}
@@ -128,11 +143,11 @@ func (b *Binance) Balances() chan [2]float64 {
 	return ch
 }
 
-func (b *Binance) subscribeToPrice() *websocket.Conn {
+func (b *Binance) subscribe(stream string) *websocket.Conn {
 	u := url.URL{
 		Scheme: "wss",
 		Host:   b.wsHostname(),
-		Path:   "/ws/btcusdt@aggTrade"}
+		Path:   fmt.Sprintf("/ws/%s", stream)}
 
 	c, _, err := websocket.DefaultDialer.Dial(u.String(), nil)
 	if err != nil {
@@ -142,13 +157,25 @@ func (b *Binance) subscribeToPrice() *websocket.Conn {
 	return c
 }
 
+func (b *Binance) listenKey() (string, error) {
+	body, err := b.doRequest("POST", "/api/v3/userDataStream", url.Values{}, false)
+	if err != nil {
+		return "", err
+	}
+
+	var response listenKeyResponse
+	json.Unmarshal(body, &response)
+
+	return response.ListenKey, nil
+}
+
 func (b *Binance) Price() chan float64 {
 	log.WithFields(log.Fields{
 		"venue":  "binance",
 		"symbol": "BTCUSDT",
 	}).Info("Subscribing to price")
 
-	c := b.subscribeToPrice()
+	c := b.subscribe("btcusdt@aggTrade")
 	ch := make(chan float64)
 
 	go func() {
@@ -159,7 +186,7 @@ func (b *Binance) Price() chan float64 {
 			if err != nil {
 				log.WithField("venue", "binance").Info("Reconnecting to price subscription")
 				c.Close()
-				c = b.subscribeToPrice()
+				c = b.subscribe("btcusdt@aggTrade")
 				continue
 			}
 
