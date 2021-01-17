@@ -8,6 +8,8 @@ import (
 	"net/http"
 
 	"github.com/stevenwilkin/treasury/alert"
+
+	log "github.com/sirupsen/logrus"
 )
 
 type Telegram struct {
@@ -30,12 +32,14 @@ func (t *Telegram) Notify(text string) bool {
 	params := sendMessageParams{ChatId: t.ChatId, Text: text}
 	jsonParams, err := json.Marshal(params)
 	if err != nil {
-		panic(err.Error())
+		log.Error(err.Error())
+		return false
 	}
 
 	req, err := http.NewRequest("POST", url, bytes.NewBuffer(jsonParams))
 	if err != nil {
-		panic(err.Error())
+		log.Error(err.Error())
+		return false
 	}
 
 	req.Header.Set("Accept", "application/json")
@@ -44,13 +48,15 @@ func (t *Telegram) Notify(text string) bool {
 	client := &http.Client{}
 	resp, err := client.Do(req)
 	if err != nil {
-		panic(err)
+		log.Error(err.Error())
+		return false
 	}
 	defer resp.Body.Close()
 
 	body, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
-		panic(err.Error())
+		log.Error(err.Error())
+		return false
 	}
 
 	var response sendMessageResponse

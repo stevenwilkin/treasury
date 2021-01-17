@@ -202,13 +202,15 @@ func (b *Bybit) GetSize() int {
 
 	resp, err := http.Get(url)
 	if err != nil {
-		log.Panic(err.Error())
+		log.Error(err.Error())
+		return 0
 	}
 	defer resp.Body.Close()
 
 	body, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
-		log.Panic(err.Error())
+		log.Error(err.Error())
+		return 0
 	}
 
 	var response positionResponse
@@ -217,7 +219,7 @@ func (b *Bybit) GetSize() int {
 	return response.Result.Size
 }
 
-func (b *Bybit) subscribe(channels []string) *websocket.Conn {
+func (b *Bybit) subscribe(channels []string) (*websocket.Conn, error) {
 	expires := (time.Now().UnixNano() / int64(time.Millisecond)) + 10000
 
 	signatureInput := fmt.Sprintf("GET/realtime%d", expires)
@@ -238,25 +240,25 @@ func (b *Bybit) subscribe(channels []string) *websocket.Conn {
 
 	c, _, err := websocket.DefaultDialer.Dial(u.String(), nil)
 	if err != nil {
-		log.Panic(err.Error())
+		return nil, err
 	}
 
 	command := wsCommand{Op: "subscribe", Args: channels}
 	if err = c.WriteJSON(command); err != nil {
-		log.Panic(err.Error())
+		return nil, err
 	}
 
-	return c
+	return c, nil
 }
 
-func (b *Bybit) orderRequest(params map[string]interface{}, path string) string {
+func (b *Bybit) orderRequest(params map[string]interface{}, path string) (string, error) {
 	params["api_key"] = b.ApiKey
 	params["timestamp"] = b.timestamp()
 	params["sign"] = getSignature(params, b.ApiSecret)
 
 	jsonRequest, err := json.Marshal(params)
 	if err != nil {
-		log.Panic(err.Error())
+		return "", err
 	}
 
 	u := url.URL{
@@ -266,7 +268,7 @@ func (b *Bybit) orderRequest(params map[string]interface{}, path string) string 
 
 	req, err := http.NewRequest("POST", u.String(), bytes.NewBuffer(jsonRequest))
 	if err != nil {
-		log.Panic(err.Error())
+		return "", err
 	}
 
 	req.Header.Set("Accept", "application/json")
@@ -275,19 +277,19 @@ func (b *Bybit) orderRequest(params map[string]interface{}, path string) string 
 	client := &http.Client{}
 	resp, err := client.Do(req)
 	if err != nil {
-		log.Panic(err.Error())
+		return "", err
 	}
 	defer resp.Body.Close()
 
 	body, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
-		log.Panic(err.Error())
+		return "", err
 	}
 
 	var response orderResponse
 	json.Unmarshal(body, &response)
 
-	return response.Result.OrderId
+	return response.Result.OrderId, nil
 }
 
 func (b *Bybit) PlaceOrder(amount int, price float64, buy, reduce bool) string {
@@ -314,7 +316,12 @@ func (b *Bybit) PlaceOrder(amount int, price float64, buy, reduce bool) string {
 		params["reduce_only"] = true
 	}
 
-	return b.orderRequest(params, "/v2/private/order/create")
+	orderId, err := b.orderRequest(params, "/v2/private/order/create")
+	if err != nil {
+		log.Error(err.Error())
+	}
+
+	return orderId
 }
 
 func (b *Bybit) EditOrder(id string, price float64) string {
@@ -329,7 +336,12 @@ func (b *Bybit) EditOrder(id string, price float64) string {
 		"symbol":    "BTCUSD",
 		"p_r_price": strconv.FormatFloat(price, 'f', 2, 64)}
 
-	return b.orderRequest(params, "/v2/private/order/replace")
+	orderId, err := b.orderRequest(params, "/v2/private/order/replace")
+	if err != nil {
+		log.Error(err.Error())
+	}
+
+	return orderId
 }
 
 func highest(orders map[int64]float64) float64 {
@@ -369,7 +381,11 @@ func (b *Bybit) Trade(contracts int, buy, reduce bool) {
 	orderBookTopic := "orderBookL2_25.BTCUSD"
 	orderTopic := "order"
 
-	c := b.subscribe([]string{orderBookTopic, orderTopic})
+	c, err := b.subscribe([]string{orderBookTopic, orderTopic})
+	if err != nil {
+		log.Error(err.Error())
+		return
+	}
 	defer c.Close()
 
 	for {

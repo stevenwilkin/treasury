@@ -143,7 +143,7 @@ func (b *Binance) Balances() chan [2]float64 {
 	return ch
 }
 
-func (b *Binance) subscribe(stream string) *websocket.Conn {
+func (b *Binance) subscribe(stream string) (*websocket.Conn, error) {
 	u := url.URL{
 		Scheme: "wss",
 		Host:   b.wsHostname(),
@@ -151,10 +151,10 @@ func (b *Binance) subscribe(stream string) *websocket.Conn {
 
 	c, _, err := websocket.DefaultDialer.Dial(u.String(), nil)
 	if err != nil {
-		log.Panic(err.Error())
+		return nil, err
 	}
 
-	return c
+	return c, nil
 }
 
 func (b *Binance) listenKey() (string, error) {
@@ -175,8 +175,13 @@ func (b *Binance) Price() chan float64 {
 		"symbol": "BTCUSDT",
 	}).Info("Subscribing to price")
 
-	c := b.subscribe("btcusdt@aggTrade")
 	ch := make(chan float64)
+
+	c, err := b.subscribe("btcusdt@aggTrade")
+	if err != nil {
+		log.Error(err.Error())
+		return ch
+	}
 
 	go func() {
 		defer c.Close()
@@ -186,7 +191,7 @@ func (b *Binance) Price() chan float64 {
 			if err != nil {
 				log.WithField("venue", "binance").Info("Reconnecting to price subscription")
 				c.Close()
-				c = b.subscribe("btcusdt@aggTrade")
+				c, _ = b.subscribe("btcusdt@aggTrade")
 				continue
 			}
 

@@ -116,7 +116,7 @@ func initAlerter() {
 
 	chatId, err := strconv.Atoi(os.Getenv("TELEGRAM_CHAT_ID"))
 	if err != nil {
-		log.Panic(err.Error())
+		log.Fatal(err.Error())
 	}
 
 	notifier := &telegram.Telegram{

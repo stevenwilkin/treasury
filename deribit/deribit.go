@@ -22,9 +22,9 @@ type Deribit struct {
 	_accessToken string
 }
 
-func (d *Deribit) accessToken() string {
+func (d *Deribit) accessToken() (string, error) {
 	if d._accessToken != "" {
-		return d._accessToken
+		return d._accessToken, nil
 	}
 
 	log.WithField("venue", "deribit").Debug("Fetching access token")
@@ -42,7 +42,7 @@ func (d *Deribit) accessToken() string {
 
 	req, err := http.NewRequest("GET", u.String(), nil)
 	if err != nil {
-		log.Panic(err.Error())
+		return "", err
 	}
 
 	req.Header.Set("Content-Type", "application/json")
@@ -50,20 +50,20 @@ func (d *Deribit) accessToken() string {
 	client := &http.Client{}
 	resp, err := client.Do(req)
 	if err != nil {
-		log.Panic(err.Error())
+		return "", err
 	}
 	defer resp.Body.Close()
 
 	body, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
-		log.Panic(err.Error())
+		return "", err
 	}
 
 	var response authResponse
 	json.Unmarshal(body, &response)
 	d._accessToken = response.Result.AccessToken
 
-	return d._accessToken
+	return d._accessToken, nil
 }
 
 func (d *Deribit) hostname() string {
@@ -74,12 +74,12 @@ func (d *Deribit) hostname() string {
 	}
 }
 
-func (d *Deribit) subscribe(channels []string) *websocket.Conn {
+func (d *Deribit) subscribe(channels []string) (*websocket.Conn, error) {
 	socketUrl := url.URL{Scheme: "wss", Host: d.hostname(), Path: "/ws/api/v2"}
 
 	c, _, err := websocket.DefaultDialer.Dial(socketUrl.String(), nil)
 	if err != nil {
-		log.Panic(err.Error())
+		return nil, err
 	}
 
 	authRequest := requestMessage{
@@ -90,7 +90,7 @@ func (d *Deribit) subscribe(channels []string) *websocket.Conn {
 			"grant_type":    "client_credentials"}}
 
 	if err = c.WriteJSON(authRequest); err != nil {
-		log.Panic(err.Error())
+		return nil, err
 	}
 
 	request := requestMessage{
@@ -99,7 +99,7 @@ func (d *Deribit) subscribe(channels []string) *websocket.Conn {
 			"channels": channels}}
 
 	if err = c.WriteJSON(request); err != nil {
-		log.Panic(err.Error())
+		return nil, err
 	}
 
 	ticker := time.NewTicker(10 * time.Second)
@@ -114,14 +114,18 @@ func (d *Deribit) subscribe(channels []string) *websocket.Conn {
 		}
 	}()
 
-	return c
+	return c, nil
 }
 
 func (d *Deribit) Equity() chan float64 {
 	log.WithField("venue", "deribit").Info("Subscribing to equity")
 
-	c := d.subscribe([]string{"user.portfolio.BTC"})
 	ch := make(chan float64)
+	c, err := d.subscribe([]string{"user.portfolio.BTC"})
+	if err != nil {
+		log.Error(err.Error())
+		return ch
+	}
 
 	go func() {
 		defer c.Close()
@@ -131,7 +135,7 @@ func (d *Deribit) Equity() chan float64 {
 			if err != nil {
 				log.WithField("venue", "deribit").Info("Reconnecting to equity subscription")
 				c.Close()
-				c = d.subscribe([]string{"user.portfolio.BTC"})
+				c, _ = d.subscribe([]string{"user.portfolio.BTC"})
 				continue
 			}
 
@@ -158,22 +162,31 @@ func (d *Deribit) GetSize() int {
 	u := "https://www.deribit.com/api/v2/private/get_positions?currency=BTC&kind=future"
 	req, err := http.NewRequest("GET", u, nil)
 	if err != nil {
-		log.Panic(err.Error())
+		log.Error(err.Error())
+		return 0
 	}
 
-	req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", d.accessToken()))
+	accessToken, err := d.accessToken()
+	if err != nil {
+		log.Error(err.Error())
+		return 0
+	}
+
+	req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", accessToken))
 	req.Header.Set("Content-Type", "application/json")
 
 	client := &http.Client{}
 	resp, err := client.Do(req)
 	if err != nil {
-		log.Panic(err.Error())
+		log.Error(err.Error())
+		return 0
 	}
 	defer resp.Body.Close()
 
 	body, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
-		log.Panic(err.Error())
+		log.Error(err.Error())
+		return 0
 	}
 
 	var response positionsResponse
@@ -187,7 +200,7 @@ func (d *Deribit) GetSize() int {
 	return int(math.Abs(size))
 }
 
-func (d *Deribit) PlaceOrder(instrument string, amount int, price float64, buy, reduce bool) string {
+func (d *Deribit) PlaceOrder(instrument string, amount int, price float64, buy, reduce bool) (string, error) {
 	log.WithFields(log.Fields{
 		"venue":      "deribit",
 		"instrument": instrument,
@@ -219,31 +232,36 @@ func (d *Deribit) PlaceOrder(instrument string, amount int, price float64, buy, 
 
 	req, err := http.NewRequest("GET", u.String(), nil)
 	if err != nil {
-		log.Panic(err.Error())
+		return "", err
 	}
 
-	req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", d.accessToken()))
+	accessToken, err := d.accessToken()
+	if err != nil {
+		return "", err
+	}
+
+	req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", accessToken))
 	req.Header.Set("Content-Type", "application/json")
 
 	client := &http.Client{}
 	resp, err := client.Do(req)
 	if err != nil {
-		log.Panic(err.Error())
+		return "", err
 	}
 	defer resp.Body.Close()
 
 	body, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
-		log.Panic(err.Error())
+		return "", err
 	}
 
 	var response orderResponse
 	json.Unmarshal(body, &response)
 
-	return response.Result.Order.OrderId
+	return response.Result.Order.OrderId, nil
 }
 
-func (d *Deribit) EditOrder(orderId string, amount int, price float64, reduce bool) {
+func (d *Deribit) EditOrder(orderId string, amount int, price float64, reduce bool) error {
 	log.WithFields(log.Fields{
 		"venue":  "deribit",
 		"order":  orderId,
@@ -270,16 +288,20 @@ func (d *Deribit) EditOrder(orderId string, amount int, price float64, reduce bo
 
 	req, err := http.NewRequest("GET", u.String(), nil)
 	if err != nil {
-		log.Panic(err.Error())
+		return err
 	}
 
-	req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", d.accessToken()))
+	accessToken, err := d.accessToken()
+	if err != nil {
+		return err
+	}
+
+	req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", accessToken))
 	req.Header.Set("Content-Type", "application/json")
 
 	client := &http.Client{}
-	if _, err = client.Do(req); err != nil {
-		log.Panic(err.Error())
-	}
+	_, err = client.Do(req)
+	return err
 }
 
 func (d *Deribit) Trade(instrument string, contracts int, buy, reduce bool) {
@@ -289,7 +311,11 @@ func (d *Deribit) Trade(instrument string, contracts int, buy, reduce bool) {
 	ordersChannel := fmt.Sprintf("user.orders.%s.raw", instrument)
 	quoteChannel := fmt.Sprintf("quote.%s", instrument)
 
-	c := d.subscribe([]string{ordersChannel, quoteChannel})
+	c, err := d.subscribe([]string{ordersChannel, quoteChannel})
+	if err != nil {
+		log.Error(err.Error())
+		return
+	}
 	defer c.Close()
 
 	for {
@@ -316,10 +342,16 @@ func (d *Deribit) Trade(instrument string, contracts int, buy, reduce bool) {
 
 			if orderId == "" {
 				price = bestPrice
-				orderId = d.PlaceOrder(instrument, contracts, price, buy, reduce)
+				orderId, err = d.PlaceOrder(instrument, contracts, price, buy, reduce)
+				if err != nil {
+					return
+				}
 			} else if price != bestPrice {
 				price = bestPrice
-				d.EditOrder(orderId, contracts, price, reduce)
+				err = d.EditOrder(orderId, contracts, price, reduce)
+				if err != nil {
+					return
+				}
 			}
 		case ordersChannel:
 			switch response.Params.Data.OrderState {

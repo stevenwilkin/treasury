@@ -100,7 +100,7 @@ func (f *FTX) Balances() chan [2]float64 {
 	return ch
 }
 
-func (f *FTX) PlaceOrder(size, price float64, buy bool) int64 {
+func (f *FTX) PlaceOrder(size, price float64, buy bool) (int64, error) {
 	log.WithFields(log.Fields{
 		"venue":  "ftx",
 		"market": "BTC/USDT",
@@ -124,7 +124,7 @@ func (f *FTX) PlaceOrder(size, price float64, buy bool) int64 {
 
 	jsonRequest, err := json.Marshal(or)
 	if err != nil {
-		log.Panic(err.Error())
+		return 0, err
 	}
 
 	timestamp := time.Now().UnixNano() / int64(time.Millisecond)
@@ -133,7 +133,7 @@ func (f *FTX) PlaceOrder(size, price float64, buy bool) int64 {
 	req, err := http.NewRequest(
 		"POST", "https://ftx.com/api/orders", bytes.NewBuffer(jsonRequest))
 	if err != nil {
-		log.Panic(err.Error())
+		return 0, err
 	}
 
 	req.Header.Set("Accept", "application/json")
@@ -145,26 +145,26 @@ func (f *FTX) PlaceOrder(size, price float64, buy bool) int64 {
 	client := &http.Client{}
 	resp, err := client.Do(req)
 	if err != nil {
-		log.Panic(err.Error())
+		return 0, err
 	}
 	defer resp.Body.Close()
 
 	body, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
-		log.Panic(err.Error())
+		return 0, err
 	}
 
 	var response orderResponse
 	json.Unmarshal(body, &response)
 
 	if response.Success {
-		return response.Result.Id
+		return response.Result.Id, nil
 	}
 
-	return 0
+	return 0, nil
 }
 
-func (f *FTX) EditOrder(id int64, size, price float64) int64 {
+func (f *FTX) EditOrder(id int64, size, price float64) (int64, error) {
 	log.WithFields(log.Fields{
 		"venue": "ftx",
 		"order": id,
@@ -178,7 +178,7 @@ func (f *FTX) EditOrder(id int64, size, price float64) int64 {
 
 	jsonRequest, err := json.Marshal(or)
 	if err != nil {
-		log.Panic(err.Error())
+		return 0, err
 	}
 
 	timestamp := time.Now().UnixNano() / int64(time.Millisecond)
@@ -190,7 +190,7 @@ func (f *FTX) EditOrder(id int64, size, price float64) int64 {
 		fmt.Sprintf("https://ftx.com%s", path),
 		bytes.NewBuffer(jsonRequest))
 	if err != nil {
-		log.Panic(err.Error())
+		return 0, err
 	}
 
 	req.Header.Set("Accept", "application/json")
@@ -202,23 +202,23 @@ func (f *FTX) EditOrder(id int64, size, price float64) int64 {
 	client := &http.Client{}
 	resp, err := client.Do(req)
 	if err != nil {
-		log.Panic(err.Error())
+		return 0, err
 	}
 	defer resp.Body.Close()
 
 	body, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
-		log.Panic(err.Error())
+		return 0, err
 	}
 
 	var response orderResponse
 	json.Unmarshal(body, &response)
 
 	if response.Success {
-		return response.Result.Id
+		return response.Result.Id, nil
 	}
 
-	return 0
+	return 0, nil
 }
 
 func (f *FTX) Trade(size float64, buy bool) {
@@ -230,7 +230,8 @@ func (f *FTX) Trade(size float64, buy bool) {
 	socketUrl := url.URL{Scheme: "wss", Host: "ftx.com", Path: "/ws"}
 	c, _, err := websocket.DefaultDialer.Dial(socketUrl.String(), nil)
 	if err != nil {
-		log.Panic(err.Error())
+		log.Error(err.Error())
+		return
 	}
 	defer c.Close()
 
@@ -240,26 +241,21 @@ func (f *FTX) Trade(size float64, buy bool) {
 			"sign": f.sign(fmt.Sprintf("%dwebsocket_login", timestamp)),
 			"time": timestamp},
 		Op: "login"}
-	jsonRequest, err := json.Marshal(request)
-	if err != nil {
-		log.Panic(err.Error())
-	}
-
-	err = c.WriteMessage(websocket.TextMessage, jsonRequest)
-	if err != nil {
-		log.Panic(err.Error())
+	if err = c.WriteJSON(request); err != nil {
+		log.Error(err.Error())
+		return
 	}
 
 	subscribe := []byte(`{"op":"subscribe","channel":"ticker","market":"BTC/USDT"}`)
-	err = c.WriteMessage(websocket.TextMessage, subscribe)
-	if err != nil {
-		log.Panic(err.Error())
+	if err = c.WriteMessage(websocket.TextMessage, subscribe); err != nil {
+		log.Error(err.Error())
+		return
 	}
 
 	subscribe = []byte(`{"op":"subscribe","channel":"orders"}`)
-	err = c.WriteMessage(websocket.TextMessage, subscribe)
-	if err != nil {
-		log.Panic(err.Error())
+	if err = c.WriteMessage(websocket.TextMessage, subscribe); err != nil {
+		log.Error(err.Error())
+		return
 	}
 
 	for {
@@ -282,10 +278,18 @@ func (f *FTX) Trade(size float64, buy bool) {
 
 			if orderId == 0 {
 				price = bestPrice
-				orderId = f.PlaceOrder(size, price, buy)
+				orderId, err = f.PlaceOrder(size, price, buy)
+				if err != nil {
+					log.Error(err.Error())
+					return
+				}
 			} else if price != bestPrice {
 				price = bestPrice
-				f.EditOrder(orderId, size, price)
+				_, err = f.EditOrder(orderId, size, price)
+				if err != nil {
+					log.Error(err.Error())
+					return
+				}
 			}
 		} else if message.Channel == "orders" {
 			switch message.Data.Status {

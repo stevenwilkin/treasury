@@ -12,7 +12,10 @@ func (b *Binance) BestBidAsk(done chan bool) (*float64, *float64) {
 	var bid, ask float64
 
 	go func() {
-		c := b.subscribe("btcusdt@bookTicker")
+		c, err := b.subscribe("btcusdt@bookTicker")
+		if err != nil {
+			return
+		}
 		defer c.Close()
 
 		var bookTicker bookTickerMessage
@@ -24,7 +27,8 @@ func (b *Binance) BestBidAsk(done chan bool) (*float64, *float64) {
 			default:
 				err := c.ReadJSON(&bookTicker)
 				if err != nil {
-					log.Panic(err.Error())
+					log.Error(err.Error())
+					return
 				}
 
 				bid, _ = strconv.ParseFloat(bookTicker.BidPrice, 64)
@@ -58,15 +62,21 @@ func (b *Binance) orderStatus() (chan bool, chan float64) {
 
 	key, err := b.listenKey()
 	if err != nil {
-		log.Panic(err.Error())
+		log.Error(err.Error())
+		return done, fills
 	}
 
-	c := b.subscribe(key)
+	c, err := b.subscribe(key)
+	if err != nil {
+		log.Error(err.Error())
+		return done, fills
+	}
 
 	go func() {
 		for {
 			if err := c.ReadJSON(&udm); err != nil {
-				log.Panic(err.Error())
+				log.Error(err.Error())
+				continue
 			}
 
 			if udm.EventType != "executionReport" {
