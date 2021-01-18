@@ -7,12 +7,38 @@ import (
 	"net/http"
 	"net/url"
 	"os"
+	"sort"
 
 	"github.com/spf13/cobra"
 )
 
 type assetsMessage struct {
 	Assets map[string]map[string]float64
+}
+
+func (am *assetsMessage) venues() []string {
+	result := make([]string, len(am.Assets))
+	i := 0
+	for venue, _ := range am.Assets {
+		result[i] = venue
+		i++
+	}
+	sort.Strings(result)
+
+	return result
+}
+
+func (am *assetsMessage) hasAssets(venue string) bool {
+	if len(am.Assets[venue]) == 0 {
+		return false
+	}
+
+	total := 0.0
+	for _, quantity := range am.Assets[venue] {
+		total += quantity
+	}
+
+	return total > 0
 }
 
 var assetsCmd = &cobra.Command{
@@ -37,10 +63,16 @@ var assetsCmd = &cobra.Command{
 			panic(err)
 		}
 
-		for venue, balances := range am.Assets {
+		for _, venue := range am.venues() {
+			if !am.hasAssets(venue) {
+				continue
+			}
 			fmt.Println(venue)
-			for asset, quantity := range balances {
-				fmt.Printf("\t%s: %f\n", asset, quantity)
+			for asset, quantity := range am.Assets[venue] {
+				if quantity == 0 {
+					continue
+				}
+				fmt.Printf("\t%s: %.8f\n", asset, quantity)
 			}
 		}
 	},
