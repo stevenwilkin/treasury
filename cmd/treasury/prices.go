@@ -4,12 +4,25 @@ import (
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
+	"sort"
 
 	"github.com/spf13/cobra"
 )
 
 type pricesMessage struct {
 	Prices map[string]float64
+}
+
+func (pm *pricesMessage) assets() []string {
+	assets := make([]string, len(pm.Prices))
+	i := 0
+	for asset, _ := range pm.Prices {
+		assets[i] = asset
+		i++
+	}
+	sort.Strings(assets)
+
+	return assets
 }
 
 var pricesCmd = &cobra.Command{
@@ -34,8 +47,8 @@ var pricesCmd = &cobra.Command{
 			panic(err)
 		}
 
-		for asset, price := range pm.Prices {
-			fmt.Printf("%s: %f\n", asset, price)
+		for _, asset := range pm.assets() {
+			fmt.Printf("%s: %f\n", asset, pm.Prices[asset])
 		}
 	},
 }
