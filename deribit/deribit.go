@@ -79,7 +79,7 @@ func (d *Deribit) subscribe(channels []string) (*websocket.Conn, error) {
 
 	c, _, err := websocket.DefaultDialer.Dial(socketUrl.String(), nil)
 	if err != nil {
-		return nil, err
+		return &websocket.Conn{}, err
 	}
 
 	authRequest := requestMessage{
@@ -90,7 +90,7 @@ func (d *Deribit) subscribe(channels []string) (*websocket.Conn, error) {
 			"grant_type":    "client_credentials"}}
 
 	if err = c.WriteJSON(authRequest); err != nil {
-		return nil, err
+		return &websocket.Conn{}, err
 	}
 
 	request := requestMessage{
@@ -99,7 +99,7 @@ func (d *Deribit) subscribe(channels []string) (*websocket.Conn, error) {
 			"channels": channels}}
 
 	if err = c.WriteJSON(request); err != nil {
-		return nil, err
+		return &websocket.Conn{}, err
 	}
 
 	ticker := time.NewTicker(10 * time.Second)
@@ -135,7 +135,10 @@ func (d *Deribit) Equity() chan float64 {
 			if err != nil {
 				log.WithField("venue", "deribit").Info("Reconnecting to equity subscription")
 				c.Close()
-				c, _ = d.subscribe([]string{"user.portfolio.BTC"})
+				c, err = d.subscribe([]string{"user.portfolio.BTC"})
+				if err != nil {
+					log.Error(err.Error())
+				}
 				continue
 			}
 

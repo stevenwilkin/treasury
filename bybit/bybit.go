@@ -240,12 +240,12 @@ func (b *Bybit) subscribe(channels []string) (*websocket.Conn, error) {
 
 	c, _, err := websocket.DefaultDialer.Dial(u.String(), nil)
 	if err != nil {
-		return nil, err
+		return &websocket.Conn{}, err
 	}
 
 	command := wsCommand{Op: "subscribe", Args: channels}
 	if err = c.WriteJSON(command); err != nil {
-		return nil, err
+		return &websocket.Conn{}, err
 	}
 
 	return c, nil

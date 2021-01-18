@@ -32,7 +32,7 @@ func (b *BitKub) subscribeToPrice(s symbol.Symbol) (*websocket.Conn, error) {
 
 	c, _, err := websocket.DefaultDialer.Dial(u.String(), nil)
 	if err != nil {
-		return nil, err
+		return &websocket.Conn{}, err
 	}
 
 	return c, nil
@@ -59,7 +59,10 @@ func (b *BitKub) Price(s symbol.Symbol) chan float64 {
 			if err != nil {
 				log.WithField("venue", "bitkub").Info("Reconnecting to price subscription")
 				c.Close()
-				c, _ = b.subscribeToPrice(s)
+				c, err = b.subscribeToPrice(s)
+				if err != nil {
+					log.Error(err.Error())
+				}
 				continue
 			}
 

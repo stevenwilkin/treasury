@@ -151,7 +151,7 @@ func (b *Binance) subscribe(stream string) (*websocket.Conn, error) {
 
 	c, _, err := websocket.DefaultDialer.Dial(u.String(), nil)
 	if err != nil {
-		return nil, err
+		return &websocket.Conn{}, err
 	}
 
 	return c, nil
@@ -191,7 +191,10 @@ func (b *Binance) Price() chan float64 {
 			if err != nil {
 				log.WithField("venue", "binance").Info("Reconnecting to price subscription")
 				c.Close()
-				c, _ = b.subscribe("btcusdt@aggTrade")
+				c, err = b.subscribe("btcusdt@aggTrade")
+				if err != nil {
+					log.Error(err.Error())
+				}
 				continue
 			}
 
