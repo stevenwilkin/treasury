@@ -15,7 +15,7 @@ import (
 
 type TestNotifier struct{}
 
-func (t *TestNotifier) Notify(s string) bool { return true }
+func (t *TestNotifier) Notify(s string) error { return nil }
 
 func TestSetHandlerInvalidVenue(t *testing.T) {
 	params := url.Values{}

@@ -1,5 +1,9 @@
 package alert
 
+import (
+	log "github.com/sirupsen/logrus"
+)
+
 type Alert interface {
 	Check() bool
 	Active() bool
@@ -9,7 +13,7 @@ type Alert interface {
 }
 
 type Notifier interface {
-	Notify(string) bool
+	Notify(string) error
 }
 
 type Alerter struct {
@@ -43,7 +47,9 @@ func (a *Alerter) CheckAlerts() {
 			continue
 		}
 		if alert.Check() {
-			a.notifier.Notify(alert.Message())
+			if err := a.notifier.Notify(alert.Message()); err != nil {
+				log.Error(err.Error())
+			}
 			alert.Deactivate()
 		}
 	}

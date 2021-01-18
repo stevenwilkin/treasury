@@ -21,7 +21,7 @@ type TestNotifier struct {
 	message string
 }
 
-func (n *TestNotifier) Notify(s string) bool { n.message = s; return true }
+func (n *TestNotifier) Notify(s string) error { n.message = s; return nil }
 
 var _ Notifier = &TestNotifier{}
 

@@ -20,5 +20,7 @@ func main() {
 		ApiToken: os.Getenv("TELEGRAM_API_TOKEN"),
 		ChatId:   chatId}
 
-	telegramBot.Notify(strings.Join(os.Args[1:], " "))
+	if err = telegramBot.Notify(strings.Join(os.Args[1:], " ")); err != nil {
+		panic(err)
+	}
 }
