@@ -16,6 +16,11 @@ type assetsMessage struct {
 	Assets map[string]map[string]float64
 }
 
+type assetQuantity struct {
+	asset    string
+	quantity float64
+}
+
 func (am *assetsMessage) venues() []string {
 	result := make([]string, len(am.Assets))
 	i := 0
@@ -39,6 +44,24 @@ func (am *assetsMessage) hasAssets(venue string) bool {
 	}
 
 	return total > 0
+}
+
+func (am *assetsMessage) venueAssets(venue string) []assetQuantity {
+	assets := []string{}
+	for asset, quantity := range am.Assets[venue] {
+		if quantity != 0 {
+			assets = append(assets, asset)
+		}
+	}
+	sort.Strings(assets)
+
+	results := []assetQuantity{}
+	for _, asset := range assets {
+		results = append(results, assetQuantity{
+			asset:    asset,
+			quantity: am.Assets[venue][asset]})
+	}
+	return results
 }
 
 var assetsCmd = &cobra.Command{
@@ -68,11 +91,8 @@ var assetsCmd = &cobra.Command{
 				continue
 			}
 			fmt.Println(venue)
-			for asset, quantity := range am.Assets[venue] {
-				if quantity == 0 {
-					continue
-				}
-				fmt.Printf("\t%s: %.8f\n", asset, quantity)
+			for _, aq := range am.venueAssets(venue) {
+				fmt.Printf("\t%s: %.8f\n", aq.asset, aq.quantity)
 			}
 		}
 	},
