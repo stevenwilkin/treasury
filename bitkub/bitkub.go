@@ -62,6 +62,7 @@ func (b *BitKub) Price(s symbol.Symbol) chan float64 {
 				c, err = b.subscribeToPrice(s)
 				if err != nil {
 					log.Error(err.Error())
+					return
 				}
 				continue
 			}

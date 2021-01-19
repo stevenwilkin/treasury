@@ -194,6 +194,7 @@ func (b *Binance) Price() chan float64 {
 				c, err = b.subscribe("btcusdt@aggTrade")
 				if err != nil {
 					log.Error(err.Error())
+					return
 				}
 				continue
 			}

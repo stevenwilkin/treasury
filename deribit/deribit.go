@@ -138,6 +138,7 @@ func (d *Deribit) Equity() chan float64 {
 				c, err = d.subscribe([]string{"user.portfolio.BTC"})
 				if err != nil {
 					log.Error(err.Error())
+					return
 				}
 				continue
 			}
