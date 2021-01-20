@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"net/url"
 	"strconv"
+	"time"
 
 	log "github.com/sirupsen/logrus"
 )
@@ -52,17 +53,18 @@ func (b *Bybit) orderRequest(params map[string]interface{}, path string) (string
 	return response.Result.OrderId, nil
 }
 
-func (b *Bybit) PlaceOrder(amount int, price float64, buy, reduce bool) string {
+func (b *Bybit) PlaceOrder(contracts int, price float64, buy, reduce bool) string {
 	log.WithFields(log.Fields{
-		"venue":  "bybit",
-		"amount": amount,
-		"price":  price,
-	}).Info("Placing order")
+		"venue":     "bybit",
+		"contracts": contracts,
+		"price":     price,
+		"buy":       buy,
+	}).Debug("Placing order")
 
 	params := map[string]interface{}{
 		"symbol":        "BTCUSD",
 		"order_type":    "Limit",
-		"qty":           strconv.Itoa(amount),
+		"qty":           strconv.Itoa(contracts),
 		"price":         strconv.FormatFloat(price, 'f', 2, 64),
 		"time_in_force": "PostOnly"}
 
@@ -104,6 +106,66 @@ func (b *Bybit) EditOrder(id string, price float64) string {
 	return orderId
 }
 
+func (b *Bybit) orderStatus() (chan bool, chan int) {
+	done := make(chan bool)
+	fillsOnCancel := make(chan int)
+	orderTopic := "order"
+
+	c, err := b.subscribe([]string{orderTopic})
+	if err != nil {
+		log.Error(err.Error())
+		return done, fillsOnCancel
+	}
+
+	go func() {
+		defer c.Close()
+		var orders orderTopicData
+
+		for {
+			if err := c.ReadJSON(&orders); err != nil {
+				log.Error(err)
+				return
+			}
+
+			if orders.Topic != orderTopic {
+				continue
+			}
+
+			order := orders.Data[0]
+
+			switch order.OrderStatus {
+			case "PartiallyFilled":
+				log.WithFields(log.Fields{
+					"venue":        "bybit",
+					"order":        order.OrderId,
+					"price":        order.Price,
+					"cum_quantity": order.CumExecQty,
+				}).Debug("Fill")
+			case "Filled":
+				log.WithFields(log.Fields{
+					"venue":    "bybit",
+					"order":    order.OrderId,
+					"price":    order.Price,
+					"quantity": order.Qty,
+				}).Info("Order filled")
+				done <- true
+				return
+			case "Cancelled":
+				log.WithFields(log.Fields{
+					"venue":        "bybit",
+					"order":        order.OrderId,
+					"price":        order.Price,
+					"quantity":     order.Qty,
+					"cum_quantity": order.CumExecQty,
+				}).Debug("Order cancelled")
+				fillsOnCancel <- order.CumExecQty
+			}
+		}
+	}()
+
+	return done, fillsOnCancel
+}
+
 func highest(orders map[int64]float64) float64 {
 	var result float64
 
@@ -130,121 +192,145 @@ func lowest(orders map[int64]float64) float64 {
 	return result
 }
 
-func (b *Bybit) Trade(contracts int, buy, reduce bool) {
-	var bestPrice, price float64
-	var orderId string
-	var pendingInitialOrder bool
-
+func (b *Bybit) bestBidAsk(done chan bool) (*float64, *float64) {
+	var bid, ask float64
 	bids := map[int64]float64{}
 	asks := map[int64]float64{}
 
 	orderBookTopic := "orderBookL2_25.BTCUSD"
-	orderTopic := "order"
 
-	c, err := b.subscribe([]string{orderBookTopic, orderTopic})
+	c, err := b.subscribe([]string{orderBookTopic})
 	if err != nil {
 		log.Error(err.Error())
-		return
+		return &bid, &ask
 	}
-	defer c.Close()
 
-	for {
-		_, message, err := c.ReadMessage()
-		if err != nil {
-			log.Error(err)
-			return
+	go func() {
+		defer c.Close()
+		var response wsResponse
+
+		for {
+			select {
+			case <-done:
+				return
+			default:
+				if err := c.ReadJSON(&response); err != nil {
+					log.Error(err)
+					return
+				}
+
+				if response.Topic != orderBookTopic {
+					continue
+				}
+
+				switch response.Type {
+				case "snapshot":
+					var snapshot snapshotData
+					json.Unmarshal(response.Data, &snapshot)
+
+					for _, order := range snapshot {
+						p, _ := strconv.ParseFloat(order.Price, 64)
+
+						if order.Side == "Buy" {
+							bids[order.Id] = p
+						} else {
+							asks[order.Id] = p
+						}
+					}
+				case "delta":
+					var updates updateData
+					json.Unmarshal(response.Data, &updates)
+
+					for _, order := range updates.Delete {
+						if order.Side == "Buy" {
+							delete(bids, order.Id)
+						} else {
+							delete(asks, order.Id)
+						}
+					}
+
+					for _, order := range updates.Insert {
+						p, _ := strconv.ParseFloat(order.Price, 64)
+
+						if order.Side == "Buy" {
+							bids[order.Id] = p
+						} else {
+							asks[order.Id] = p
+						}
+					}
+				}
+
+				bid = highest(bids)
+				ask = lowest(asks)
+			}
+		}
+	}()
+
+	return &bid, &ask
+}
+
+func (b *Bybit) makeBestPrice(buy bool, done chan bool) func() float64 {
+	bid, ask := b.bestBidAsk(done)
+
+	return func() float64 {
+		for *bid == 0 || *ask == 0 {
 		}
 
-		var response wsResponse
-		json.Unmarshal(message, &response)
+		if buy {
+			return *bid
+		} else {
+			return *ask
+		}
+	}
+}
 
-		switch response.Topic {
-		case orderTopic:
-			var orders []orderTopicData
-			json.Unmarshal(response.Data, &orders)
-			order := orders[0]
+func (b *Bybit) canImprove(price, bestPrice float64, buy bool) bool {
+	if buy {
+		return price < bestPrice
+	} else {
+		return price > bestPrice
+	}
+}
 
-			switch order.OrderStatus {
-			case "New":
-				orderId = order.OrderId
-			case "PartiallyFilled":
-				log.WithFields(log.Fields{
-					"venue":        "bybit",
-					"order":        orderId,
-					"cum_quantity": order.CumExecQty,
-				}).Debug("Fill")
-			case "Filled":
-				log.WithFields(log.Fields{
-					"venue": "bybit",
-					"order": orderId,
-				}).Info("Order filled")
-				return
-			case "Cancelled":
-				log.WithFields(log.Fields{
-					"venue":        "bybit",
-					"order":        orderId,
-					"quantity":     order.Qty,
-					"cum_quantity": order.CumExecQty,
-				}).Debug("Order cancelled")
-				orderId = ""
-				contracts = order.Qty - order.CumExecQty
-				pendingInitialOrder = false
-			default:
-				pendingInitialOrder = false
-			}
-		case orderBookTopic:
-			switch response.Type {
-			case "snapshot":
-				var snapshot snapshotData
-				json.Unmarshal(response.Data, &snapshot)
+func (b *Bybit) Trade(contracts int, buy, reduce bool) {
+	log.WithFields(log.Fields{
+		"venue":     "bybit",
+		"contracts": contracts,
+		"buy":       buy,
+		"reduce":    reduce,
+	}).Info("Trade")
 
-				for _, order := range snapshot {
-					p, _ := strconv.ParseFloat(order.Price, 64)
+	var orderId string
+	var price, bp float64
+	var fillQty int
+	remaining := contracts
 
-					if order.Side == "Buy" {
-						bids[order.Id] = p
-					} else {
-						asks[order.Id] = p
-					}
-				}
-			case "delta":
-				var updates updateData
-				json.Unmarshal(response.Data, &updates)
+	doneBestPrice := make(chan bool)
+	bestPrice := b.makeBestPrice(buy, doneBestPrice)
+	done, fillsOnCancel := b.orderStatus()
+	ticker := time.NewTicker(10 * time.Millisecond)
 
-				for _, order := range updates.Delete {
-					if order.Side == "Buy" {
-						delete(bids, order.Id)
-					} else {
-						delete(asks, order.Id)
-					}
-				}
-
-				for _, order := range updates.Insert {
-					p, _ := strconv.ParseFloat(order.Price, 64)
-
-					if order.Side == "Buy" {
-						bids[order.Id] = p
-					} else {
-						asks[order.Id] = p
-					}
-				}
-			}
-
-			if buy {
-				bestPrice = highest(bids)
+	for {
+		select {
+		case <-done:
+			remaining = 0
+			doneBestPrice <- true
+			return
+		case fillQty = <-fillsOnCancel:
+			remaining -= fillQty
+			orderId = ""
+		case <-ticker.C:
+			if remaining == 0 {
+				continue
+			} else if orderId == "" {
+				price = bestPrice()
+				orderId = b.PlaceOrder(remaining, price, buy, reduce)
 			} else {
-				bestPrice = lowest(asks)
-			}
-
-			if orderId == "" {
-				if !pendingInitialOrder {
-					price = bestPrice
-					pendingInitialOrder = true
-					b.PlaceOrder(contracts, price, buy, reduce)
+				bp = bestPrice()
+				if b.canImprove(price, bp, buy) {
+					price = bp
+					b.EditOrder(orderId, bp)
 				}
-			} else if price != bestPrice {
-				price = bestPrice
-				b.EditOrder(orderId, price)
 			}
 		}
 	}

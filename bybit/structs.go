@@ -55,8 +55,12 @@ type orderResponse struct {
 }
 
 type orderTopicData struct {
-	OrderId     string `json:"order_id"`
-	OrderStatus string `json:"order_status"`
-	Qty         int    `json:"qty"`
-	CumExecQty  int    `json:"cum_exec_qty"`
+	Topic string `json:"topic"`
+	Data  []struct {
+		OrderId     string `json:"order_id"`
+		OrderStatus string `json:"order_status"`
+		Price       string `json:"price"`
+		Qty         int    `json:"qty"`
+		CumExecQty  int    `json:"cum_exec_qty"`
+	} `json:"data"`
 }
