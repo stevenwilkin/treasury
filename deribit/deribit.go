@@ -107,7 +107,8 @@ func (d *Deribit) subscribe(channels []string) (*websocket.Conn, error) {
 	go func() {
 		for {
 			if err = c.WriteJSON(testMessage); err != nil {
-				log.Error(err.Error())
+				log.WithField("venue", "deribit").Debug("Heartbeat stopping")
+				return
 			}
 			<-ticker.C
 		}
