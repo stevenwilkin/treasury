@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"net/url"
 	"strconv"
+	"time"
 
 	_ "github.com/joho/godotenv/autoload"
 	log "github.com/sirupsen/logrus"
@@ -18,7 +19,7 @@ func (d *Deribit) PlaceOrder(instrument string, amount int, price float64, buy, 
 		"instrument": instrument,
 		"amount":     amount,
 		"price":      price,
-	}).Info("Placing order")
+	}).Debug("Placing order")
 
 	v := url.Values{}
 	v.Set("instrument_name", instrument)
@@ -116,75 +117,103 @@ func (d *Deribit) EditOrder(orderId string, amount int, price float64, reduce bo
 	return err
 }
 
-func (d *Deribit) Trade(instrument string, contracts int, buy, reduce bool) {
-	var bestPrice, price float64
-	var orderId string
-
+func (d *Deribit) orderStatus(instrument string) chan bool {
+	done := make(chan bool, 1)
 	ordersChannel := fmt.Sprintf("user.orders.%s.raw", instrument)
-	quoteChannel := fmt.Sprintf("quote.%s", instrument)
 
-	c, err := d.subscribe([]string{ordersChannel, quoteChannel})
+	c, err := d.subscribe([]string{ordersChannel})
 	if err != nil {
 		log.Error(err.Error())
-		return
+		return done
 	}
-	defer c.Close()
 
-	for {
-		_, message, err := c.ReadMessage()
-		if err != nil {
-			log.Error(err)
-			return
-		}
+	go func() {
+		var om orderMessage
+		defer c.Close()
 
-		var response tradeResponse
-		json.Unmarshal(message, &response)
-
-		if response.Method != "subscription" {
-			continue
-		}
-
-		switch response.Params.Channel {
-		case quoteChannel:
-			if buy {
-				bestPrice = response.Params.Data.BestBidPrice
-			} else {
-				bestPrice = response.Params.Data.BestAskPrice
+		for {
+			if err = c.ReadJSON(&om); err != nil {
+				log.Error(err.Error())
+				return
 			}
 
-			if orderId == "" {
-				price = bestPrice
-				orderId, err = d.PlaceOrder(instrument, contracts, price, buy, reduce)
-				if err != nil {
-					return
-				}
-			} else if price != bestPrice {
-				price = bestPrice
-				err = d.EditOrder(orderId, contracts, price, reduce)
-				if err != nil {
-					return
-				}
+			if om.Method != "subscription" {
+				continue
 			}
-		case ordersChannel:
-			switch response.Params.Data.OrderState {
+
+			switch om.Params.Data.OrderState {
 			case "open":
 				log.WithFields(log.Fields{
 					"venue":    "deribit",
-					"order":    orderId,
-					"quantity": response.Params.Data.FilledAmount,
+					"order":    om.Params.Data.OrderId,
+					"quantity": om.Params.Data.FilledAmount,
 				}).Debug("Fill")
 			case "cancelled":
 				log.WithFields(log.Fields{
 					"venue": "deribit",
-					"order": orderId,
+					"order": om.Params.Data.OrderId,
 				}).Debug("Order cancelled")
 				return
 			case "filled":
 				log.WithFields(log.Fields{
 					"venue": "deribit",
-					"order": orderId,
+					"order": om.Params.Data.OrderId,
 				}).Info("Order filled")
+				done <- true
 				return
+			}
+		}
+	}()
+
+	return done
+}
+
+func (d *Deribit) canImprove(price, bestPrice float64, buy bool) bool {
+	if buy {
+		return price < bestPrice
+	} else {
+		return price > bestPrice
+	}
+}
+
+func (d *Deribit) Trade(instrument string, contracts int, buy, reduce bool) {
+	log.WithFields(log.Fields{
+		"venue":      "deribit",
+		"instrument": instrument,
+		"contracts":  contracts,
+		"buy":        buy,
+		"reduce":     reduce,
+	}).Info("Trade")
+
+	var price, bp float64
+	var orderId string
+	var err error
+	doneBestPrice := make(chan bool, 1)
+	bestPrice := d.makeBestPrice(instrument, buy, doneBestPrice)
+	done := d.orderStatus(instrument)
+	ticker := time.NewTicker(10 * time.Millisecond)
+
+	for {
+		select {
+		case <-done:
+			doneBestPrice <- true
+			return
+		case <-ticker.C:
+			if orderId == "" {
+				price = bestPrice()
+				orderId, err = d.PlaceOrder(instrument, contracts, price, buy, reduce)
+				if err != nil {
+					return
+				}
+			} else {
+				bp = bestPrice()
+				if d.canImprove(price, bp, buy) {
+					price = bp
+					err = d.EditOrder(orderId, contracts, price, reduce)
+					if err != nil {
+						return
+					}
+				}
 			}
 		}
 	}

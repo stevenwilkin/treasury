@@ -26,16 +26,23 @@ type positionsResponse struct {
 	} `json:"result"`
 }
 
-type tradeResponse struct {
+type quoteMessage struct {
 	Method string `json:"method"`
 	Params struct {
-		Channel string `json:"channel"`
-		Data    struct {
+		Data struct {
 			BestBidPrice float64 `json:"best_bid_price"`
 			BestAskPrice float64 `json:"best_ask_price"`
+		} `json:"data"`
+	} `json:"params"`
+}
+
+type orderMessage struct {
+	Method string `json:"method"`
+	Params struct {
+		Data struct {
 			OrderId      string  `json:"order_id"`
 			OrderState   string  `json:"order_state"`
-			FilledAmount int     `json:"filled_amount"`
+			FilledAmount float64 `json:"filled_amount"`
 		} `json:"data"`
 	} `json:"params"`
 }
