@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"net/url"
 	"strconv"
+	"time"
 
 	log "github.com/sirupsen/logrus"
 )
@@ -178,10 +179,11 @@ func (b *Binance) Trade(quantity float64, buy bool) {
 	}).Info("Trade")
 
 	done, fills := b.orderStatus()
-	doneBestPrice := make(chan bool)
+	doneBestPrice := make(chan bool, 1)
 	bestPrice := b.makeBestPrice(buy, doneBestPrice)
 
 	remaining := quantity
+	ticker := time.NewTicker(10 * time.Millisecond)
 	price := bestPrice()
 	b.enterOrder(&remaining, price, buy)
 
@@ -193,7 +195,7 @@ func (b *Binance) Trade(quantity float64, buy bool) {
 			return
 		case fillQty := <-fills:
 			remaining -= fillQty
-		default:
+		case <-ticker.C:
 			bp := bestPrice()
 			if b.canImprove(price, bp, buy) {
 				price = bp
