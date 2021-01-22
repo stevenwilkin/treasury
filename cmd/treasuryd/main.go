@@ -10,11 +10,9 @@ import (
 	"time"
 
 	"github.com/stevenwilkin/treasury/alert"
-	"github.com/stevenwilkin/treasury/asset"
+	"github.com/stevenwilkin/treasury/feed"
 	"github.com/stevenwilkin/treasury/state"
-	"github.com/stevenwilkin/treasury/symbol"
 	"github.com/stevenwilkin/treasury/telegram"
-	"github.com/stevenwilkin/treasury/venue"
 
 	_ "github.com/joho/godotenv/autoload"
 	log "github.com/sirupsen/logrus"
@@ -25,76 +23,11 @@ const (
 )
 
 var (
-	statum  *state.State
-	alerter *alert.Alerter
-	venues  Venues
+	statum      *state.State
+	alerter     *alert.Alerter
+	feedHandler *feed.Handler
+	venues      Venues
 )
-
-func initDataFeeds() {
-	log.Info("Initialising data feeds")
-
-	processFeed := func(chanF func() chan float64, processF func(float64)) {
-		go func() {
-			ch := chanF()
-			for {
-				processF(<-ch)
-			}
-		}()
-	}
-
-	processFeedArray := func(chanF func() chan [2]float64, processF func([2]float64)) {
-		go func() {
-			ch := chanF()
-			for {
-				processF(<-ch)
-			}
-		}()
-	}
-
-	processFeed(venues.Binance.Price, func(btcUsdt float64) {
-		statum.SetSymbol(symbol.BTCUSDT, btcUsdt)
-	})
-
-	processFeedArray(venues.Binance.Balances, func(balances [2]float64) {
-		statum.SetAsset(venue.Binance, asset.BTC, balances[0])
-		statum.SetAsset(venue.Binance, asset.USDT, balances[1])
-	})
-
-	processFeed(func() chan float64 {
-		return venues.Bitkub.Price(symbol.BTCTHB)
-	}, func(btcThb float64) {
-		statum.SetSymbol(symbol.BTCTHB, btcThb)
-	})
-
-	processFeed(func() chan float64 {
-		return venues.Bitkub.Price(symbol.USDTTHB)
-	}, func(usdtThb float64) {
-		statum.SetSymbol(symbol.USDTTHB, usdtThb)
-	})
-
-	processFeed(func() chan float64 {
-		return venues.Oanda.Price(symbol.USDTHB)
-	}, func(usdThb float64) {
-		statum.SetSymbol(symbol.USDTHB, usdThb)
-	})
-
-	processFeed(venues.Deribit.Equity, func(deribitBtc float64) {
-		statum.SetAsset(venue.Deribit, asset.BTC, deribitBtc)
-	})
-
-	processFeed(venues.Bybit.Equity, func(bybitBtc float64) {
-		statum.SetAsset(venue.Bybit, asset.BTC, bybitBtc)
-	})
-
-	processFeedArray(venues.Bybit.FundingRate, func(funding [2]float64) {
-		statum.SetFunding(funding[0], funding[1])
-	})
-
-	processFeedArray(venues.Ftx.Balances, func(balances [2]float64) {
-		statum.SetAsset(venue.FTX, asset.BTC, balances[0])
-		statum.SetAsset(venue.FTX, asset.USDT, balances[1])
-	})
-}
 
 func initState() {
 	log.Info("Initialising state")
