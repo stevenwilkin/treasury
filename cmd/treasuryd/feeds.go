@@ -9,6 +9,12 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
+func curry(f func(s symbol.Symbol) chan float64, s symbol.Symbol) func() chan float64 {
+	return func() chan float64 {
+		return f(s)
+	}
+}
+
 func initDataFeeds() {
 	log.Info("Initialising data feeds")
 	feedHandler = feed.NewHandler()
@@ -22,21 +28,15 @@ func initDataFeeds() {
 		statum.SetAsset(venue.Binance, asset.USDT, balances[1])
 	})
 
-	feedHandler.Add(func() chan float64 {
-		return venues.Bitkub.Price(symbol.BTCTHB)
-	}, func(btcThb float64) {
+	feedHandler.Add(curry(venues.Bitkub.Price, symbol.BTCTHB), func(btcThb float64) {
 		statum.SetSymbol(symbol.BTCTHB, btcThb)
 	})
 
-	feedHandler.Add(func() chan float64 {
-		return venues.Bitkub.Price(symbol.USDTTHB)
-	}, func(usdtThb float64) {
+	feedHandler.Add(curry(venues.Bitkub.Price, symbol.USDTTHB), func(usdtThb float64) {
 		statum.SetSymbol(symbol.USDTTHB, usdtThb)
 	})
 
-	feedHandler.Add(func() chan float64 {
-		return venues.Oanda.Price(symbol.USDTHB)
-	}, func(usdThb float64) {
+	feedHandler.Add(curry(venues.Oanda.Price, symbol.USDTHB), func(usdThb float64) {
 		statum.SetSymbol(symbol.USDTHB, usdThb)
 	})
 
