@@ -1,25 +1,24 @@
 package feed
 
+import (
+	"reflect"
+)
+
 type Handler struct{}
 
 func NewHandler() *Handler {
 	return &Handler{}
 }
 
-func (h *Handler) Add(chanF func() chan float64, processF func(float64)) {
+func (h *Handler) Add(inputF interface{}, outputF interface{}) {
 	go func() {
-		ch := chanF()
+		ch := reflect.ValueOf(inputF).Call([]reflect.Value{})[0]
 		for {
-			processF(<-ch)
-		}
-	}()
-}
-
-func (h *Handler) AddArray(chanF func() chan [2]float64, processF func([2]float64)) {
-	go func() {
-		ch := chanF()
-		for {
-			processF(<-ch)
+			item, ok := ch.Recv()
+			if !ok {
+				return
+			}
+			reflect.ValueOf(outputF).Call([]reflect.Value{item})
 		}
 	}()
 }

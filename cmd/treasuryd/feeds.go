@@ -17,7 +17,7 @@ func initDataFeeds() {
 		statum.SetSymbol(symbol.BTCUSDT, btcUsdt)
 	})
 
-	feedHandler.AddArray(venues.Binance.Balances, func(balances [2]float64) {
+	feedHandler.Add(venues.Binance.Balances, func(balances [2]float64) {
 		statum.SetAsset(venue.Binance, asset.BTC, balances[0])
 		statum.SetAsset(venue.Binance, asset.USDT, balances[1])
 	})
@@ -48,11 +48,11 @@ func initDataFeeds() {
 		statum.SetAsset(venue.Bybit, asset.BTC, bybitBtc)
 	})
 
-	feedHandler.AddArray(venues.Bybit.FundingRate, func(funding [2]float64) {
+	feedHandler.Add(venues.Bybit.FundingRate, func(funding [2]float64) {
 		statum.SetFunding(funding[0], funding[1])
 	})
 
-	feedHandler.AddArray(venues.Ftx.Balances, func(balances [2]float64) {
+	feedHandler.Add(venues.Ftx.Balances, func(balances [2]float64) {
 		statum.SetAsset(venue.FTX, asset.BTC, balances[0])
 		statum.SetAsset(venue.FTX, asset.USDT, balances[1])
 	})
