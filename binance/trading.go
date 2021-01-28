@@ -171,10 +171,10 @@ func (b *Binance) canImprove(price, bestPrice float64, buy bool) bool {
 	}
 }
 
-func (b *Binance) Trade(btc float64, buy bool) {
+func (b *Binance) trade(quantity quantity, buy bool) {
 	log.WithFields(log.Fields{
 		"venue":    "binance",
-		"quantity": btc,
+		"quantity": quantity.string(),
 		"buy":      buy,
 	}).Info("Trade")
 
@@ -182,7 +182,6 @@ func (b *Binance) Trade(btc float64, buy bool) {
 	doneBestPrice := make(chan bool, 1)
 	bestPrice := b.makeBestPrice(buy, doneBestPrice)
 
-	quantity := &btcQuantity{btc: btc}
 	ticker := time.NewTicker(10 * time.Millisecond)
 	price := bestPrice()
 	b.enterOrder(quantity, price, buy)
@@ -204,4 +203,12 @@ func (b *Binance) Trade(btc float64, buy bool) {
 			}
 		}
 	}
+}
+
+func (b *Binance) Trade(btc float64, buy bool) {
+	b.trade(&btcQuantity{btc: btc}, buy)
+}
+
+func (b *Binance) TradeUSD(usd float64, buy bool) {
+	b.trade(&usdQuantity{usd: usd}, buy)
 }

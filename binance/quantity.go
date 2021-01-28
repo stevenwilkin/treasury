@@ -1,11 +1,15 @@
 package binance
 
-import "sync"
+import (
+	"fmt"
+	"sync"
+)
 
 type quantity interface {
 	remaining(float64) float64
 	fill(float64)
 	done()
+	string() string
 }
 
 type btcQuantity struct {
@@ -33,6 +37,10 @@ func (q *btcQuantity) done() {
 	defer q.m.Unlock()
 
 	q.filled = q.btc
+}
+
+func (q *btcQuantity) string() string {
+	return fmt.Sprintf("btc%f", q.btc)
 }
 
 type usdQuantity struct {
@@ -65,6 +73,10 @@ func (q *usdQuantity) done() {
 	defer q.m.Unlock()
 
 	q.isDone = true
+}
+
+func (q *usdQuantity) string() string {
+	return fmt.Sprintf("usd%f", q.usd)
 }
 
 var _ quantity = &btcQuantity{}
