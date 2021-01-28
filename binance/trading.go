@@ -190,6 +190,7 @@ func (b *Binance) trade(quantity quantity, buy bool) {
 		select {
 		case <-done:
 			quantity.done()
+			b.CancelAllOrders()
 			doneBestPrice <- true
 			return
 		case fillQty := <-fills:
