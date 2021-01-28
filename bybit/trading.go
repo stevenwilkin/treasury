@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"io/ioutil"
+	"math"
 	"net/http"
 	"net/url"
 	"strconv"
@@ -269,7 +270,7 @@ func (b *Bybit) bestBidAsk(done chan bool) (*float64, *float64) {
 	return &bid, &ask
 }
 
-func (b *Bybit) makeBestPrice(buy bool, done chan bool) func() float64 {
+func (b *Bybit) makeBestPrice(buy bool, limit float64, done chan bool) func() float64 {
 	bid, ask := b.bestBidAsk(done)
 
 	return func() float64 {
@@ -277,9 +278,17 @@ func (b *Bybit) makeBestPrice(buy bool, done chan bool) func() float64 {
 		}
 
 		if buy {
-			return *bid
+			if limit == 0 {
+				return *bid
+			} else {
+				return math.Min(*bid, limit)
+			}
 		} else {
-			return *ask
+			if limit == 0 {
+				return *ask
+			} else {
+				return math.Max(*ask, limit)
+			}
 		}
 	}
 }
@@ -292,10 +301,11 @@ func (b *Bybit) canImprove(price, bestPrice float64, buy bool) bool {
 	}
 }
 
-func (b *Bybit) Trade(contracts int, buy, reduce bool) {
+func (b *Bybit) TradeWithLimit(contracts int, limit float64, buy, reduce bool) {
 	log.WithFields(log.Fields{
 		"venue":     "bybit",
 		"contracts": contracts,
+		"limit":     limit,
 		"buy":       buy,
 		"reduce":    reduce,
 	}).Info("Trade")
@@ -306,7 +316,7 @@ func (b *Bybit) Trade(contracts int, buy, reduce bool) {
 	remaining := contracts
 
 	doneBestPrice := make(chan bool)
-	bestPrice := b.makeBestPrice(buy, doneBestPrice)
+	bestPrice := b.makeBestPrice(buy, limit, doneBestPrice)
 	done, fillsOnCancel := b.orderStatus()
 	ticker := time.NewTicker(10 * time.Millisecond)
 
@@ -334,4 +344,8 @@ func (b *Bybit) Trade(contracts int, buy, reduce bool) {
 			}
 		}
 	}
+}
+
+func (b *Bybit) Trade(contracts int, buy, reduce bool) {
+	b.TradeWithLimit(contracts, 0, buy, reduce)
 }
