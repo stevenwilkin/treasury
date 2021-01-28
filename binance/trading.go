@@ -86,12 +86,12 @@ func (b *Binance) orderStatus() (chan bool, chan float64) {
 
 			switch udm.OrderStatus {
 			case "FILLED":
+				done <- true
 				log.WithFields(log.Fields{
 					"venue":    "binance",
 					"order_id": udm.OrderId,
 				}).Info("Order filled")
 				c.Close()
-				done <- true
 				return
 			case "PARTIALLY_FILLED":
 				fillQty, _ := strconv.ParseFloat(udm.FillQty, 64)
