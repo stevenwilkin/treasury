@@ -158,8 +158,8 @@ func (b *Binance) PlaceOrder(quantity, price float64, buy bool) int64 {
 	return response.OrderId
 }
 
-func (b *Binance) enterOrder(remaining *float64, price float64, buy bool) {
-	for *remaining > 0 && b.PlaceOrder(*remaining, price, buy) == 0 {
+func (b *Binance) enterOrder(q quantity, price float64, buy bool) {
+	for q.remaining(price) > 0 && b.PlaceOrder(q.remaining(price), price, buy) == 0 {
 	}
 }
 
@@ -171,10 +171,10 @@ func (b *Binance) canImprove(price, bestPrice float64, buy bool) bool {
 	}
 }
 
-func (b *Binance) Trade(quantity float64, buy bool) {
+func (b *Binance) Trade(btc float64, buy bool) {
 	log.WithFields(log.Fields{
 		"venue":    "binance",
-		"quantity": quantity,
+		"quantity": btc,
 		"buy":      buy,
 	}).Info("Trade")
 
@@ -182,25 +182,25 @@ func (b *Binance) Trade(quantity float64, buy bool) {
 	doneBestPrice := make(chan bool, 1)
 	bestPrice := b.makeBestPrice(buy, doneBestPrice)
 
-	remaining := quantity
+	quantity := &btcQuantity{btc: btc}
 	ticker := time.NewTicker(10 * time.Millisecond)
 	price := bestPrice()
-	b.enterOrder(&remaining, price, buy)
+	b.enterOrder(quantity, price, buy)
 
 	for {
 		select {
 		case <-done:
-			remaining = 0
+			quantity.done()
 			doneBestPrice <- true
 			return
 		case fillQty := <-fills:
-			remaining -= fillQty
+			quantity.fill(fillQty)
 		case <-ticker.C:
 			bp := bestPrice()
 			if b.canImprove(price, bp, buy) {
 				price = bp
 				b.CancelAllOrders()
-				b.enterOrder(&remaining, price, buy)
+				b.enterOrder(quantity, price, buy)
 			}
 		}
 	}
