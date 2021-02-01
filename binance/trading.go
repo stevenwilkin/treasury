@@ -135,7 +135,7 @@ func (b *Binance) PlaceOrder(quantity, price float64, buy bool) int64 {
 		"symbol":   {"BTCUSDT"},
 		"side":     {side},
 		"type":     {"LIMIT_MAKER"},
-		"quantity": {strconv.FormatFloat(quantity, 'f', 2, 64)},
+		"quantity": {strconv.FormatFloat(quantity, 'f', 6, 64)},
 		"price":    {strconv.FormatFloat(price, 'f', 2, 64)}}
 
 	body, err := b.doRequest("POST", "/api/v3/order", v, true)
@@ -171,7 +171,7 @@ func (b *Binance) canImprove(price, bestPrice float64, buy bool) bool {
 	}
 }
 
-func (b *Binance) trade(quantity quantity, buy bool) {
+func (b *Binance) trade(quantity quantity, buy bool) float64 {
 	log.WithFields(log.Fields{
 		"venue":    "binance",
 		"quantity": quantity.string(),
@@ -182,7 +182,7 @@ func (b *Binance) trade(quantity quantity, buy bool) {
 	doneBestPrice := make(chan bool, 1)
 	bestPrice := b.makeBestPrice(buy, doneBestPrice)
 
-	ticker := time.NewTicker(10 * time.Millisecond)
+	ticker := time.NewTicker(100 * time.Millisecond)
 	price := bestPrice()
 	b.enterOrder(quantity, price, buy)
 
@@ -192,10 +192,14 @@ func (b *Binance) trade(quantity quantity, buy bool) {
 			quantity.done()
 			b.CancelAllOrders()
 			doneBestPrice <- true
-			return
+			return price
 		case fillQty := <-fills:
 			quantity.fill(fillQty)
 		case <-ticker.C:
+			if quantity.remaining(price) <= 0 {
+				b.CancelAllOrders()
+				return price
+			}
 			bp := bestPrice()
 			if b.canImprove(price, bp, buy) {
 				price = bp
@@ -206,10 +210,10 @@ func (b *Binance) trade(quantity quantity, buy bool) {
 	}
 }
 
-func (b *Binance) Trade(btc float64, buy bool) {
-	b.trade(&btcQuantity{btc: btc}, buy)
+func (b *Binance) Trade(btc float64, buy bool) float64 {
+	return b.trade(&btcQuantity{btc: btc}, buy)
 }
 
-func (b *Binance) TradeUSD(usd float64, buy bool) {
-	b.trade(&usdQuantity{usd: usd}, buy)
+func (b *Binance) TradeUSD(usd float64, buy bool) float64 {
+	return b.trade(&usdQuantity{usd: usd}, buy)
 }
