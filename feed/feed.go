@@ -1,24 +1,46 @@
 package feed
 
 import (
-	"reflect"
+	"errors"
+	"strings"
 )
 
-type Handler struct{}
+type Feed int
 
-func NewHandler() *Handler {
-	return &Handler{}
+const (
+	BTCUSDT Feed = iota
+	BTCTHB
+	USDTTHB
+	USDTHB
+	Binance
+	Deribit
+	Bybit
+	FTX
+	Funding
+)
+
+func feeds() []string {
+	return []string{
+		"BTCUSDT",
+		"BTCTHB",
+		"USDTTHB",
+		"USDTHB",
+		"Binance",
+		"Deribit",
+		"Bybit",
+		"FTX",
+		"Funding"}
 }
 
-func (h *Handler) Add(inputF interface{}, outputF interface{}) {
-	go func() {
-		ch := reflect.ValueOf(inputF).Call([]reflect.Value{})[0]
-		for {
-			item, ok := ch.Recv()
-			if !ok {
-				return
-			}
-			reflect.ValueOf(outputF).Call([]reflect.Value{item})
+func (s Feed) String() string {
+	return feeds()[s]
+}
+
+func FromString(s string) (Feed, error) {
+	for i, feed := range feeds() {
+		if strings.ToLower(s) == strings.ToLower(feed) {
+			return Feed(i), nil
 		}
-	}()
+	}
+	return Feed(0), errors.New("Invalid feed")
 }
