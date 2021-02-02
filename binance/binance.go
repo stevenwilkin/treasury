@@ -124,7 +124,7 @@ func (b *Binance) Balances() chan [2]float64 {
 		for {
 			btc, usdt, err := b.GetBalances()
 			if err != nil {
-				log.WithField("venue", "binance").Error(err.Error())
+				log.WithField("venue", "binance").Warn(err.Error())
 				<-ticker.C
 				continue
 			}
