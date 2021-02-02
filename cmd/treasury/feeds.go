@@ -5,12 +5,16 @@ import (
 	"fmt"
 	"io/ioutil"
 	"sort"
+	"time"
 
 	"github.com/spf13/cobra"
 )
 
 type feedsResponse struct {
-	Feeds map[string]bool
+	Feeds map[string]struct {
+		Active     bool
+		LastUpdate time.Time
+	}
 }
 
 func (fr *feedsResponse) feeds() []string {
@@ -59,16 +63,23 @@ var feedsCmd = &cobra.Command{
 			panic(err)
 		}
 
-		var status string
+		var status, lastUpdate string
 		padding := fr.padding()
 
 		for _, feed := range fr.feeds() {
-			if fr.Feeds[feed] {
+			if fr.Feeds[feed].Active {
 				status = "Active"
+				lu := fr.Feeds[feed].LastUpdate
+				if lu == (time.Time{}) {
+					lastUpdate = "  Never"
+				} else {
+					lastUpdate = fmt.Sprintf("  %.2fs", time.Since(lu).Seconds())
+				}
 			} else {
 				status = "Inactive"
+				lastUpdate = ""
 			}
-			fmt.Printf("%-*s %s\n", padding, feed, status)
+			fmt.Printf("%-*s  %s%s\n", padding, feed, status, lastUpdate)
 		}
 	},
 }

@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"net/http"
 	"strconv"
+	"time"
 
 	"github.com/stevenwilkin/treasury/alert"
 	"github.com/stevenwilkin/treasury/asset"
@@ -34,8 +35,12 @@ type fundingMessage struct {
 	Predicted float64 `float64:"predicted"`
 }
 
+type feedsResponseItem struct {
+	Active     bool
+	LastUpdate time.Time
+}
 type feedsResponse struct {
-	Feeds map[string]bool
+	Feeds map[string]feedsResponseItem
 }
 
 func pricesHandler(w http.ResponseWriter, r *http.Request) {
@@ -254,10 +259,11 @@ func updateSizeHandler(w http.ResponseWriter, r *http.Request) {
 func feedsHandler(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 
-	fr := feedsResponse{Feeds: map[string]bool{}}
+	fr := feedsResponse{Feeds: map[string]feedsResponseItem{}}
 
 	for feed, status := range feedHandler.Status() {
-		fr.Feeds[feed.String()] = bool(status)
+		fr.Feeds[feed.String()] = feedsResponseItem{
+			Active: status.Active, LastUpdate: status.LastUpdate}
 	}
 
 	b, err := json.Marshal(fr)
