@@ -18,6 +18,7 @@ func init() {
 	rootCmd.AddCommand(fundingCmd)
 	rootCmd.AddCommand(exposureCmd)
 	rootCmd.AddCommand(sizeCmd)
+	rootCmd.AddCommand(feedsCmd)
 
 	assetsCmd.AddCommand(setAssetsCmd)
 	alertsCmd.AddCommand(alertsPriceCmd, alertsClearCmd, alertsFundingCmd)

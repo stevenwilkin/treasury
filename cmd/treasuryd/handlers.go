@@ -34,6 +34,10 @@ type fundingMessage struct {
 	Predicted float64 `float64:"predicted"`
 }
 
+type feedsResponse struct {
+	Feeds map[string]bool
+}
+
 func pricesHandler(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 
@@ -247,6 +251,23 @@ func updateSizeHandler(w http.ResponseWriter, r *http.Request) {
 	sizeHandler(w, r)
 }
 
+func feedsHandler(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+
+	fr := feedsResponse{Feeds: map[string]bool{}}
+
+	for feed, status := range feedHandler.Status() {
+		fr.Feeds[feed.String()] = bool(status)
+	}
+
+	b, err := json.Marshal(fr)
+	if err != nil {
+		log.Error(err)
+	}
+
+	w.Write(b)
+}
+
 func controlHandlers() *http.ServeMux {
 	mux := http.NewServeMux()
 	mux.HandleFunc("/prices", pricesHandler)
@@ -263,6 +284,7 @@ func controlHandlers() *http.ServeMux {
 	mux.HandleFunc("/exposure", exposureHandler)
 	mux.HandleFunc("/size", sizeHandler)
 	mux.HandleFunc("/size/update", updateSizeHandler)
+	mux.HandleFunc("/feeds", feedsHandler)
 
 	return mux
 }
