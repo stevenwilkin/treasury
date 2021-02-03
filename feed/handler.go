@@ -22,6 +22,12 @@ func NewHandler() *Handler {
 		feeds: Status{}}
 }
 
+func (h *Handler) setActive(f Feed, active bool) {
+	h.m.Lock()
+	h.feeds[f].Active = active
+	h.m.Unlock()
+}
+
 func (h *Handler) setLastUpdate(f Feed) {
 	h.m.Lock()
 	h.feeds[f].LastUpdate = time.Now()
@@ -39,6 +45,7 @@ func (h *Handler) Add(f Feed, inputF interface{}, outputF interface{}) {
 		for {
 			item, ok := ch.Recv()
 			if !ok {
+				h.setActive(f, false)
 				return
 			}
 
