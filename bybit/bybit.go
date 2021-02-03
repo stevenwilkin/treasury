@@ -162,7 +162,7 @@ func (b *Bybit) FundingRate() chan [2]float64 {
 		for {
 			current, predicted, err := b.GetFundingRate()
 			if err != nil {
-				log.WithField("venue", "bybit").Error(err.Error())
+				log.WithField("venue", "bybit").Warn(err.Error())
 				<-ticker.C
 				continue
 			}
