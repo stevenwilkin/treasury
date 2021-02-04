@@ -76,4 +76,8 @@ func TestClosingChannel(t *testing.T) {
 	if h.Status()[BTCUSDT].Active {
 		t.Error("Should not be active")
 	}
+
+	if h.Status()[BTCUSDT].Errors != 1 {
+		t.Error("Should have 1 error")
+	}
 }

@@ -23,13 +23,14 @@ func NewHandler() *Handler {
 		feeds: Status{}}
 }
 
-func (h *Handler) setActive(f Feed, active bool) {
+func (h *Handler) setFailed(f Feed, active bool) {
 	h.m.Lock()
 	h.feeds[f].Active = active
+	h.feeds[f].Errors += 1
 	h.m.Unlock()
 }
 
-func (h *Handler) setLastUpdate(f Feed) {
+func (h *Handler) setUpdated(f Feed) {
 	h.m.Lock()
 	h.feeds[f].LastUpdate = time.Now()
 	h.feeds[f].Errors = 0
@@ -47,11 +48,11 @@ func (h *Handler) Add(f Feed, inputF interface{}, outputF interface{}) {
 		for {
 			item, ok := ch.Recv()
 			if !ok {
-				h.setActive(f, false)
+				h.setFailed(f, false)
 				return
 			}
 
-			h.setLastUpdate(f)
+			h.setUpdated(f)
 			reflect.ValueOf(outputF).Call([]reflect.Value{item})
 		}
 	}()
