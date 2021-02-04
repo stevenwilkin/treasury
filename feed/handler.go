@@ -14,6 +14,7 @@ type Handler struct {
 type FeedStatus struct {
 	Active     bool
 	LastUpdate time.Time
+	Errors     int
 }
 type Status map[Feed]*FeedStatus
 
@@ -31,6 +32,7 @@ func (h *Handler) setActive(f Feed, active bool) {
 func (h *Handler) setLastUpdate(f Feed) {
 	h.m.Lock()
 	h.feeds[f].LastUpdate = time.Now()
+	h.feeds[f].Errors = 0
 	h.m.Unlock()
 }
 
