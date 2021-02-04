@@ -57,6 +57,14 @@ func (h *Handler) Add(f Feed, inputF interface{}, outputF interface{}) {
 	}()
 }
 
-func (h *Handler) Status() Status {
-	return h.feeds
+func (h *Handler) Status() map[Feed]FeedStatus {
+	h.m.Lock()
+	defer h.m.Unlock()
+
+	result := map[Feed]FeedStatus{}
+	for f, s := range h.feeds {
+		result[f] = *s
+	}
+
+	return result
 }
