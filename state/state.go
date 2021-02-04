@@ -23,7 +23,7 @@ type State struct {
 }
 
 const (
-	statePath = "/tmp/treasuryd.json"
+	statePath = "/var/lib/treasuryd/state.json"
 )
 
 func NewState() *State {

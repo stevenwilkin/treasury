@@ -3,6 +3,13 @@
 My personal digital asset management system
 
 
+## Data storage path
+
+The following directory must exist and be writeable:
+
+	/var/lib/treasuryd
+
+
 ## Systemd service
 
 Copy the service unit file to the configuration directory:
