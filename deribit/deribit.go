@@ -123,24 +123,19 @@ func (d *Deribit) Equity() chan float64 {
 	ch := make(chan float64)
 	c, err := d.subscribe([]string{"user.portfolio.BTC"})
 	if err != nil {
-		log.Error(err.Error())
+		log.WithField("venue", "deribit").Warn(err.Error())
+		close(ch)
 		return ch
 	}
 
 	go func() {
-		defer c.Close()
-
 		for {
 			_, message, err := c.ReadMessage()
 			if err != nil {
-				log.WithField("venue", "deribit").Info("Reconnecting to equity subscription")
+				log.WithField("venue", "deribit").Warn(err.Error())
 				c.Close()
-				c, err = d.subscribe([]string{"user.portfolio.BTC"})
-				if err != nil {
-					log.Error(err.Error())
-					return
-				}
-				continue
+				close(ch)
+				return
 			}
 
 			var response portfolioResponse

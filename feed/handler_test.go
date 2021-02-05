@@ -30,7 +30,7 @@ func TestLastUpdate(t *testing.T) {
 	}
 }
 
-func TestUpdateClearsErrorCount(t *testing.T) {
+func TestUpdateClearsErrorCountAndSetsActive(t *testing.T) {
 	trigger := make(chan bool)
 	f := func() chan int {
 		ch := make(chan int)
@@ -43,12 +43,16 @@ func TestUpdateClearsErrorCount(t *testing.T) {
 
 	h := NewHandler()
 	h.Add(BTCUSDT, f, func(int) {})
-	h.feeds[BTCUSDT].Errors = 1
+	h.setFailed(BTCUSDT)
 
 	trigger <- true
 
 	if h.Status()[BTCUSDT].Errors != 0 {
-		t.Error("Should have 0 errors ")
+		t.Error("Should have 0 errors")
+	}
+
+	if !h.Status()[BTCUSDT].Active {
+		t.Error("Should be active")
 	}
 }
 
@@ -79,5 +83,30 @@ func TestClosingChannel(t *testing.T) {
 
 	if h.Status()[BTCUSDT].Errors != 1 {
 		t.Error("Should have 1 error")
+	}
+}
+
+func TestClosingChannelRestart(t *testing.T) {
+	delayBase = 0
+
+	count := 0
+	f := func() chan int {
+		count += 1
+		ch := make(chan int)
+		close(ch)
+		return ch
+	}
+
+	h := NewHandler()
+	h.Add(BTCUSDT, f, func(int) {})
+
+	time.Sleep(time.Millisecond) // nasty
+
+	if count < 2 {
+		t.Error("Feed should have been restarted after failure")
+	}
+
+	if count > maxRetries+1 {
+		t.Error("Feed should not exceed max retries")
 	}
 }

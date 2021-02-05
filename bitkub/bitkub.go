@@ -48,23 +48,19 @@ func (b *BitKub) Price(s symbol.Symbol) chan float64 {
 
 	c, err := b.subscribeToPrice(s)
 	if err != nil {
+		log.WithField("venue", "bitkub").Warn(err.Error())
+		close(ch)
 		return ch
 	}
 
 	go func() {
-		defer c.Close()
-
 		for {
 			_, message, err := c.ReadMessage()
 			if err != nil {
-				log.WithField("venue", "bitkub").Info("Reconnecting to price subscription")
+				log.WithField("venue", "bitkub").Warn(err.Error())
 				c.Close()
-				c, err = b.subscribeToPrice(s)
-				if err != nil {
-					log.Error(err.Error())
-					return
-				}
-				continue
+				close(ch)
+				return
 			}
 
 			var ticker tickerMessage

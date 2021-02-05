@@ -93,9 +93,9 @@ func (o *Oanda) Price(s symbol.Symbol) chan float64 {
 		for {
 			price, err := o.GetPrice(s)
 			if err != nil {
-				log.WithField("venue", "oanda").Error(err.Error())
-				<-ticker.C
-				continue
+				log.WithField("venue", "oanda").Warn(err.Error())
+				close(ch)
+				return
 			}
 
 			log.WithFields(log.Fields{

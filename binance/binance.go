@@ -125,8 +125,8 @@ func (b *Binance) Balances() chan [2]float64 {
 			btc, usdt, err := b.GetBalances()
 			if err != nil {
 				log.WithField("venue", "binance").Warn(err.Error())
-				<-ticker.C
-				continue
+				close(ch)
+				return
 			}
 
 			log.WithFields(log.Fields{
@@ -179,24 +179,19 @@ func (b *Binance) Price() chan float64 {
 
 	c, err := b.subscribe("btcusdt@aggTrade")
 	if err != nil {
-		log.Error(err.Error())
+		log.WithField("venue", "binance").Warn(err.Error())
+		close(ch)
 		return ch
 	}
 
 	go func() {
-		defer c.Close()
-
 		for {
 			_, message, err := c.ReadMessage()
 			if err != nil {
-				log.WithField("venue", "binance").Info("Reconnecting to price subscription")
+				log.WithField("venue", "binance").Warn(err.Error())
 				c.Close()
-				c, err = b.subscribe("btcusdt@aggTrade")
-				if err != nil {
-					log.Error(err.Error())
-					return
-				}
-				continue
+				close(ch)
+				return
 			}
 
 			var ticker tickerMessage

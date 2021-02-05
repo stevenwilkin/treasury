@@ -81,9 +81,9 @@ func (f *FTX) Balances() chan [2]float64 {
 		for {
 			balances, err := f.GetBalances()
 			if err != nil {
-				log.WithField("venue", "ftx").Error(err.Error())
-				<-ticker.C
-				continue
+				log.WithField("venue", "ftx").Warn(err.Error())
+				close(ch)
+				return
 			}
 
 			log.WithFields(log.Fields{

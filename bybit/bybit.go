@@ -107,9 +107,9 @@ func (b *Bybit) Equity() chan float64 {
 		for {
 			equity, err := b.GetEquity()
 			if err != nil {
-				log.WithField("venue", "bybit").Error(err.Error())
-				<-ticker.C
-				continue
+				log.WithField("venue", "bybit").Warn(err.Error())
+				close(ch)
+				return
 			}
 
 			log.WithFields(log.Fields{
@@ -163,8 +163,8 @@ func (b *Bybit) FundingRate() chan [2]float64 {
 			current, predicted, err := b.GetFundingRate()
 			if err != nil {
 				log.WithField("venue", "bybit").Warn(err.Error())
-				<-ticker.C
-				continue
+				close(ch)
+				return
 			}
 
 			log.WithFields(log.Fields{
