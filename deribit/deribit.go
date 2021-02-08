@@ -19,10 +19,11 @@ type Deribit struct {
 	ApiSecret    string
 	Test         bool
 	_accessToken string
+	expiresIn    time.Time
 }
 
 func (d *Deribit) accessToken() (string, error) {
-	if d._accessToken != "" {
+	if d._accessToken != "" && d.expiresIn.After(time.Now()) {
 		return d._accessToken, nil
 	}
 
@@ -61,6 +62,8 @@ func (d *Deribit) accessToken() (string, error) {
 	var response authResponse
 	json.Unmarshal(body, &response)
 	d._accessToken = response.Result.AccessToken
+	expirySecs := time.Second * time.Duration(response.Result.ExpiresIn-10)
+	d.expiresIn = time.Now().Add(expirySecs)
 
 	return d._accessToken, nil
 }
