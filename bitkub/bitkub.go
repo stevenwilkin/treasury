@@ -3,7 +3,10 @@ package bitkub
 import (
 	"encoding/json"
 	"fmt"
+	"io/ioutil"
+	"net/http"
 	"net/url"
+	"time"
 
 	"github.com/stevenwilkin/treasury/symbol"
 
@@ -12,10 +15,6 @@ import (
 )
 
 type BitKub struct{}
-
-type tickerMessage struct {
-	Last float64
-}
 
 func (b *BitKub) subscribeToPrice(s symbol.Symbol) (*websocket.Conn, error) {
 	var tickerString string
@@ -38,7 +37,7 @@ func (b *BitKub) subscribeToPrice(s symbol.Symbol) (*websocket.Conn, error) {
 	return c, nil
 }
 
-func (b *BitKub) Price(s symbol.Symbol) chan float64 {
+func (b *BitKub) PriceWS(s symbol.Symbol) chan float64 {
 	log.WithFields(log.Fields{
 		"venue":  "bitkub",
 		"symbol": s,
@@ -72,6 +71,79 @@ func (b *BitKub) Price(s symbol.Symbol) chan float64 {
 				"value":  ticker.Last,
 			}).Debug("Received price")
 			ch <- ticker.Last
+		}
+	}()
+
+	return ch
+}
+
+func (b *BitKub) GetPrice(s symbol.Symbol) (float64, error) {
+	var tickerString string
+
+	switch s {
+	case symbol.BTCTHB:
+		tickerString = "THB_BTC"
+	case symbol.USDTTHB:
+		tickerString = "THB_USDT"
+	}
+
+	v := url.Values{"sym": {tickerString}}
+
+	u := url.URL{
+		Scheme:   "https",
+		Host:     "api.bitkub.com",
+		Path:     "/api/market/ticker",
+		RawQuery: v.Encode()}
+
+	req, err := http.NewRequest("GET", u.String(), nil)
+	if err != nil {
+		return 0, err
+	}
+
+	client := &http.Client{}
+	resp, err := client.Do(req)
+	if err != nil {
+		return 0, err
+	}
+	defer resp.Body.Close()
+
+	body, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		return 0, err
+	}
+
+	var response tickerResponse
+	json.Unmarshal(body, &response)
+
+	return response[tickerString].Last, nil
+}
+
+func (b *BitKub) Price(s symbol.Symbol) chan float64 {
+	log.WithFields(log.Fields{
+		"venue":  "bitkub",
+		"symbol": s,
+	}).Info("Polling price")
+
+	ch := make(chan float64)
+	ticker := time.NewTicker(1 * time.Second)
+
+	go func() {
+		for {
+			price, err := b.GetPrice(s)
+			if err != nil {
+				log.WithField("venue", "bitkub").Warn(err.Error())
+				close(ch)
+				return
+			}
+
+			log.WithFields(log.Fields{
+				"venue":  "bitkub",
+				"symbol": s,
+				"value":  price,
+			}).Debug("Received price")
+
+			ch <- price
+			<-ticker.C
 		}
 	}()
 
