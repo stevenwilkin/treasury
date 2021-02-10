@@ -8,7 +8,7 @@ import (
 	"github.com/stevenwilkin/treasury/bybit"
 	"github.com/stevenwilkin/treasury/deribit"
 	"github.com/stevenwilkin/treasury/ftx"
-	"github.com/stevenwilkin/treasury/oanda"
+	"github.com/stevenwilkin/treasury/xe"
 
 	log "github.com/sirupsen/logrus"
 )
@@ -19,7 +19,7 @@ type Venues struct {
 	Deribit *deribit.Deribit
 	Bybit   *bybit.Bybit
 	Ftx     *ftx.FTX
-	Oanda   *oanda.Oanda
+	XE      *xe.XE
 }
 
 func initVenues() {
@@ -38,7 +38,5 @@ func initVenues() {
 	venues.Ftx = &ftx.FTX{
 		ApiKey:    os.Getenv("FTX_API_KEY"),
 		ApiSecret: os.Getenv("FTX_API_SECRET")}
-	venues.Oanda = &oanda.Oanda{
-		AccountId: os.Getenv("OANDA_ACCOUNT_ID"),
-		ApiKey:    os.Getenv("OANDA_API_KEY")}
+	venues.XE = &xe.XE{}
 }

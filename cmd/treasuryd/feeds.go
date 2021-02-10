@@ -50,7 +50,7 @@ func initDataFeeds() {
 
 	feedHandler.Add(
 		feed.USDTHB,
-		curry(venues.Oanda.Price, symbol.USDTHB),
+		venues.XE.Price,
 		func(usdThb float64) {
 			statum.SetSymbol(symbol.USDTHB, usdThb)
 		})
