@@ -3,6 +3,7 @@ package xe
 import (
 	"encoding/base64"
 	"encoding/json"
+	"errors"
 	"io/ioutil"
 	"math"
 	"net/http"
@@ -103,6 +104,10 @@ func (x *XE) GetPrice() (float64, error) {
 
 	var response rateResponse
 	json.Unmarshal(body, &response)
+
+	if response.Payload.Rates.Rate == "" {
+		return 0, errors.New("Empty rate response")
+	}
 
 	return decode(response.Payload.Rates.Rate)
 }
