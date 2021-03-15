@@ -149,3 +149,43 @@ func TestCanReactivate(t *testing.T) {
 		t.Error("Should be able to reactivate")
 	}
 }
+
+func TestReactivateUnaddedFeed(t *testing.T) {
+	h := NewHandler()
+	h.Reactivate(USDTHB)
+}
+
+func TestReactivateFeed(t *testing.T) {
+	delayBase = 0
+
+	closeCh := true
+	f := func() chan int {
+		ch := make(chan int)
+		go func() {
+			if closeCh {
+				close(ch)
+			} else {
+				ch <- 1
+			}
+		}()
+		return ch
+	}
+
+	h := NewHandler()
+	h.Add(BTCUSDT, f, func(int) {})
+
+	time.Sleep(time.Millisecond)
+
+	if !h.canReactivate(BTCUSDT) {
+		t.Error("Should be able to reactivate")
+	}
+
+	closeCh = false
+
+	h.Reactivate(BTCUSDT)
+	time.Sleep(time.Millisecond)
+
+	if h.canReactivate(BTCUSDT) {
+		t.Error("Should not be able to reactivate")
+	}
+}

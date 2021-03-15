@@ -90,15 +90,7 @@ func (h *Handler) exponentialBackoff(f Feed) {
 	time.Sleep(delay)
 }
 
-func (h *Handler) Add(f Feed, inputF interface{}, outputF interface{}) {
-	h.m.Lock()
-	defer h.m.Unlock()
-
-	h.feeds[f] = &FeedStatus{
-		inputF:  inputF,
-		outputF: outputF,
-		Active:  true}
-
+func (h *Handler) handle(f Feed) {
 	go func() {
 		ch := h.startFeed(f)
 		for {
@@ -117,6 +109,25 @@ func (h *Handler) Add(f Feed, inputF interface{}, outputF interface{}) {
 			}
 		}
 	}()
+}
+
+func (h *Handler) Add(f Feed, inputF interface{}, outputF interface{}) {
+	h.m.Lock()
+	defer h.m.Unlock()
+
+	h.feeds[f] = &FeedStatus{
+		inputF:  inputF,
+		outputF: outputF,
+		Active:  true}
+
+	h.handle(f)
+}
+
+func (h *Handler) Reactivate(f Feed) {
+	if h.canReactivate(f) {
+		log.WithField("feed", f).Info("Reactivating feed")
+		h.handle(f)
+	}
 }
 
 func (h *Handler) Status() map[Feed]FeedStatus {
