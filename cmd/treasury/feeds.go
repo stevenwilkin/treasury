@@ -4,6 +4,9 @@ import (
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
+	"net/http"
+	"net/url"
+	"os"
 	"sort"
 	"time"
 
@@ -80,6 +83,25 @@ var feedsCmd = &cobra.Command{
 				lastUpdate = ""
 			}
 			fmt.Printf("%-*s  %s%s\n", padding, feed, status, lastUpdate)
+		}
+	},
+}
+
+var feedsReactivateCmd = &cobra.Command{
+	Use:   "reactivate [feed]",
+	Short: "Reactivate inactive data feed",
+	Args:  cobra.ExactArgs(1),
+	Run: func(cmd *cobra.Command, args []string) {
+		resp, err := client.PostForm("http://unix/feeds/reactivate", url.Values{
+			"feed": {args[0]}})
+		if err != nil {
+			fmt.Println(err)
+			os.Exit(1)
+		}
+
+		if resp.StatusCode != http.StatusOK {
+			fmt.Println("Failed")
+			os.Exit(1)
 		}
 	},
 }

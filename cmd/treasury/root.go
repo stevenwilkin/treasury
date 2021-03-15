@@ -24,4 +24,5 @@ func init() {
 	alertsCmd.AddCommand(alertsPriceCmd, alertsClearCmd, alertsFundingCmd)
 	pnlCmd.AddCommand(pnlUsdCmd)
 	sizeCmd.AddCommand(sizeUpdateCmd)
+	feedsCmd.AddCommand(feedsReactivateCmd)
 }

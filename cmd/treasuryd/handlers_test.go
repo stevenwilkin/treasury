@@ -9,6 +9,7 @@ import (
 
 	"github.com/stevenwilkin/treasury/alert"
 	"github.com/stevenwilkin/treasury/asset"
+	"github.com/stevenwilkin/treasury/feed"
 	"github.com/stevenwilkin/treasury/state"
 	"github.com/stevenwilkin/treasury/venue"
 )
@@ -157,5 +158,51 @@ func TestFundingAlertsHandler(t *testing.T) {
 
 	if alert.Description() != expected {
 		t.Errorf("Expected: '%s', got: '%s'", expected, alert.Description())
+	}
+}
+
+func TestFeedsReactivateHandlerInvalidFeed(t *testing.T) {
+	params := url.Values{}
+	params.Set("feed", "fake")
+	body := strings.NewReader(params.Encode())
+
+	r, err := http.NewRequest("POST", "/feeds/reactivate", body)
+	if err != nil {
+		t.Fatal(err)
+	}
+	r.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+
+	w := httptest.NewRecorder()
+	handler := http.HandlerFunc(feedsReactivateHandler)
+	handler.ServeHTTP(w, r)
+
+	resp := w.Result()
+
+	if resp.StatusCode != http.StatusBadRequest {
+		t.Errorf("Unexpected status code %d", resp.StatusCode)
+	}
+}
+
+func TestFeedsReactivateHandler(t *testing.T) {
+	feedHandler = feed.NewHandler()
+
+	params := url.Values{}
+	params.Set("feed", feed.BTCUSDT.String())
+	body := strings.NewReader(params.Encode())
+
+	r, err := http.NewRequest("POST", "/feeds/reactivate", body)
+	if err != nil {
+		t.Fatal(err)
+	}
+	r.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+
+	w := httptest.NewRecorder()
+	handler := http.HandlerFunc(feedsReactivateHandler)
+	handler.ServeHTTP(w, r)
+
+	resp := w.Result()
+
+	if resp.StatusCode != http.StatusOK {
+		t.Errorf("Unexpected status code %d", resp.StatusCode)
 	}
 }

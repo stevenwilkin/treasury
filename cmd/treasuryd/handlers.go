@@ -8,6 +8,7 @@ import (
 
 	"github.com/stevenwilkin/treasury/alert"
 	"github.com/stevenwilkin/treasury/asset"
+	"github.com/stevenwilkin/treasury/feed"
 	"github.com/stevenwilkin/treasury/symbol"
 	"github.com/stevenwilkin/treasury/venue"
 
@@ -274,6 +275,16 @@ func feedsHandler(w http.ResponseWriter, r *http.Request) {
 	w.Write(b)
 }
 
+func feedsReactivateHandler(w http.ResponseWriter, r *http.Request) {
+	f, err := feed.FromString(r.FormValue("feed"))
+	if err != nil {
+		w.WriteHeader(http.StatusBadRequest)
+		return
+	}
+
+	feedHandler.Reactivate(f)
+}
+
 func controlHandlers() *http.ServeMux {
 	mux := http.NewServeMux()
 	mux.HandleFunc("/prices", pricesHandler)
@@ -291,6 +302,7 @@ func controlHandlers() *http.ServeMux {
 	mux.HandleFunc("/size", sizeHandler)
 	mux.HandleFunc("/size/update", updateSizeHandler)
 	mux.HandleFunc("/feeds", feedsHandler)
+	mux.HandleFunc("/feeds/reactivate", feedsReactivateHandler)
 
 	return mux
 }
