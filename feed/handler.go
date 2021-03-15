@@ -68,6 +68,18 @@ func (h *Handler) canRestart(f Feed) bool {
 	return h.feedStatus(f).Errors <= maxRetries
 }
 
+func (h *Handler) canReactivate(f Feed) bool {
+	h.m.Lock()
+	_, ok := h.feeds[f]
+	h.m.Unlock()
+
+	if !ok {
+		return false
+	} else {
+		return !h.canRestart(f)
+	}
+}
+
 func (h *Handler) exponentialBackoff(f Feed) {
 	delaySeconds := math.Pow(delayBase, float64(h.feedStatus(f).Errors))
 	delay := time.Second * time.Duration(delaySeconds)

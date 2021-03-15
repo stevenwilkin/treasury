@@ -110,3 +110,42 @@ func TestClosingChannelRestart(t *testing.T) {
 		t.Error("Feed should not exceed max retries")
 	}
 }
+
+func TestCanReactivateNonAddedFeed(t *testing.T) {
+	h := NewHandler()
+
+	if h.canReactivate(USDTHB) {
+		t.Error("Should not be able to reactivate non-added feed")
+	}
+}
+
+func TestCanReactivate(t *testing.T) {
+	delayBase = 0
+
+	sendValue := true
+	f := func() chan int {
+		ch := make(chan int)
+		go func() {
+			if sendValue {
+				ch <- 1
+			} else {
+				close(ch)
+			}
+		}()
+		return ch
+	}
+
+	h := NewHandler()
+	h.Add(BTCUSDT, f, func(int) {})
+
+	if h.canReactivate(BTCUSDT) {
+		t.Error("Should not be able to reactivate")
+	}
+
+	sendValue = false
+	time.Sleep(time.Millisecond)
+
+	if !h.canReactivate(BTCUSDT) {
+		t.Error("Should be able to reactivate")
+	}
+}
