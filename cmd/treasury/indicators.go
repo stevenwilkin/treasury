@@ -37,5 +37,6 @@ var indicatorsCmd = &cobra.Command{
 
 		fmt.Printf("THB  Premium: %.2f%%\n", im.THBPremium*100)
 		fmt.Printf("USDT Premium: %.2f%%\n", im.USDTPremium*100)
+		fmt.Printf("Combined:     %.2f%%\n", (im.THBPremium+im.USDTPremium)*100)
 	},
 }
