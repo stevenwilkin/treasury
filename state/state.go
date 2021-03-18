@@ -142,6 +142,22 @@ func (s *State) Exposure() float64 {
 	return s.TotalEquity() - equivalentEquity
 }
 
+func (s *State) THBPremium() float64 {
+	btcthb := s.Symbol(symbol.BTCTHB)
+	btcusdt := s.Symbol(symbol.BTCUSDT)
+	usdtthb := s.Symbol(symbol.USDTTHB)
+
+	if !(btcthb > 0 && btcusdt > 0 && usdtthb > 0) {
+		return 0
+	}
+
+	equivalent := btcthb / usdtthb
+	difference := equivalent - btcusdt
+	percentage := difference / btcusdt
+
+	return percentage
+}
+
 func (s *State) Save() error {
 	s.mu.Lock()
 	defer s.mu.Unlock()

@@ -142,3 +142,29 @@ func TestExposure(t *testing.T) {
 		t.Errorf("Expected exposure to be %f, got %f", 1.0, s.Exposure())
 	}
 }
+
+func TestTHBPremium(t *testing.T) {
+	s := NewState()
+
+	if s.THBPremium() != 0 {
+		t.Error("Expected THB premium to be 0")
+	}
+
+	s.SetSymbol(symbol.BTCTHB, 330000)
+
+	if s.THBPremium() != 0 {
+		t.Error("Expected THB premium to be 0")
+	}
+
+	s.SetSymbol(symbol.BTCUSDT, 10000)
+
+	if s.THBPremium() != 0 {
+		t.Error("Expected THB premium to be 0")
+	}
+
+	s.SetSymbol(symbol.USDTTHB, 30)
+
+	if s.THBPremium() != 0.1 {
+		t.Errorf("Expected THB premium to be %f, got %f", 0.1, s.THBPremium())
+	}
+}
