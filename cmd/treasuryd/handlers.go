@@ -285,6 +285,18 @@ func feedsReactivateHandler(w http.ResponseWriter, r *http.Request) {
 	feedHandler.Reactivate(f)
 }
 
+func indicatorsHandler(w http.ResponseWriter, r *http.Request) {
+	data := map[string]float64{
+		"thb_premium": statum.THBPremium()}
+
+	b, err := json.Marshal(data)
+	if err != nil {
+		log.Error(err)
+	}
+
+	w.Write(b)
+}
+
 func controlHandlers() *http.ServeMux {
 	mux := http.NewServeMux()
 	mux.HandleFunc("/prices", pricesHandler)
@@ -303,6 +315,7 @@ func controlHandlers() *http.ServeMux {
 	mux.HandleFunc("/size/update", updateSizeHandler)
 	mux.HandleFunc("/feeds", feedsHandler)
 	mux.HandleFunc("/feeds/reactivate", feedsReactivateHandler)
+	mux.HandleFunc("/indicators", indicatorsHandler)
 
 	return mux
 }
