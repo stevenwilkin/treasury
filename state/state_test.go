@@ -168,3 +168,23 @@ func TestTHBPremium(t *testing.T) {
 		t.Errorf("Expected THB premium to be %f, got %f", 0.1, s.THBPremium())
 	}
 }
+
+func TestUSDTPremium(t *testing.T) {
+	s := NewState()
+
+	if s.USDTPremium() != 0 {
+		t.Error("Expected USDT premium to be 0")
+	}
+
+	s.SetSymbol(symbol.USDTHB, 30)
+
+	if s.USDTPremium() != 0 {
+		t.Error("Expected USDT premium to be 0")
+	}
+
+	s.SetSymbol(symbol.USDTTHB, 33)
+
+	if s.USDTPremium() != 0.1 {
+		t.Errorf("Expected USDT premium to be %f, got %f", 0.1, s.USDTPremium())
+	}
+}

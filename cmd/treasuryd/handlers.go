@@ -287,7 +287,8 @@ func feedsReactivateHandler(w http.ResponseWriter, r *http.Request) {
 
 func indicatorsHandler(w http.ResponseWriter, r *http.Request) {
 	data := map[string]float64{
-		"thb_premium": statum.THBPremium()}
+		"thb_premium":  statum.THBPremium(),
+		"usdt_premium": statum.USDTPremium()}
 
 	b, err := json.Marshal(data)
 	if err != nil {

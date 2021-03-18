@@ -9,7 +9,8 @@ import (
 )
 
 type indicatorsMessage struct {
-	THBPremium float64 `json:"thb_premium"`
+	THBPremium  float64 `json:"thb_premium"`
+	USDTPremium float64 `json:"usdt_premium"`
 }
 
 var indicatorsCmd = &cobra.Command{
@@ -34,6 +35,7 @@ var indicatorsCmd = &cobra.Command{
 			panic(err)
 		}
 
-		fmt.Printf("THB Premium: %.2f%%\n", im.THBPremium*100)
+		fmt.Printf("THB  Premium: %.2f%%\n", im.THBPremium*100)
+		fmt.Printf("USDT Premium: %.2f%%\n", im.USDTPremium*100)
 	},
 }

@@ -158,6 +158,17 @@ func (s *State) THBPremium() float64 {
 	return percentage
 }
 
+func (s *State) USDTPremium() float64 {
+	usdthb := s.Symbol(symbol.USDTHB)
+	usdtthb := s.Symbol(symbol.USDTTHB)
+
+	if !(usdthb > 0 && usdtthb > 0) {
+		return 0
+	}
+
+	return (usdtthb - usdthb) / usdthb
+}
+
 func (s *State) Save() error {
 	s.mu.Lock()
 	defer s.mu.Unlock()
