@@ -11,8 +11,10 @@ import (
 
 	"github.com/stevenwilkin/treasury/alert"
 	"github.com/stevenwilkin/treasury/feed"
+	"github.com/stevenwilkin/treasury/handlers"
 	"github.com/stevenwilkin/treasury/state"
 	"github.com/stevenwilkin/treasury/telegram"
+	"github.com/stevenwilkin/treasury/venue"
 
 	_ "github.com/joho/godotenv/autoload"
 	log "github.com/sirupsen/logrus"
@@ -26,7 +28,7 @@ var (
 	statum      *state.State
 	alerter     *alert.Alerter
 	feedHandler *feed.Handler
-	venues      Venues
+	venues      venue.Venues
 )
 
 func initState() {
@@ -68,6 +70,11 @@ func initAlerter() {
 	}()
 }
 
+func initVenues() {
+	log.Info("Initialising venues")
+	venues = venue.NewVenues()
+}
+
 func initControlSocket() {
 	log.Info("Initialising control socket ", socketPath)
 
@@ -85,11 +92,11 @@ func initControlSocket() {
 		log.Fatal("chmod error:", err)
 	}
 
-	mux := controlHandlers()
+	h := handlers.NewHandler(statum, alerter, feedHandler, venues)
 
 	go func() {
 		defer l.Close()
-		log.Fatal(http.Serve(l, mux))
+		log.Fatal(http.Serve(l, h.Mux()))
 	}()
 }
 

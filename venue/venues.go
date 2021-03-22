@@ -1,4 +1,4 @@
-package main
+package venue
 
 import (
 	"os"
@@ -9,8 +9,6 @@ import (
 	"github.com/stevenwilkin/treasury/deribit"
 	"github.com/stevenwilkin/treasury/ftx"
 	"github.com/stevenwilkin/treasury/xe"
-
-	log "github.com/sirupsen/logrus"
 )
 
 type Venues struct {
@@ -22,8 +20,8 @@ type Venues struct {
 	XE      *xe.XE
 }
 
-func initVenues() {
-	log.Info("Initialising venues")
+func NewVenues() Venues {
+	venues := Venues{}
 
 	venues.Binance = &binance.Binance{
 		ApiKey:    os.Getenv("BINANCE_API_KEY"),
@@ -39,4 +37,6 @@ func initVenues() {
 		ApiKey:    os.Getenv("FTX_API_KEY"),
 		ApiSecret: os.Getenv("FTX_API_SECRET")}
 	venues.XE = &xe.XE{}
+
+	return venues
 }

@@ -1,4 +1,4 @@
-package main
+package handlers
 
 import (
 	"net/http"
@@ -18,7 +18,12 @@ type TestNotifier struct{}
 
 func (t *TestNotifier) Notify(s string) error { return nil }
 
-func TestSetHandlerInvalidVenue(t *testing.T) {
+var h *Handler = NewHandler(state.NewState(),
+	alert.NewAlerter(&TestNotifier{}),
+	feed.NewHandler(),
+	venue.Venues{})
+
+func TestSetAssetInvalidVenue(t *testing.T) {
 	params := url.Values{}
 	params.Set("venue", "fake")
 	params.Set("asset", "btc")
@@ -32,7 +37,7 @@ func TestSetHandlerInvalidVenue(t *testing.T) {
 	r.Header.Set("Content-Type", "application/x-www-form-urlencoded")
 
 	w := httptest.NewRecorder()
-	handler := http.HandlerFunc(setHandler)
+	handler := http.HandlerFunc(h.SetAsset)
 	handler.ServeHTTP(w, r)
 
 	resp := w.Result()
@@ -42,7 +47,7 @@ func TestSetHandlerInvalidVenue(t *testing.T) {
 	}
 }
 
-func TestSetHandlerInvalidAsset(t *testing.T) {
+func TestSetAssetInvalidAsset(t *testing.T) {
 	params := url.Values{}
 	params.Set("venue", "nexo")
 	params.Set("asset", "fake")
@@ -56,7 +61,7 @@ func TestSetHandlerInvalidAsset(t *testing.T) {
 	r.Header.Set("Content-Type", "application/x-www-form-urlencoded")
 
 	w := httptest.NewRecorder()
-	handler := http.HandlerFunc(setHandler)
+	handler := http.HandlerFunc(h.SetAsset)
 	handler.ServeHTTP(w, r)
 
 	resp := w.Result()
@@ -66,9 +71,7 @@ func TestSetHandlerInvalidAsset(t *testing.T) {
 	}
 }
 
-func TestSetHandlerSetsAsset(t *testing.T) {
-	statum = state.NewState()
-
+func TestSetAsset(t *testing.T) {
 	params := url.Values{}
 	params.Set("venue", "nexo")
 	params.Set("asset", "btc")
@@ -82,15 +85,15 @@ func TestSetHandlerSetsAsset(t *testing.T) {
 	r.Header.Set("Content-Type", "application/x-www-form-urlencoded")
 
 	w := httptest.NewRecorder()
-	handler := http.HandlerFunc(setHandler)
+	handler := http.HandlerFunc(h.SetAsset)
 	handler.ServeHTTP(w, r)
 
-	if statum.Asset(venue.Nexo, asset.BTC) != 1.23 {
-		t.Errorf("Unexpected asset value %f", statum.Assets[venue.Nexo][asset.BTC])
+	if h.s.Asset(venue.Nexo, asset.BTC) != 1.23 {
+		t.Errorf("Unexpected asset value %f", h.s.Assets[venue.Nexo][asset.BTC])
 	}
 }
 
-func TestCostHandler(t *testing.T) {
+func TestSetCost(t *testing.T) {
 	params := url.Values{"cost": {"123.45"}}
 	body := strings.NewReader(params.Encode())
 
@@ -101,16 +104,16 @@ func TestCostHandler(t *testing.T) {
 	r.Header.Set("Content-Type", "application/x-www-form-urlencoded")
 
 	w := httptest.NewRecorder()
-	handler := http.HandlerFunc(costHandler)
+	handler := http.HandlerFunc(h.SetCost)
 	handler.ServeHTTP(w, r)
 
-	if statum.Cost != 123.45 {
-		t.Errorf("Unexpected cost %f", statum.Cost)
+	if h.s.Cost != 123.45 {
+		t.Errorf("Unexpected cost %f", h.s.Cost)
 	}
 }
 
-func TestPriceAlertsHandler(t *testing.T) {
-	alerter = alert.NewAlerter(&TestNotifier{})
+func TestAddPriceAlert(t *testing.T) {
+	h.a = alert.NewAlerter(&TestNotifier{})
 
 	params := url.Values{"value": {"20000"}}
 	body := strings.NewReader(params.Encode())
@@ -122,14 +125,14 @@ func TestPriceAlertsHandler(t *testing.T) {
 	r.Header.Set("Content-Type", "application/x-www-form-urlencoded")
 
 	w := httptest.NewRecorder()
-	handler := http.HandlerFunc(priceAlertsHandler)
+	handler := http.HandlerFunc(h.AddPriceAlert)
 	handler.ServeHTTP(w, r)
 
-	if len(alerter.Alerts()) != 1 {
+	if len(h.a.Alerts()) != 1 {
 		t.Error("Should set an alert")
 	}
 
-	alert := alerter.Alerts()[0]
+	alert := h.a.Alerts()[0]
 	expected := "Price alert at BTCUSDT 20000.00"
 
 	if alert.Description() != expected {
@@ -137,8 +140,8 @@ func TestPriceAlertsHandler(t *testing.T) {
 	}
 }
 
-func TestFundingAlertsHandler(t *testing.T) {
-	alerter = alert.NewAlerter(&TestNotifier{})
+func TestAddFundingAlert(t *testing.T) {
+	h.a = alert.NewAlerter(&TestNotifier{})
 
 	r, err := http.NewRequest("POST", "/alerts/funding", nil)
 	if err != nil {
@@ -146,14 +149,14 @@ func TestFundingAlertsHandler(t *testing.T) {
 	}
 
 	w := httptest.NewRecorder()
-	handler := http.HandlerFunc(fundingAlertsHandler)
+	handler := http.HandlerFunc(h.AddFundingAlert)
 	handler.ServeHTTP(w, r)
 
-	if len(alerter.Alerts()) != 1 {
+	if len(h.a.Alerts()) != 1 {
 		t.Error("Should set an alert")
 	}
 
-	alert := alerter.Alerts()[0]
+	alert := h.a.Alerts()[0]
 	expected := "Negative funding alert"
 
 	if alert.Description() != expected {
@@ -161,7 +164,7 @@ func TestFundingAlertsHandler(t *testing.T) {
 	}
 }
 
-func TestFeedsReactivateHandlerInvalidFeed(t *testing.T) {
+func TestReactivateFeedInvalidFeed(t *testing.T) {
 	params := url.Values{}
 	params.Set("feed", "fake")
 	body := strings.NewReader(params.Encode())
@@ -173,7 +176,7 @@ func TestFeedsReactivateHandlerInvalidFeed(t *testing.T) {
 	r.Header.Set("Content-Type", "application/x-www-form-urlencoded")
 
 	w := httptest.NewRecorder()
-	handler := http.HandlerFunc(feedsReactivateHandler)
+	handler := http.HandlerFunc(h.ReactivateFeed)
 	handler.ServeHTTP(w, r)
 
 	resp := w.Result()
@@ -183,9 +186,7 @@ func TestFeedsReactivateHandlerInvalidFeed(t *testing.T) {
 	}
 }
 
-func TestFeedsReactivateHandler(t *testing.T) {
-	feedHandler = feed.NewHandler()
-
+func TestReactivateFeed(t *testing.T) {
 	params := url.Values{}
 	params.Set("feed", feed.BTCUSDT.String())
 	body := strings.NewReader(params.Encode())
@@ -197,7 +198,7 @@ func TestFeedsReactivateHandler(t *testing.T) {
 	r.Header.Set("Content-Type", "application/x-www-form-urlencoded")
 
 	w := httptest.NewRecorder()
-	handler := http.HandlerFunc(feedsReactivateHandler)
+	handler := http.HandlerFunc(h.ReactivateFeed)
 	handler.ServeHTTP(w, r)
 
 	resp := w.Result()
