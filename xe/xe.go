@@ -1,14 +1,10 @@
 package xe
 
 import (
-	"encoding/base64"
 	"encoding/json"
 	"errors"
 	"io/ioutil"
-	"math"
 	"net/http"
-	"net/url"
-	"strconv"
 	"time"
 
 	log "github.com/sirupsen/logrus"
@@ -17,81 +13,21 @@ import (
 type XE struct{}
 
 type rateResponse struct {
-	Payload struct {
-		Rates struct {
-			Rate string `json:"rate"`
-		} `json:"rates"`
-	} `json:"payload"`
-}
-
-func extractDataAndKey(s string) (string, string) {
-	var offset int
-	var n float64
-
-	for _, c := range s[len(s)-4:] {
-		n += float64(c)
-	}
-
-	n = math.Mod((float64(len(s)) - 10), n)
-	if n > float64(len(s))-14 {
-		offset = len(s) - 14
-	} else {
-		offset = int(n)
-	}
-
-	return s[0:offset] + s[offset+10:], s[offset : offset+10]
-}
-
-func decodeString(data []byte, key string) string {
-	var i, keyPosition float64
-	var result, plaintext string
-
-	for o := 0; o < len(data); o += 10 {
-		charCode := data[o]
-
-		if math.Mod(float64(i), float64(len(key)))-1 < 0 {
-			keyPosition = float64(len(key)) + math.Mod(i, float64(len(key))) - 1
-		} else {
-			keyPosition = math.Mod(i, float64(len(key))) - 1
-		}
-
-		if (o + 10) > len(data) {
-			plaintext = string(data[o+1 : len(data)])
-		} else {
-			plaintext = string(data[o+1 : o+10])
-		}
-
-		result += string(charCode-key[int(keyPosition)]) + plaintext
-		i++
-	}
-
-	return result
-}
-
-func decode(s string) (float64, error) {
-	dataString, key := extractDataAndKey(s)
-
-	dataUnescaped, err := url.QueryUnescape(dataString)
-	if err != nil {
-		return 0, err
-	}
-
-	data, err := base64.StdEncoding.DecodeString(dataUnescaped)
-	if err != nil {
-		return 0, err
-	}
-
-	resultString := decodeString(data, key)
-
-	if result, err := strconv.ParseFloat(resultString, 64); err != nil {
-		return 0, err
-	} else {
-		return result, nil
-	}
+	Rates struct {
+		THB float64 `json:"THB"`
+	} `json:"rates"`
 }
 
 func (x *XE) GetPrice() (float64, error) {
-	resp, err := http.Get("https://www.xe.com/api/page_resources/converter.php?fromCurrency=USD&toCurrency=THB")
+	req, err := http.NewRequest("GET", "https://xe.com/api/protected/midmarket-converter/", nil)
+	if err != nil {
+		return 0, err
+	}
+
+	req.Header.Set("Authorization", "Basic bG9kZXN0YXI6eDRBZE9MaENEbHQ3TkNLV25sTlhIUXlQTzMzZVo0R00=")
+
+	client := &http.Client{}
+	resp, err := client.Do(req)
 	if err != nil {
 		return 0, err
 	}
@@ -105,11 +41,11 @@ func (x *XE) GetPrice() (float64, error) {
 	var response rateResponse
 	json.Unmarshal(body, &response)
 
-	if response.Payload.Rates.Rate == "" {
+	if response.Rates.THB == 0 {
 		return 0, errors.New("Empty rate response")
 	}
 
-	return decode(response.Payload.Rates.Rate)
+	return response.Rates.THB, nil
 }
 
 func (x *XE) Price() chan float64 {
