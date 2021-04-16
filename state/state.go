@@ -20,6 +20,7 @@ type State struct {
 	Symbols           map[symbol.Symbol]float64
 	FundingRate       [2]float64
 	TotalSize         int
+	LoanUSD           float64
 }
 
 const (
@@ -90,6 +91,14 @@ func (s *State) SetSize(size int) {
 	s.TotalSize = size
 }
 
+func (s *State) Loan() float64 {
+	return s.LoanUSD
+}
+
+func (s *State) SetLoan(loan float64) {
+	s.LoanUSD = loan
+}
+
 func (s *State) Size() int {
 	return s.TotalSize
 }
@@ -107,6 +116,10 @@ func (s *State) TotalValue() float64 {
 				total += quantity * s.Symbols[sym]
 			}
 		}
+	}
+
+	if s.LoanUSD > 0 {
+		total -= (s.LoanUSD * s.Symbols[symbol.USDTHB])
 	}
 
 	return total

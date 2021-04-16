@@ -74,6 +74,15 @@ func TestSize(t *testing.T) {
 	}
 }
 
+func TestLoan(t *testing.T) {
+	s := NewState()
+	s.SetLoan(100000)
+
+	if s.Loan() != 100000 {
+		t.Errorf("Expected: 100000 - Got: %f", s.Loan())
+	}
+}
+
 func TestTotalValue(t *testing.T) {
 	s := NewState()
 	s.SetAsset(venue.Nexo, asset.BTC, 1.1)
@@ -84,6 +93,18 @@ func TestTotalValue(t *testing.T) {
 
 	if s.TotalValue() != 391000 {
 		t.Errorf("Expected total value to be %d, got %f", 391000, s.TotalValue())
+	}
+}
+
+func TestTotalValueWithOutstandingLoan(t *testing.T) {
+	s := NewState()
+	s.SetLoan(10000)
+	s.SetAsset(venue.Nexo, asset.BTC, 2)
+	s.SetSymbol(symbol.BTCTHB, 300000)
+	s.SetSymbol(symbol.USDTHB, 31)
+
+	if s.TotalValue() != 290000 {
+		t.Errorf("Expected total value to be %d, got %f", 290000, s.TotalValue())
 	}
 }
 
