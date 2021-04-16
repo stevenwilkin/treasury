@@ -20,10 +20,12 @@ func init() {
 	rootCmd.AddCommand(sizeCmd)
 	rootCmd.AddCommand(feedsCmd)
 	rootCmd.AddCommand(indicatorsCmd)
+	rootCmd.AddCommand(loanCmd)
 
 	assetsCmd.AddCommand(setAssetsCmd)
 	alertsCmd.AddCommand(alertsPriceCmd, alertsClearCmd, alertsFundingCmd)
 	pnlCmd.AddCommand(pnlUsdCmd)
 	sizeCmd.AddCommand(sizeUpdateCmd)
 	feedsCmd.AddCommand(feedsReactivateCmd)
+	loanCmd.AddCommand(loanSetCmd)
 }

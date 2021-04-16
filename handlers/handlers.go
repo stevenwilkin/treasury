@@ -284,6 +284,34 @@ func (h *Handler) Indicators(w http.ResponseWriter, r *http.Request) {
 	w.Write(b)
 }
 
+func (h *Handler) Loan(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+
+	fm := struct {
+		Loan float64 `json:"loan"`
+	}{
+		Loan: h.s.Loan()}
+
+	b, err := json.Marshal(fm)
+	if err != nil {
+		log.Error(err)
+	}
+
+	w.Write(b)
+}
+
+func (h *Handler) SetLoan(w http.ResponseWriter, r *http.Request) {
+	l, err := strconv.ParseFloat(r.FormValue("loan"), 64)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+
+	log.Infof("Loan - %f", l)
+
+	h.s.SetLoan(l)
+}
+
 func (h *Handler) Mux() *http.ServeMux {
 	mux := http.NewServeMux()
 	mux.HandleFunc("/prices", h.Prices)
@@ -303,6 +331,8 @@ func (h *Handler) Mux() *http.ServeMux {
 	mux.HandleFunc("/feeds", h.Feeds)
 	mux.HandleFunc("/feeds/reactivate", h.ReactivateFeed)
 	mux.HandleFunc("/indicators", h.Indicators)
+	mux.HandleFunc("/loan", h.Loan)
+	mux.HandleFunc("/loan/set", h.SetLoan)
 
 	return mux
 }

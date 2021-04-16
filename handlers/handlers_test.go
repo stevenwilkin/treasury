@@ -207,3 +207,22 @@ func TestReactivateFeed(t *testing.T) {
 		t.Errorf("Unexpected status code %d", resp.StatusCode)
 	}
 }
+
+func TestSetLoan(t *testing.T) {
+	params := url.Values{"loan": {"123.45"}}
+	body := strings.NewReader(params.Encode())
+
+	r, err := http.NewRequest("POST", "/loan/set", body)
+	if err != nil {
+		t.Fatal(err)
+	}
+	r.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+
+	w := httptest.NewRecorder()
+	handler := http.HandlerFunc(h.SetLoan)
+	handler.ServeHTTP(w, r)
+
+	if h.s.Loan() != 123.45 {
+		t.Errorf("Unexpected loan %f", h.s.Loan())
+	}
+}
