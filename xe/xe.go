@@ -24,7 +24,7 @@ func (x *XE) GetPrice() (float64, error) {
 		return 0, err
 	}
 
-	req.Header.Set("Authorization", "Basic bG9kZXN0YXI6cXdzc3VlbmhTd2E5Ym5TUlpvT2JVd2V4Y2t1VUpIZXE=")
+	req.Header.Set("Authorization", "Basic bG9kZXN0YXI6RGlVNG1pRlFMZTBaa09NY3A4RmJkczRYNkVFWjh1TVI=")
 
 	client := &http.Client{}
 	resp, err := client.Do(req)
