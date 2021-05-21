@@ -1,3 +1,7 @@
+function formatPrice(f) {
+  return f.toFixed(2);
+}
+
 function initPrices(prices) {
   var template = $('#template-price').html();
 
@@ -5,7 +9,7 @@ function initPrices(prices) {
     var item = template
                  .replace(/__NAME__/, price)
                  .replace(/__ID__/, 'price-' + price)
-                 .replace(/__PRICE__/, prices[price]);
+                 .replace(/__PRICE__/, formatPrice(prices[price]));
     $('.prices').append(item);
   }
 }
@@ -15,14 +19,15 @@ function updatePrices(prices) {
       flashColour = '#FFF';
 
   for(var price in prices) {
-    var item = $('.price-' + price);
+    var item = $('.price-' + price),
+        value = formatPrice(prices[price]);
 
-    if(item.text() == prices[price]) {
+    if(item.text() == value) {
       continue;
     }
 
     item
-      .text(prices[price])
+      .text(value)
       .css('color', flashColour);
 
     setTimeout(function() {
