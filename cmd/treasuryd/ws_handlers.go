@@ -2,8 +2,7 @@ package main
 
 import (
 	"net/http"
-
-	"github.com/stevenwilkin/treasury/symbol"
+	"sync"
 
 	"github.com/gorilla/websocket"
 	log "github.com/sirupsen/logrus"
@@ -16,37 +15,22 @@ type pricesMessage struct {
 var (
 	conns    = map[*websocket.Conn]bool{}
 	upgrader = websocket.Upgrader{}
+	m        = sync.Mutex{}
 )
 
-func sendState(c *websocket.Conn) {
-	log.Debug("Sending initial state")
+func sendState(c *websocket.Conn) error {
+	log.Debug("Sending state")
 
 	pm := pricesMessage{Prices: map[string]float64{}}
 	for s, p := range statum.Symbols {
 		pm.Prices[s.String()] = p
 	}
 
-	err := c.WriteJSON(pm)
-	if err != nil {
-		log.Error(err)
+	if err := c.WriteJSON(pm); err != nil {
+		return err
 	}
-}
 
-func sendPrice(s symbol.Symbol, price float64) {
-	log.WithFields(log.Fields{
-		"symbol": s,
-		"value":  price,
-	}).Debug("Sending price to websockets")
-
-	for c, _ := range conns {
-		pm := pricesMessage{Prices: map[string]float64{s.String(): price}}
-
-		err := c.WriteJSON(pm)
-		if err != nil {
-			log.Error(err)
-			delete(conns, c)
-		}
-	}
+	return nil
 }
 
 func serveWs(w http.ResponseWriter, r *http.Request) {
@@ -58,6 +42,9 @@ func serveWs(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	m.Lock()
 	conns[c] = true
+	m.Unlock()
+
 	sendState(c)
 }

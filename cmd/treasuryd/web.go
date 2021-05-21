@@ -4,12 +4,30 @@ package main
 
 import (
 	"net/http"
+	"time"
 
 	log "github.com/sirupsen/logrus"
 )
 
 func initWS() {
 	http.HandleFunc("/ws", serveWs)
+
+	ticker := time.NewTicker(1 * time.Second)
+
+	go func() {
+		for {
+			for c, _ := range conns {
+				if err := sendState(c); err != nil {
+					log.Debug(err)
+					m.Lock()
+					delete(conns, c)
+					m.Unlock()
+				}
+			}
+
+			<-ticker.C
+		}
+	}()
 }
 
 func initWeb() {
