@@ -13,14 +13,13 @@ import (
 )
 
 type State struct {
-	mu                sync.Mutex
-	symbolSubscribers map[chan SymbolNotification]bool
-	Cost              float64
-	Assets            map[venue.Venue]map[asset.Asset]float64
-	Symbols           map[symbol.Symbol]float64
-	FundingRate       [2]float64
-	TotalSize         int
-	LoanUSD           float64
+	mu          sync.Mutex
+	Cost        float64
+	Assets      map[venue.Venue]map[asset.Asset]float64
+	Symbols     map[symbol.Symbol]float64
+	FundingRate [2]float64
+	TotalSize   int
+	LoanUSD     float64
 }
 
 const (
@@ -29,9 +28,8 @@ const (
 
 func NewState() *State {
 	return &State{
-		symbolSubscribers: map[chan SymbolNotification]bool{},
-		Assets:            map[venue.Venue]map[asset.Asset]float64{},
-		Symbols:           map[symbol.Symbol]float64{}}
+		Assets:  map[venue.Venue]map[asset.Asset]float64{},
+		Symbols: map[symbol.Symbol]float64{}}
 }
 
 func (s *State) SetAsset(v venue.Venue, a asset.Asset, q float64) {
@@ -40,10 +38,6 @@ func (s *State) SetAsset(v venue.Venue, a asset.Asset, q float64) {
 
 	if _, ok := s.Assets[v]; !ok {
 		s.Assets[v] = map[asset.Asset]float64{}
-	}
-
-	if s.Assets[v][a] == q {
-		return
 	}
 
 	s.Assets[v][a] = q
@@ -60,12 +54,7 @@ func (s *State) SetSymbol(sym symbol.Symbol, v float64) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
-	if s.Symbols[sym] == v {
-		return
-	}
-
 	s.Symbols[sym] = v
-	s.NotifySymbolSubscribers(sym, v)
 }
 
 func (s *State) Symbol(sym symbol.Symbol) float64 {

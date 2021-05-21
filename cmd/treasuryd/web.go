@@ -10,15 +10,6 @@ import (
 
 func initWS() {
 	http.HandleFunc("/ws", serveWs)
-
-	ch := statum.SubscribeToSymbols()
-
-	go func() {
-		for {
-			sn := <-ch
-			sendPrice(sn.Symbol, sn.Value)
-		}
-	}()
 }
 
 func initWeb() {
