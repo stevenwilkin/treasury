@@ -45,7 +45,7 @@ function handlePrices(prices) {
 }
 
 $(function() {
-  var ws = new WebSocket('ws://0.0.0.0:8080/ws');
+  var ws = new WebSocket('ws://' + window.location.host + '/ws');
 
   ws.onopen = function() {
     console.log('> onopen');
