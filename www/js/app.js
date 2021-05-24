@@ -49,6 +49,9 @@ $(function() {
 
   ws.onopen = function() {
     console.log('> onopen');
+    var token = readCookie('auth_token') || window.prompt('Auth token');
+    createCookie('auth_token', token, 365);
+    ws.send(JSON.stringify({auth: token}));
   }
 
   ws.onclose = function() {
@@ -62,6 +65,12 @@ $(function() {
 
   ws.onmessage = function(message) {
     var json = JSON.parse(message.data);
+
+    if(json.error) {
+      window.alert('Authentication failed');
+      eraseCookie('auth_token');
+      return;
+    }
 
     if(json.prices) {
       handlePrices(json.prices);

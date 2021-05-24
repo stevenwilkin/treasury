@@ -2,6 +2,7 @@ package main
 
 import (
 	"net/http"
+	"os"
 	"sync"
 
 	"github.com/gorilla/websocket"
@@ -10,6 +11,10 @@ import (
 
 type pricesMessage struct {
 	Prices map[string]float64 `json:"prices"`
+}
+
+type authMessage struct {
+	Auth string `json:"auth"`
 }
 
 var (
@@ -38,8 +43,23 @@ func serveWs(w http.ResponseWriter, r *http.Request) {
 
 	c, err := upgrader.Upgrade(w, r, nil)
 	if err != nil {
-		log.Error(err)
+		log.Warn(err)
 		return
+	}
+
+	if authToken := os.Getenv("WS_AUTH_TOKEN"); len(authToken) > 0 {
+		var am authMessage
+		if err := c.ReadJSON(&am); err != nil {
+			log.Warn(err)
+			return
+		}
+
+		if am.Auth != authToken {
+			log.Info("Unauthenticated")
+			c.WriteMessage(websocket.TextMessage, []byte(`{"error":"unauthenticated"}`))
+			c.Close()
+			return
+		}
 	}
 
 	m.Lock()
