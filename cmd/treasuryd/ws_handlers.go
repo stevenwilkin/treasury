@@ -5,12 +5,20 @@ import (
 	"os"
 	"sync"
 
+	"github.com/stevenwilkin/treasury/symbol"
+
 	"github.com/gorilla/websocket"
 	log "github.com/sirupsen/logrus"
 )
 
-type pricesMessage struct {
-	Prices map[string]float64 `json:"prices"`
+type stateMessage struct {
+	Assets        map[string]map[string]float64 `json:"assets"`
+	Prices        map[string]float64            `json:"prices"`
+	Exposure      float64                       `json:"exposure"`
+	Cost          float64                       `json:"cost"`
+	Value         float64                       `json:"value"`
+	Pnl           float64                       `json:"pnl"`
+	PnlPercentage float64                       `json:"pnl_percentage"`
 }
 
 type authMessage struct {
@@ -26,12 +34,29 @@ var (
 func sendState(c *websocket.Conn) error {
 	log.Debug("Sending state")
 
-	pm := pricesMessage{Prices: map[string]float64{}}
-	for s, p := range statum.Symbols {
-		pm.Prices[s.String()] = p
+	usdThb := statum.Symbol(symbol.USDTHB)
+
+	sm := stateMessage{
+		Assets:        map[string]map[string]float64{},
+		Prices:        map[string]float64{},
+		Exposure:      statum.Exposure(),
+		Cost:          statum.Cost / usdThb,
+		Value:         statum.TotalValue() / usdThb,
+		Pnl:           statum.Pnl() / usdThb,
+		PnlPercentage: statum.PnlPercentage()}
+
+	for v, balances := range statum.Assets {
+		sm.Assets[v.String()] = map[string]float64{}
+		for a, q := range balances {
+			sm.Assets[v.String()][a.String()] = q
+		}
 	}
 
-	if err := c.WriteJSON(pm); err != nil {
+	for s, p := range statum.Symbols {
+		sm.Prices[s.String()] = p
+	}
+
+	if err := c.WriteJSON(sm); err != nil {
 		return err
 	}
 
