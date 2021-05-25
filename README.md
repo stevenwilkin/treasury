@@ -29,3 +29,8 @@ Enable and start the service:
 	& ~
 	EOF
 	systemctl restart rsyslog
+
+
+## Upload web assets
+
+	rsync -av ./www $HOST:/usr/share/treasuryd/
