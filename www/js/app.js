@@ -86,10 +86,33 @@ function updateAssets(assets) {
 }
 
 function handleAssets(assets) {
+  var filtered = {};
+  for(var venue in assets) {
+    var hasAssets = false;
+    for(var asset in assets[venue]) {
+      if(assets[venue][asset] > 0) {
+        hasAssets = true;
+        break;
+      }
+    }
+
+    if(!hasAssets) {
+      continue;
+    }
+
+    filtered[venue] = {};
+
+    for(var asset in assets[venue]) {
+      if(assets[venue][asset] > 0) {
+        filtered[venue][asset] = assets[venue][asset];
+      }
+    }
+  }
+
   if($('.assets').children().length) {
-    updateAssets(assets);
+    updateAssets(filtered);
   } else {
-    initAssets(assets);
+    initAssets(filtered);
   }
 }
 
