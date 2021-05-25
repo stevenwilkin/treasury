@@ -10,13 +10,14 @@ type Asset int
 const (
 	BTC Asset = iota
 	USDT
+	USDC
 	USD
 )
 
 type Balances map[Asset]float64
 
 func assets() []string {
-	return []string{"BTC", "USDT", "USD"}
+	return []string{"BTC", "USDT", "USDC", "USD"}
 }
 
 func (a Asset) String() string {

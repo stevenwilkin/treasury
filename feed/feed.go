@@ -11,6 +11,7 @@ const (
 	BTCUSDT Feed = iota
 	BTCTHB
 	USDTTHB
+	USDCTHB
 	USDTHB
 	Binance
 	Deribit
@@ -24,6 +25,7 @@ func feeds() []string {
 		"BTCUSDT",
 		"BTCTHB",
 		"USDTTHB",
+		"USDCTHB",
 		"USDTHB",
 		"Binance",
 		"Deribit",

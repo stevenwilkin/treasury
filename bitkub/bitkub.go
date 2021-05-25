@@ -85,6 +85,8 @@ func (b *BitKub) GetPrice(s symbol.Symbol) (float64, error) {
 		tickerString = "THB_BTC"
 	case symbol.USDTTHB:
 		tickerString = "THB_USDT"
+	case symbol.USDCTHB:
+		tickerString = "THB_USDC"
 	}
 
 	v := url.Values{"sym": {tickerString}}

@@ -49,6 +49,13 @@ func initDataFeeds() {
 		})
 
 	feedHandler.Add(
+		feed.USDCTHB,
+		curry(venues.Bitkub.Price, symbol.USDCTHB),
+		func(usdcThb float64) {
+			statum.SetSymbol(symbol.USDCTHB, usdcThb)
+		})
+
+	feedHandler.Add(
 		feed.USDTHB,
 		venues.XE.Price,
 		func(usdThb float64) {
