@@ -1,8 +1,30 @@
-var normalColour = 'rgb(178, 178, 178)',
-    flashColour = '#FFF';
+function updateElement(identifier, value) {
+  var item = $(identifier),
+      normalColour = 'rgb(178, 178, 178)',
+      flashColour = '#FFF';
 
-function formatPrice(f) {
-  return f.toFixed(2);
+  if(item.text() == value) {
+    return;
+  }
+
+  if(item.text() == '') {
+    item.text(value);
+    return;
+  }
+
+  if(window.timeouts[identifier]) {
+    clearTimeout(window.timeouts[identifier]);
+    delete(window.timeouts[identifier]);
+  }
+
+  item
+    .text(value)
+    .css('color', flashColour);
+
+  window.timeouts[identifier] = setTimeout(function() {
+    item.css('color', normalColour);
+    delete(window.timeouts[identifier]);
+  }, 1000);
 }
 
 function initPrices(prices) {
@@ -12,35 +34,19 @@ function initPrices(prices) {
     var item = template
                  .replace(/__NAME__/, price)
                  .replace(/__ID__/, 'price-' + price)
-                 .replace(/__PRICE__/, formatPrice(prices[price]));
+                 .replace(/__PRICE__/, prices[price].toFixed(2));
     $('.prices').append(item);
   }
 }
 
-function updatePrices(prices) {
-  for(var price in prices) {
-    var item = $('.price-' + price),
-        value = formatPrice(prices[price]);
-
-    if(item.text() == value) {
-      continue;
-    }
-
-    item
-      .text(value)
-      .css('color', flashColour);
-
-    setTimeout(function() {
-      item.css('color', normalColour);
-    }, 1000);
-  }
-}
-
 function handlePrices(prices) {
-  if($('.prices').children().length) {
-    updatePrices(prices);
-  } else {
+  if(!$('.prices').children().length) {
     initPrices(prices);
+    return;
+  }
+
+  for(var price in prices) {
+    updateElement('.price-' + price, prices[price].toFixed(2));
   }
 }
 
@@ -64,29 +70,9 @@ function initAssets(assets) {
   }
 }
 
-function updateAssets(assets) {
-  for(var venue in assets) {
-    for(var asset in assets[venue]) {
-      var item = $('.asset-' +  + venue + '-' + asset),
-          value = assets[venue][asset];
-
-      if(item.text() == value) {
-        continue;
-      }
-
-      item
-        .text(value)
-        .css('color', flashColour);
-
-      setTimeout(function() {
-        item.css('color', normalColour);
-      }, 1000);
-    }
-  }
-}
-
-function handleAssets(assets) {
+function filterAssets(assets) {
   var filtered = {};
+
   for(var venue in assets) {
     var hasAssets = false;
     for(var asset in assets[venue]) {
@@ -109,10 +95,21 @@ function handleAssets(assets) {
     }
   }
 
-  if($('.assets').children().length) {
-    updateAssets(filtered);
-  } else {
+  return filtered;
+}
+
+function handleAssets(assets) {
+  var filtered = filterAssets(assets);
+
+  if(!$('.assets').children().length) {
     initAssets(filtered);
+    return;
+  }
+
+  for(var venue in filtered) {
+    for(var asset in filtered[venue]) {
+      updateElement('.asset-' + venue + '-' + asset, filtered[venue][asset]);
+    }
   }
 }
 
@@ -142,11 +139,12 @@ function handlePayload(json) {
       value = value.toFixed(2) + '%';
     }
 
-    $('.stat-' + stat).text(value);
+    updateElement('.stat-' + stat, value);
   }
 }
 
 $(function() {
+  window.timeouts = {};
   var ws = new WebSocket('ws://' + window.location.host + '/ws');
 
   ws.onopen = function() {
