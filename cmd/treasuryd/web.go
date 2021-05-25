@@ -4,6 +4,7 @@ package main
 
 import (
 	"net/http"
+	"os"
 	"time"
 
 	log "github.com/sirupsen/logrus"
@@ -31,7 +32,12 @@ func initWS() {
 }
 
 func initWeb() {
-	fs := http.FileServer(http.Dir("./www"))
+	path := "./www"
+	if wwwRoot := os.Getenv("WWW_ROOT"); len(wwwRoot) > 0 {
+		path = wwwRoot
+	}
+
+	fs := http.FileServer(http.Dir(path))
 	http.Handle("/", fs)
 
 	go func() {
