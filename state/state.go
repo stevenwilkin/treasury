@@ -50,6 +50,22 @@ func (s *State) Asset(v venue.Venue, a asset.Asset) float64 {
 	return s.Assets[v][a]
 }
 
+func (s *State) GetAssets() map[venue.Venue]map[asset.Asset]float64 {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
+	results := map[venue.Venue]map[asset.Asset]float64{}
+
+	for v, balances := range s.Assets {
+		results[v] = map[asset.Asset]float64{}
+		for a, q := range balances {
+			results[v][a] = q
+		}
+	}
+
+	return results
+}
+
 func (s *State) SetSymbol(sym symbol.Symbol, v float64) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
@@ -62,6 +78,19 @@ func (s *State) Symbol(sym symbol.Symbol) float64 {
 	defer s.mu.Unlock()
 
 	return s.Symbols[sym]
+}
+
+func (s *State) GetSymbols() map[symbol.Symbol]float64 {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
+	results := map[symbol.Symbol]float64{}
+
+	for sym, p := range s.Symbols {
+		results[sym] = p
+	}
+
+	return results
 }
 
 func (s *State) SetCost(c float64) {

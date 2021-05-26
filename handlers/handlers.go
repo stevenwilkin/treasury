@@ -34,7 +34,7 @@ func (h *Handler) Prices(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 
 	pm := pricesMessage{Prices: map[string]float64{}}
-	for s, p := range h.s.Symbols {
+	for s, p := range h.s.GetSymbols() {
 		pm.Prices[s.String()] = p
 	}
 
@@ -50,7 +50,7 @@ func (h *Handler) Assets(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 
 	am := assetsMessage{Assets: map[string]map[string]float64{}}
-	for v, balances := range h.s.Assets {
+	for v, balances := range h.s.GetAssets() {
 		am.Assets[v.String()] = map[string]float64{}
 		for a, q := range balances {
 			am.Assets[v.String()][a.String()] = q

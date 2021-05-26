@@ -1,6 +1,7 @@
 package state
 
 import (
+	"reflect"
 	"testing"
 
 	"github.com/stevenwilkin/treasury/asset"
@@ -36,6 +37,17 @@ func TestAsset(t *testing.T) {
 	}
 }
 
+func TestGetAssets(t *testing.T) {
+	s := NewState()
+	s.SetAsset(venue.Nexo, asset.BTC, 1.2)
+	s.SetAsset(venue.Nexo, asset.USDT, 1000)
+	s.SetAsset(venue.Binance, asset.USDT, 2000)
+
+	if !reflect.DeepEqual(s.GetAssets(), s.Assets) {
+		t.Error("Assets should be equal")
+	}
+}
+
 func TestSetSymbol(t *testing.T) {
 	s := NewState()
 	s.SetSymbol(symbol.BTCTHB, 300000)
@@ -51,6 +63,16 @@ func TestSymbol(t *testing.T) {
 
 	if s.Symbol(symbol.BTCTHB) != 300000 {
 		t.Error("Symbol value should be returned")
+	}
+}
+
+func TestGetSymbols(t *testing.T) {
+	s := NewState()
+	s.SetSymbol(symbol.BTCTHB, 300000)
+	s.SetSymbol(symbol.USDTHB, 31)
+
+	if !reflect.DeepEqual(s.GetSymbols(), s.Symbols) {
+		t.Error("Symbols should be equal")
 	}
 }
 

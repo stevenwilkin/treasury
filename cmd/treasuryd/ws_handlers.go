@@ -45,14 +45,14 @@ func sendState(c *websocket.Conn) error {
 		Pnl:           statum.Pnl() / usdThb,
 		PnlPercentage: statum.PnlPercentage()}
 
-	for v, balances := range statum.Assets {
+	for v, balances := range statum.GetAssets() {
 		sm.Assets[v.String()] = map[string]float64{}
 		for a, q := range balances {
 			sm.Assets[v.String()][a.String()] = q
 		}
 	}
 
-	for s, p := range statum.Symbols {
+	for s, p := range statum.GetSymbols() {
 		sm.Prices[s.String()] = p
 	}
 
