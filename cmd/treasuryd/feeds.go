@@ -29,9 +29,10 @@ func initDataFeeds() {
 	feedHandler.Add(
 		feed.Binance,
 		venues.Binance.Balances,
-		func(balances [2]float64) {
+		func(balances [3]float64) {
 			statum.SetAsset(venue.Binance, asset.BTC, balances[0])
 			statum.SetAsset(venue.Binance, asset.USDT, balances[1])
+			statum.SetAsset(venue.Binance, asset.USDC, balances[2])
 		})
 
 	feedHandler.Add(

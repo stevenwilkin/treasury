@@ -84,45 +84,42 @@ func (b *Binance) doRequest(method, path string, values url.Values, sign bool) (
 	return body, nil
 }
 
-func (b *Binance) GetBalances() (float64, float64, error) {
+func (b *Binance) GetBalances() (float64, float64, float64, error) {
 	body, err := b.doRequest("GET", "/api/v3/account", url.Values{}, true)
 	if err != nil {
-		return 0, 0, err
+		return 0, 0, 0, err
 	}
 
 	var response accountResponse
 	json.Unmarshal(body, &response)
 
-	var btc, usdt float64
+	var btc, usdt, usdc float64
 
 	for _, asset := range response.Balances {
-		if asset.Asset != "BTC" && asset.Asset != "USDT" {
+		switch asset.Asset {
+		case "BTC":
+			btc = asset.Total()
+		case "USDT":
+			usdt = asset.Total()
+		case "USDC":
+			usdc = asset.Total()
+		default:
 			continue
-		}
-
-		free, _ := strconv.ParseFloat(asset.Free, 64)
-		locked, _ := strconv.ParseFloat(asset.Locked, 64)
-		total := free + locked
-
-		if asset.Asset == "BTC" {
-			btc = total
-		} else {
-			usdt = total
 		}
 	}
 
-	return btc, usdt, nil
+	return btc, usdt, usdc, nil
 }
 
-func (b *Binance) Balances() chan [2]float64 {
+func (b *Binance) Balances() chan [3]float64 {
 	log.WithField("venue", "binance").Info("Polling balances")
 
-	ch := make(chan [2]float64)
+	ch := make(chan [3]float64)
 	ticker := time.NewTicker(1 * time.Second)
 
 	go func() {
 		for {
-			btc, usdt, err := b.GetBalances()
+			btc, usdt, usdc, err := b.GetBalances()
 			if err != nil {
 				log.WithField("venue", "binance").Warn(err.Error())
 				close(ch)
@@ -133,9 +130,10 @@ func (b *Binance) Balances() chan [2]float64 {
 				"venue": "binance",
 				"btc":   btc,
 				"usdt":  usdt,
+				"usdc":  usdc,
 			}).Debug("Received balances")
 
-			ch <- [2]float64{btc, usdt}
+			ch <- [3]float64{btc, usdt, usdc}
 			<-ticker.C
 		}
 	}()
