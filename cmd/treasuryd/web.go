@@ -3,6 +3,7 @@
 package main
 
 import (
+	"fmt"
 	"net/http"
 	"os"
 	"time"
@@ -37,11 +38,16 @@ func initWeb() {
 		path = wwwRoot
 	}
 
+	port := "8080"
+	if wwwPort := os.Getenv("WWW_PORT"); len(wwwPort) > 0 {
+		port = wwwPort
+	}
+
 	fs := http.FileServer(http.Dir(path))
 	http.Handle("/", fs)
 
 	go func() {
-		log.Info("Listening on 0.0.0.0:8080")
-		log.Fatal(http.ListenAndServe(":8080", nil))
+		log.Infof("Listening on 0.0.0.0:%s", port)
+		log.Fatal(http.ListenAndServe(fmt.Sprintf(":%s", port), nil))
 	}()
 }
