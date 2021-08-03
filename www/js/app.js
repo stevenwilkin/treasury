@@ -139,6 +139,7 @@ function handlePayload(json) {
       value = value.toFixed(2) + '%';
     }
 
+    $('.stats').removeClass('d-none');
     updateElement('.stat-' + stat, value);
   }
 }
