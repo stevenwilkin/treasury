@@ -59,6 +59,7 @@ func initAlerter() {
 		ChatId:   chatId}
 
 	alerter = alert.NewAlerter(statum, notifier)
+	alerter.Retrieve()
 
 	ticker := time.NewTicker(1 * time.Second)
 	go func() {
@@ -66,6 +67,7 @@ func initAlerter() {
 			<-ticker.C
 			log.Debug("Checking alerts")
 			alerter.CheckAlerts()
+			alerter.Persist()
 		}
 	}()
 }
