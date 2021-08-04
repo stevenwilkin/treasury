@@ -98,3 +98,67 @@ func TestDeactivatesTriggeredAlert(t *testing.T) {
 		t.Error("Should deactivate triggered alert")
 	}
 }
+
+func TestDoesNotPersistInactiveAlerts(t *testing.T) {
+	s := state.NewState()
+	alerter := NewAlerter(s, &TestNotifier{})
+	alerter.AddAlert(&PriceAlert{})
+	alerter.AddAlert(&FundingAlert{})
+
+	alerter.Persist()
+
+	if s.GetFundingAlert() {
+		t.Error("Should not have funding alert")
+	}
+
+	if len(s.GetPriceAlerts()) != 0 {
+		t.Error("Should not have price alerts")
+	}
+}
+
+func TestPersistsFundingAlert(t *testing.T) {
+	s := state.NewState()
+	alerter := NewAlerter(s, &TestNotifier{})
+	alerter.AddAlert(&FundingAlert{active: true})
+
+	alerter.Persist()
+
+	if !s.GetFundingAlert() {
+		t.Error("Should have funding alert")
+	}
+}
+
+func TestPersistsPriceAlerts(t *testing.T) {
+	s := state.NewState()
+	alerter := NewAlerter(s, &TestNotifier{})
+	alerter.AddAlert(&PriceAlert{active: true, price: 10000})
+	alerter.AddAlert(&PriceAlert{active: true, price: 20000})
+
+	alerter.Persist()
+
+	if len(s.GetPriceAlerts()) != 2 {
+		t.Fatal("Should have price alerts")
+	}
+
+	if s.GetPriceAlerts()[0] != 10000 && s.GetPriceAlerts()[1] != 20000 {
+		t.Error("Should persist details of price alerts")
+	}
+}
+
+func TestPersistClearsPreviousAlerts(t *testing.T) {
+	s := state.NewState()
+	alerter := NewAlerter(s, &TestNotifier{})
+
+	s.SetFundingAlert(true)
+	s.SetPriceAlerts([]float64{10000})
+
+	alerter.Persist()
+
+	if s.GetFundingAlert() {
+		t.Error("Should not have funding alert")
+	}
+
+	if len(s.GetPriceAlerts()) != 0 {
+		t.Error("Should not have price alerts")
+	}
+}

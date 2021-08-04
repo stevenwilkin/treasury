@@ -58,6 +58,29 @@ func (a *Alerter) CheckAlerts() {
 	}
 }
 
+func (a *Alerter) Persist() {
+	var (
+		fundingAlert bool
+		priceAlerts  []float64
+	)
+
+	for alert := range a.alerts {
+		if !alert.Active() {
+			continue
+		}
+
+		switch alert.(type) {
+		case *FundingAlert:
+			fundingAlert = true
+		case *PriceAlert:
+			priceAlerts = append(priceAlerts, alert.(*PriceAlert).price)
+		}
+	}
+
+	a.state.SetFundingAlert(fundingAlert)
+	a.state.SetPriceAlerts(priceAlerts)
+}
+
 func NewAlerter(state *state.State, notifier Notifier) *Alerter {
 	return &Alerter{
 		state:    state,
