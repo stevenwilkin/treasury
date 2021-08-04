@@ -13,13 +13,15 @@ import (
 )
 
 type State struct {
-	mu          sync.Mutex
-	Cost        float64
-	Assets      map[venue.Venue]map[asset.Asset]float64
-	Symbols     map[symbol.Symbol]float64
-	FundingRate [2]float64
-	TotalSize   int
-	LoanUSD     float64
+	mu           sync.Mutex
+	Cost         float64
+	Assets       map[venue.Venue]map[asset.Asset]float64
+	Symbols      map[symbol.Symbol]float64
+	FundingRate  [2]float64
+	TotalSize    int
+	LoanUSD      float64
+	FundingAlert bool
+	PriceAlerts  []float64
 }
 
 const (
@@ -198,6 +200,25 @@ func (s *State) USDTPremium() float64 {
 	}
 
 	return (usdtthb - usdthb) / usdthb
+}
+
+func (s *State) GetPriceAlerts() []float64 {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
+	return s.PriceAlerts
+}
+
+func (s *State) SetPriceAlerts(alerts []float64) {
+	s.PriceAlerts = alerts
+}
+
+func (s *State) GetFundingAlert() bool {
+	return s.FundingAlert
+}
+
+func (s *State) SetFundingAlert(alert bool) {
+	s.FundingAlert = alert
 }
 
 func (s *State) Save() error {

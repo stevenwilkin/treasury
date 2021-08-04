@@ -231,3 +231,33 @@ func TestUSDTPremium(t *testing.T) {
 		t.Errorf("Expected USDT premium to be %f, got %f", 0.1, s.USDTPremium())
 	}
 }
+
+func TestFundingAlert(t *testing.T) {
+	s := NewState()
+
+	if s.GetFundingAlert() {
+		t.Error("Expected not to have funding alert")
+	}
+
+	s.SetFundingAlert(true)
+
+	if !s.GetFundingAlert() {
+		t.Error("Expected to have funding alert")
+	}
+}
+
+func TestPriceAlerts(t *testing.T) {
+	s := NewState()
+
+	if len(s.GetPriceAlerts()) != 0 {
+		t.Error("Expected not to have prices alerts")
+	}
+
+	alerts := []float64{10000, 20000}
+
+	s.SetPriceAlerts(alerts)
+
+	if len(s.GetPriceAlerts()) != len(alerts) {
+		t.Error("Expected to have prices alerts")
+	}
+}
