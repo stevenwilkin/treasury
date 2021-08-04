@@ -162,3 +162,54 @@ func TestPersistClearsPreviousAlerts(t *testing.T) {
 		t.Error("Should not have price alerts")
 	}
 }
+
+func TestRetrieve(t *testing.T) {
+	s := state.NewState()
+	alerter := NewAlerter(s, &TestNotifier{})
+
+	s.SetFundingAlert(true)
+	s.SetPriceAlerts([]float64{10000, 20000})
+
+	alerter.Retrieve()
+	alerts := alerter.Alerts()
+
+	if len(alerts) != 3 {
+		t.Fatal("Should have alerts")
+	}
+}
+
+func TestRetrieveFundingAlert(t *testing.T) {
+	s := state.NewState()
+	alerter := NewAlerter(s, &TestNotifier{})
+
+	s.SetFundingAlert(true)
+
+	alerter.Retrieve()
+	alerts := alerter.Alerts()
+
+	if len(alerts) != 1 {
+		t.Fatal("Should have alert")
+	}
+
+	if _, ok := alerts[0].(*FundingAlert); !ok {
+		t.Error("Should have a funding alert")
+	}
+}
+
+func TestRetrievePriceAlerts(t *testing.T) {
+	s := state.NewState()
+	alerter := NewAlerter(s, &TestNotifier{})
+
+	s.SetPriceAlerts([]float64{10000})
+
+	alerter.Retrieve()
+	alerts := alerter.Alerts()
+
+	if len(alerts) != 1 {
+		t.Fatal("Should have alert")
+	}
+
+	if alert, _ := alerts[0].(*PriceAlert); alert.price != 10000 {
+		t.Error("Should have a price alert")
+	}
+}

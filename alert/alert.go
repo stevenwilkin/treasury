@@ -81,6 +81,18 @@ func (a *Alerter) Persist() {
 	a.state.SetPriceAlerts(priceAlerts)
 }
 
+func (a *Alerter) Retrieve() {
+	if a.state.GetFundingAlert() {
+		a.AddFundingAlert()
+	}
+
+	if priceAlerts := a.state.GetPriceAlerts(); len(priceAlerts) > 0 {
+		for _, price := range priceAlerts {
+			a.AddPriceAlert(price)
+		}
+	}
+}
+
 func NewAlerter(state *state.State, notifier Notifier) *Alerter {
 	return &Alerter{
 		state:    state,
