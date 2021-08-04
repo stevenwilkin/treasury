@@ -58,7 +58,7 @@ func initAlerter() {
 		ApiToken: os.Getenv("TELEGRAM_API_TOKEN"),
 		ChatId:   chatId}
 
-	alerter = alert.NewAlerter(notifier)
+	alerter = alert.NewAlerter(statum, notifier)
 
 	ticker := time.NewTicker(1 * time.Second)
 	go func() {

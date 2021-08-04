@@ -173,8 +173,7 @@ func (h *Handler) AddPriceAlert(w http.ResponseWriter, r *http.Request) {
 
 	log.Infof("Setting price alert - %f", v)
 
-	a := alert.NewPriceAlert(h.s, symbol.BTCUSDT, v)
-	h.a.AddAlert(a)
+	h.a.AddPriceAlert(v)
 }
 
 func (h *Handler) Funding(w http.ResponseWriter, r *http.Request) {
@@ -198,8 +197,7 @@ func (h *Handler) Funding(w http.ResponseWriter, r *http.Request) {
 func (h *Handler) AddFundingAlert(w http.ResponseWriter, r *http.Request) {
 	log.Infof("Setting funding alert")
 
-	a := alert.NewFundingAlert(h.s)
-	h.a.AddAlert(a)
+	h.a.AddFundingAlert()
 }
 
 func (h *Handler) Exposure(w http.ResponseWriter, r *http.Request) {

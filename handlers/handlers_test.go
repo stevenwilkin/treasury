@@ -18,10 +18,13 @@ type TestNotifier struct{}
 
 func (t *TestNotifier) Notify(s string) error { return nil }
 
-var h *Handler = NewHandler(state.NewState(),
-	alert.NewAlerter(&TestNotifier{}),
-	feed.NewHandler(),
-	venue.Venues{})
+var (
+	s = state.NewState()
+	h = NewHandler(s,
+		alert.NewAlerter(s, &TestNotifier{}),
+		feed.NewHandler(),
+		venue.Venues{})
+)
 
 func TestSetAssetInvalidVenue(t *testing.T) {
 	params := url.Values{}
@@ -113,7 +116,7 @@ func TestSetCost(t *testing.T) {
 }
 
 func TestAddPriceAlert(t *testing.T) {
-	h.a = alert.NewAlerter(&TestNotifier{})
+	h.a = alert.NewAlerter(s, &TestNotifier{})
 
 	params := url.Values{"value": {"20000"}}
 	body := strings.NewReader(params.Encode())
@@ -141,7 +144,7 @@ func TestAddPriceAlert(t *testing.T) {
 }
 
 func TestAddFundingAlert(t *testing.T) {
-	h.a = alert.NewAlerter(&TestNotifier{})
+	h.a = alert.NewAlerter(s, &TestNotifier{})
 
 	r, err := http.NewRequest("POST", "/alerts/funding", nil)
 	if err != nil {

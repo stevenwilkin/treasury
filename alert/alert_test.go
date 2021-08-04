@@ -1,6 +1,10 @@
 package alert
 
-import "testing"
+import (
+	"testing"
+
+	"github.com/stevenwilkin/treasury/state"
+)
 
 type TestAlert struct {
 	active    bool
@@ -26,7 +30,7 @@ func (n *TestNotifier) Notify(s string) error { n.message = s; return nil }
 var _ Notifier = &TestNotifier{}
 
 func TestAlerts(t *testing.T) {
-	alerter := NewAlerter(&TestNotifier{})
+	alerter := NewAlerter(state.NewState(), &TestNotifier{})
 	alert := &TestAlert{}
 	alerter.AddAlert(alert)
 
@@ -36,7 +40,7 @@ func TestAlerts(t *testing.T) {
 }
 
 func TestClearAlerts(t *testing.T) {
-	alerter := NewAlerter(&TestNotifier{})
+	alerter := NewAlerter(state.NewState(), &TestNotifier{})
 	alert := &TestAlert{}
 	alerter.AddAlert(alert)
 	alerter.ClearAlerts()
@@ -47,7 +51,7 @@ func TestClearAlerts(t *testing.T) {
 }
 
 func TestChecksActiveAlerts(t *testing.T) {
-	alerter := NewAlerter(&TestNotifier{})
+	alerter := NewAlerter(state.NewState(), &TestNotifier{})
 	alert := &TestAlert{active: true}
 
 	alerter.AddAlert(alert)
@@ -59,7 +63,7 @@ func TestChecksActiveAlerts(t *testing.T) {
 }
 
 func TestDoesNotCheckInactiveAlerts(t *testing.T) {
-	alerter := NewAlerter(&TestNotifier{})
+	alerter := NewAlerter(state.NewState(), &TestNotifier{})
 	alert := &TestAlert{active: false}
 
 	alerter.AddAlert(alert)
@@ -72,7 +76,7 @@ func TestDoesNotCheckInactiveAlerts(t *testing.T) {
 
 func TestNotifiesTriggeredAlert(t *testing.T) {
 	notifier := &TestNotifier{}
-	alerter := NewAlerter(notifier)
+	alerter := NewAlerter(state.NewState(), notifier)
 	alert := &TestAlert{active: true, triggered: true, message: "Foo"}
 
 	alerter.AddAlert(alert)
@@ -84,7 +88,7 @@ func TestNotifiesTriggeredAlert(t *testing.T) {
 }
 
 func TestDeactivatesTriggeredAlert(t *testing.T) {
-	alerter := NewAlerter(&TestNotifier{})
+	alerter := NewAlerter(state.NewState(), &TestNotifier{})
 	alert := &TestAlert{active: true, triggered: true}
 
 	alerter.AddAlert(alert)

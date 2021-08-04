@@ -61,4 +61,9 @@ func NewPriceAlert(s *state.State, sym symbol.Symbol, price float64) *PriceAlert
 		direction: d}
 }
 
+func (a *Alerter) AddPriceAlert(price float64) {
+	alert := NewPriceAlert(a.state, symbol.BTCUSDT, price)
+	a.AddAlert(alert)
+}
+
 var _ Alert = &PriceAlert{}

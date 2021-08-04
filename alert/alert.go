@@ -1,6 +1,8 @@
 package alert
 
 import (
+	"github.com/stevenwilkin/treasury/state"
+
 	log "github.com/sirupsen/logrus"
 )
 
@@ -17,6 +19,7 @@ type Notifier interface {
 }
 
 type Alerter struct {
+	state    *state.State
 	notifier Notifier
 	alerts   map[Alert]bool
 }
@@ -55,8 +58,9 @@ func (a *Alerter) CheckAlerts() {
 	}
 }
 
-func NewAlerter(notifier Notifier) *Alerter {
+func NewAlerter(state *state.State, notifier Notifier) *Alerter {
 	return &Alerter{
+		state:    state,
 		notifier: notifier,
 		alerts:   map[Alert]bool{}}
 }

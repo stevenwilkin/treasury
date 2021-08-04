@@ -42,4 +42,9 @@ func NewFundingAlert(s *state.State) *FundingAlert {
 		state:  s}
 }
 
+func (a *Alerter) AddFundingAlert() {
+	alert := NewFundingAlert(a.state)
+	a.AddAlert(alert)
+}
+
 var _ Alert = &FundingAlert{}
