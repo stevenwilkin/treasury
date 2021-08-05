@@ -14,7 +14,7 @@ import (
 func main() {
 	log.SetLevel(log.PanicLevel)
 
-	bitkub := &bitkub.BitKub{}
+	bitkub := &bitkub.Bitkub{}
 	binance := &binance.Binance{}
 	xe := &xe.XE{}
 

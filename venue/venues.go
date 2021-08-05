@@ -13,7 +13,7 @@ import (
 
 type Venues struct {
 	Binance *binance.Binance
-	Bitkub  *bitkub.BitKub
+	Bitkub  *bitkub.Bitkub
 	Deribit *deribit.Deribit
 	Bybit   *bybit.Bybit
 	Ftx     *ftx.FTX
@@ -26,7 +26,7 @@ func NewVenues() Venues {
 	venues.Binance = &binance.Binance{
 		ApiKey:    os.Getenv("BINANCE_API_KEY"),
 		ApiSecret: os.Getenv("BINANCE_API_SECRET")}
-	venues.Bitkub = &bitkub.BitKub{}
+	venues.Bitkub = &bitkub.Bitkub{}
 	venues.Deribit = &deribit.Deribit{
 		ApiId:     os.Getenv("DERIBIT_API_ID"),
 		ApiSecret: os.Getenv("DERIBIT_API_SECRET")}

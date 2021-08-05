@@ -14,7 +14,7 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
-type BitKub struct{}
+type Bitkub struct{}
 
 func symbolToTicker(s symbol.Symbol) string {
 	var ticker string
@@ -30,7 +30,7 @@ func symbolToTicker(s symbol.Symbol) string {
 
 	return ticker
 }
-func (b *BitKub) subscribeToPrice(s symbol.Symbol) (*websocket.Conn, error) {
+func (b *Bitkub) subscribeToPrice(s symbol.Symbol) (*websocket.Conn, error) {
 	tickerString := symbolToTicker(s)
 
 	path := fmt.Sprintf("websocket-api/market.ticker.%s", tickerString)
@@ -44,7 +44,7 @@ func (b *BitKub) subscribeToPrice(s symbol.Symbol) (*websocket.Conn, error) {
 	return c, nil
 }
 
-func (b *BitKub) PriceWS(s symbol.Symbol) chan float64 {
+func (b *Bitkub) PriceWS(s symbol.Symbol) chan float64 {
 	log.WithFields(log.Fields{
 		"venue":  "bitkub",
 		"symbol": s,
@@ -84,7 +84,7 @@ func (b *BitKub) PriceWS(s symbol.Symbol) chan float64 {
 	return ch
 }
 
-func (b *BitKub) GetPrice(s symbol.Symbol) (float64, error) {
+func (b *Bitkub) GetPrice(s symbol.Symbol) (float64, error) {
 	tickerString := symbolToTicker(s)
 
 	v := url.Values{"sym": {tickerString}}
@@ -118,7 +118,7 @@ func (b *BitKub) GetPrice(s symbol.Symbol) (float64, error) {
 	return response[tickerString].Last, nil
 }
 
-func (b *BitKub) Price(s symbol.Symbol) chan float64 {
+func (b *Bitkub) Price(s symbol.Symbol) chan float64 {
 	log.WithFields(log.Fields{
 		"venue":  "bitkub",
 		"symbol": s,

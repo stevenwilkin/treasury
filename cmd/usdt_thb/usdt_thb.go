@@ -15,7 +15,7 @@ import (
 func main() {
 	log.SetLevel(log.PanicLevel)
 
-	bitkub := &bitkub.BitKub{}
+	bitkub := &bitkub.Bitkub{}
 	oanda := &oanda.Oanda{
 		AccountId: os.Getenv("OANDA_ACCOUNT_ID"),
 		ApiKey:    os.Getenv("OANDA_API_KEY")}
