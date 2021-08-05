@@ -16,15 +16,22 @@ import (
 
 type BitKub struct{}
 
-func (b *BitKub) subscribeToPrice(s symbol.Symbol) (*websocket.Conn, error) {
-	var tickerString string
+func symbolToTicker(s symbol.Symbol) string {
+	var ticker string
 
 	switch s {
 	case symbol.BTCTHB:
-		tickerString = "thb_btc"
+		ticker = "THB_BTC"
 	case symbol.USDTTHB:
-		tickerString = "thb_usdt"
+		ticker = "THB_USDT"
+	case symbol.USDCTHB:
+		ticker = "THB_USDC"
 	}
+
+	return ticker
+}
+func (b *BitKub) subscribeToPrice(s symbol.Symbol) (*websocket.Conn, error) {
+	tickerString := symbolToTicker(s)
 
 	path := fmt.Sprintf("websocket-api/market.ticker.%s", tickerString)
 	u := url.URL{Scheme: "wss", Host: "api.bitkub.com", Path: path}
@@ -78,16 +85,7 @@ func (b *BitKub) PriceWS(s symbol.Symbol) chan float64 {
 }
 
 func (b *BitKub) GetPrice(s symbol.Symbol) (float64, error) {
-	var tickerString string
-
-	switch s {
-	case symbol.BTCTHB:
-		tickerString = "THB_BTC"
-	case symbol.USDTTHB:
-		tickerString = "THB_USDT"
-	case symbol.USDCTHB:
-		tickerString = "THB_USDC"
-	}
+	tickerString := symbolToTicker(s)
 
 	v := url.Values{"sym": {tickerString}}
 

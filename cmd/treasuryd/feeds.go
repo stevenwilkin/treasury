@@ -37,21 +37,21 @@ func initDataFeeds() {
 
 	feedHandler.Add(
 		feed.BTCTHB,
-		curry(venues.Bitkub.Price, symbol.BTCTHB),
+		curry(venues.Bitkub.PriceWS, symbol.BTCTHB),
 		func(btcThb float64) {
 			state.SetSymbol(symbol.BTCTHB, btcThb)
 		})
 
 	feedHandler.Add(
 		feed.USDTTHB,
-		curry(venues.Bitkub.Price, symbol.USDTTHB),
+		curry(venues.Bitkub.PriceWS, symbol.USDTTHB),
 		func(usdtThb float64) {
 			state.SetSymbol(symbol.USDTTHB, usdtThb)
 		})
 
 	feedHandler.Add(
 		feed.USDCTHB,
-		curry(venues.Bitkub.Price, symbol.USDCTHB),
+		curry(venues.Bitkub.PriceWS, symbol.USDCTHB),
 		func(usdcThb float64) {
 			state.SetSymbol(symbol.USDCTHB, usdcThb)
 		})
