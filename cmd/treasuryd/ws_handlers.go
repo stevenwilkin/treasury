@@ -34,25 +34,25 @@ var (
 func sendState(c *websocket.Conn) error {
 	log.Debug("Sending state")
 
-	usdThb := statum.Symbol(symbol.USDTHB)
+	usdThb := state.Symbol(symbol.USDTHB)
 
 	sm := stateMessage{
 		Assets:        map[string]map[string]float64{},
 		Prices:        map[string]float64{},
-		Exposure:      statum.Exposure(),
-		Cost:          statum.Cost / usdThb,
-		Value:         statum.TotalValue() / usdThb,
-		Pnl:           statum.Pnl() / usdThb,
-		PnlPercentage: statum.PnlPercentage()}
+		Exposure:      state.Exposure(),
+		Cost:          state.Cost / usdThb,
+		Value:         state.TotalValue() / usdThb,
+		Pnl:           state.Pnl() / usdThb,
+		PnlPercentage: state.PnlPercentage()}
 
-	for v, balances := range statum.GetAssets() {
+	for v, balances := range state.GetAssets() {
 		sm.Assets[v.String()] = map[string]float64{}
 		for a, q := range balances {
 			sm.Assets[v.String()][a.String()] = q
 		}
 	}
 
-	for s, p := range statum.GetSymbols() {
+	for s, p := range state.GetSymbols() {
 		sm.Prices[s.String()] = p
 	}
 

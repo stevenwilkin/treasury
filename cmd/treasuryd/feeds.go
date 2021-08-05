@@ -23,72 +23,72 @@ func initDataFeeds() {
 		feed.BTCUSDT,
 		venues.Binance.Price,
 		func(btcUsdt float64) {
-			statum.SetSymbol(symbol.BTCUSDT, btcUsdt)
+			state.SetSymbol(symbol.BTCUSDT, btcUsdt)
 		})
 
 	feedHandler.Add(
 		feed.Binance,
 		venues.Binance.Balances,
 		func(balances [3]float64) {
-			statum.SetAsset(venue.Binance, asset.BTC, balances[0])
-			statum.SetAsset(venue.Binance, asset.USDT, balances[1])
-			statum.SetAsset(venue.Binance, asset.USDC, balances[2])
+			state.SetAsset(venue.Binance, asset.BTC, balances[0])
+			state.SetAsset(venue.Binance, asset.USDT, balances[1])
+			state.SetAsset(venue.Binance, asset.USDC, balances[2])
 		})
 
 	feedHandler.Add(
 		feed.BTCTHB,
 		curry(venues.Bitkub.Price, symbol.BTCTHB),
 		func(btcThb float64) {
-			statum.SetSymbol(symbol.BTCTHB, btcThb)
+			state.SetSymbol(symbol.BTCTHB, btcThb)
 		})
 
 	feedHandler.Add(
 		feed.USDTTHB,
 		curry(venues.Bitkub.Price, symbol.USDTTHB),
 		func(usdtThb float64) {
-			statum.SetSymbol(symbol.USDTTHB, usdtThb)
+			state.SetSymbol(symbol.USDTTHB, usdtThb)
 		})
 
 	feedHandler.Add(
 		feed.USDCTHB,
 		curry(venues.Bitkub.Price, symbol.USDCTHB),
 		func(usdcThb float64) {
-			statum.SetSymbol(symbol.USDCTHB, usdcThb)
+			state.SetSymbol(symbol.USDCTHB, usdcThb)
 		})
 
 	feedHandler.Add(
 		feed.USDTHB,
 		venues.XE.Price,
 		func(usdThb float64) {
-			statum.SetSymbol(symbol.USDTHB, usdThb)
+			state.SetSymbol(symbol.USDTHB, usdThb)
 		})
 
 	feedHandler.Add(
 		feed.Deribit,
 		venues.Deribit.Equity,
 		func(deribitBtc float64) {
-			statum.SetAsset(venue.Deribit, asset.BTC, deribitBtc)
+			state.SetAsset(venue.Deribit, asset.BTC, deribitBtc)
 		})
 
 	feedHandler.Add(
 		feed.Bybit,
 		venues.Bybit.Equity,
 		func(bybitBtc float64) {
-			statum.SetAsset(venue.Bybit, asset.BTC, bybitBtc)
+			state.SetAsset(venue.Bybit, asset.BTC, bybitBtc)
 		})
 
 	feedHandler.Add(
 		feed.Funding,
 		venues.Bybit.FundingRate,
 		func(funding [2]float64) {
-			statum.SetFunding(funding[0], funding[1])
+			state.SetFunding(funding[0], funding[1])
 		})
 
 	feedHandler.Add(
 		feed.FTX,
 		venues.Ftx.Balances,
 		func(balances [2]float64) {
-			statum.SetAsset(venue.FTX, asset.BTC, balances[0])
-			statum.SetAsset(venue.FTX, asset.USDT, balances[1])
+			state.SetAsset(venue.FTX, asset.BTC, balances[0])
+			state.SetAsset(venue.FTX, asset.USDT, balances[1])
 		})
 }

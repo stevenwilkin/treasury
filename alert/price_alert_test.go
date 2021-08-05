@@ -8,8 +8,8 @@ import (
 )
 
 func TestDescription(t *testing.T) {
-	statum := state.NewState()
-	alert := NewPriceAlert(statum, symbol.BTCTHB, 300000)
+	state := state.NewState()
+	alert := NewPriceAlert(state, symbol.BTCTHB, 300000)
 
 	expected := "Price alert at BTCTHB 300000.00"
 
@@ -19,8 +19,8 @@ func TestDescription(t *testing.T) {
 }
 
 func TestMessage(t *testing.T) {
-	statum := state.NewState()
-	alert := NewPriceAlert(statum, symbol.BTCTHB, 300000)
+	state := state.NewState()
+	alert := NewPriceAlert(state, symbol.BTCTHB, 300000)
 
 	expected := "BTCTHB has reached 300000.00"
 
@@ -30,8 +30,8 @@ func TestMessage(t *testing.T) {
 }
 
 func TestDeactivate(t *testing.T) {
-	statum := state.NewState()
-	alert := NewPriceAlert(statum, symbol.BTCTHB, 300000)
+	state := state.NewState()
+	alert := NewPriceAlert(state, symbol.BTCTHB, 300000)
 
 	if !alert.Active() {
 		t.Error("Alert should be active")
@@ -45,15 +45,15 @@ func TestDeactivate(t *testing.T) {
 }
 
 func TestCheckOnRisingPrice(t *testing.T) {
-	statum := state.NewState()
-	statum.SetSymbol(symbol.BTCTHB, 200000)
-	alert := NewPriceAlert(statum, symbol.BTCTHB, 300000)
+	state := state.NewState()
+	state.SetSymbol(symbol.BTCTHB, 200000)
+	alert := NewPriceAlert(state, symbol.BTCTHB, 300000)
 
 	if alert.Check() {
 		t.Error("Alert should not be triggered")
 	}
 
-	statum.SetSymbol(symbol.BTCTHB, 400000)
+	state.SetSymbol(symbol.BTCTHB, 400000)
 
 	if !alert.Check() {
 		t.Error("Alert should be triggered")
@@ -61,15 +61,15 @@ func TestCheckOnRisingPrice(t *testing.T) {
 }
 
 func TestCheckOnFallingPrice(t *testing.T) {
-	statum := state.NewState()
-	statum.SetSymbol(symbol.BTCTHB, 400000)
-	alert := NewPriceAlert(statum, symbol.BTCTHB, 300000)
+	state := state.NewState()
+	state.SetSymbol(symbol.BTCTHB, 400000)
+	alert := NewPriceAlert(state, symbol.BTCTHB, 300000)
 
 	if alert.Check() {
 		t.Error("Alert should not be triggered")
 	}
 
-	statum.SetSymbol(symbol.BTCTHB, 200000)
+	state.SetSymbol(symbol.BTCTHB, 200000)
 
 	if !alert.Check() {
 		t.Error("Alert should be triggered")

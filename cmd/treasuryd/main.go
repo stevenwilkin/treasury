@@ -11,7 +11,7 @@ import (
 	"github.com/stevenwilkin/treasury/alert"
 	"github.com/stevenwilkin/treasury/feed"
 	"github.com/stevenwilkin/treasury/handlers"
-	"github.com/stevenwilkin/treasury/state"
+	st "github.com/stevenwilkin/treasury/state"
 	"github.com/stevenwilkin/treasury/venue"
 
 	_ "github.com/joho/godotenv/autoload"
@@ -23,7 +23,7 @@ const (
 )
 
 var (
-	statum      *state.State
+	state       *st.State
 	alerter     *alert.Alerter
 	feedHandler *feed.Handler
 	venues      venue.Venues
@@ -31,15 +31,15 @@ var (
 
 func initState() {
 	log.Info("Initialising state")
-	statum = state.NewState()
-	statum.Load()
+	state = st.NewState()
+	state.Load()
 
 	ticker := time.NewTicker(1 * time.Second)
 	go func() {
 		for {
 			<-ticker.C
 			log.Debug("Persisting state")
-			statum.Save()
+			state.Save()
 		}
 	}()
 }
@@ -66,7 +66,7 @@ func initControlSocket() {
 		log.Fatal("chmod error:", err)
 	}
 
-	h := handlers.NewHandler(statum, alerter, feedHandler, venues)
+	h := handlers.NewHandler(state, alerter, feedHandler, venues)
 
 	go func() {
 		defer l.Close()
