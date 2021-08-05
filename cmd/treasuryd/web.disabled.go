@@ -1,4 +1,4 @@
-// +build !web
+// +build noweb
 
 package main
 
