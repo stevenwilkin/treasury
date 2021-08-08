@@ -201,3 +201,44 @@ func (d *Deribit) GetSize() int {
 
 	return int(math.Abs(size))
 }
+
+func (d *Deribit) GetLeverage() float64 {
+	u := "https://www.deribit.com/api/v2/private/get_account_summary?currency=BTC"
+	req, err := http.NewRequest("GET", u, nil)
+	if err != nil {
+		log.Error(err.Error())
+		return 0
+	}
+
+	accessToken, err := d.accessToken()
+	if err != nil {
+		log.Error(err.Error())
+		return 0
+	}
+
+	req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", accessToken))
+	req.Header.Set("Content-Type", "application/json")
+
+	client := &http.Client{}
+	resp, err := client.Do(req)
+	if err != nil {
+		log.Error(err.Error())
+		return 0
+	}
+	defer resp.Body.Close()
+
+	body, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		log.Error(err.Error())
+		return 0
+	}
+
+	var response accountSummaryResponse
+	json.Unmarshal(body, &response)
+
+	if response.Result.Equity == 0 {
+		return 0
+	}
+
+	return (response.Result.InitialMargin / response.Result.Equity) * 100
+}

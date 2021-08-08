@@ -27,6 +27,13 @@ type positionsResponse struct {
 	} `json:"result"`
 }
 
+type accountSummaryResponse struct {
+	Result struct {
+		Equity        float64 `json:"equity"`
+		InitialMargin float64 `json:"initial_margin"`
+	} `json:"result"`
+}
+
 type quoteMessage struct {
 	Method string `json:"method"`
 	Params struct {
