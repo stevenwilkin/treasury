@@ -140,7 +140,17 @@ func TestPersistsPriceAlerts(t *testing.T) {
 		t.Fatal("Should have price alerts")
 	}
 
-	if s.GetPriceAlerts()[0] != 10000 && s.GetPriceAlerts()[1] != 20000 {
+	var hasFirstAlert, hasSecondAlert bool
+
+	for _, a := range s.GetPriceAlerts() {
+		if a == 10000 {
+			hasFirstAlert = true
+		} else if a == 20000 {
+			hasSecondAlert = true
+		}
+	}
+
+	if !hasFirstAlert || !hasSecondAlert {
 		t.Error("Should persist details of price alerts")
 	}
 }
