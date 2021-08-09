@@ -200,6 +200,22 @@ func (h *Handler) AddFundingAlert(w http.ResponseWriter, r *http.Request) {
 	h.a.AddFundingAlert()
 }
 
+func (h *Handler) Leverage(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+
+	fm := struct {
+		Value float64 `json:"value"`
+	}{
+		Value: h.v.Deribit.GetLeverage()}
+
+	b, err := json.Marshal(fm)
+	if err != nil {
+		log.Error(err)
+	}
+
+	w.Write(b)
+}
+
 func (h *Handler) Exposure(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 
@@ -324,6 +340,7 @@ func (h *Handler) Mux() *http.ServeMux {
 	mux.HandleFunc("/alerts/funding", h.AddFundingAlert)
 	mux.HandleFunc("/funding", h.Funding)
 	mux.HandleFunc("/exposure", h.Exposure)
+	mux.HandleFunc("/leverage", h.Leverage)
 	mux.HandleFunc("/size", h.Size)
 	mux.HandleFunc("/size/update", h.UpdateSize)
 	mux.HandleFunc("/feeds", h.Feeds)
