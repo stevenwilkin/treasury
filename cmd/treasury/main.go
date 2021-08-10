@@ -7,6 +7,8 @@ import (
 	"io/ioutil"
 	"net"
 	"net/http"
+	"net/url"
+	"os"
 )
 
 const (
@@ -36,6 +38,19 @@ func get(path string, result interface{}) {
 	json.Unmarshal(body, result)
 	if err != nil {
 		panic(err)
+	}
+}
+
+func post(path string, values url.Values) {
+	resp, err := client.PostForm(fmt.Sprintf("http://unix%s", path), values)
+	if err != nil {
+		fmt.Println(err)
+		os.Exit(1)
+	}
+
+	if resp.StatusCode != http.StatusOK {
+		fmt.Println("Failed")
+		os.Exit(1)
 	}
 }
 
