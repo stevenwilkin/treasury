@@ -1,9 +1,7 @@
 package main
 
 import (
-	"encoding/json"
 	"fmt"
-	"io/ioutil"
 
 	"github.com/spf13/cobra"
 )
@@ -19,23 +17,8 @@ var pnlCmd = &cobra.Command{
 	Use:   "pnl",
 	Short: "Retrieve PnL",
 	Run: func(cmd *cobra.Command, args []string) {
-		resp, err := client.Get("http://unix/pnl")
-		if err != nil {
-			panic(err)
-		}
-		defer resp.Body.Close()
-
-		body, err := ioutil.ReadAll(resp.Body)
-		if err != nil {
-			panic(err)
-		}
-
 		var pm pnlMessage
-
-		json.Unmarshal(body, &pm)
-		if err != nil {
-			panic(err)
-		}
+		get("/pnl", &pm)
 
 		fmt.Printf("Cost:  %f\n", pm.Cost)
 		fmt.Printf("Value: %f\n", pm.Value)
@@ -48,23 +31,8 @@ var pnlUsdCmd = &cobra.Command{
 	Use:   "usd",
 	Short: "Retrieve USD PnL",
 	Run: func(cmd *cobra.Command, args []string) {
-		resp, err := client.Get("http://unix/pnl/usd")
-		if err != nil {
-			panic(err)
-		}
-		defer resp.Body.Close()
-
-		body, err := ioutil.ReadAll(resp.Body)
-		if err != nil {
-			panic(err)
-		}
-
 		var pm pnlMessage
-
-		json.Unmarshal(body, &pm)
-		if err != nil {
-			panic(err)
-		}
+		get("/pnl/usd", &pm)
 
 		fmt.Printf("Cost:  %f\n", pm.Cost)
 		fmt.Printf("Value: %f\n", pm.Value)

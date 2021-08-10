@@ -1,9 +1,7 @@
 package main
 
 import (
-	"encoding/json"
 	"fmt"
-	"io/ioutil"
 	"net/http"
 	"net/url"
 	"os"
@@ -48,23 +46,8 @@ var feedsCmd = &cobra.Command{
 	Use:   "feeds",
 	Short: "Retrieve data feeds",
 	Run: func(cmd *cobra.Command, args []string) {
-		resp, err := client.Get("http://unix/feeds")
-		if err != nil {
-			panic(err)
-		}
-		defer resp.Body.Close()
-
-		body, err := ioutil.ReadAll(resp.Body)
-		if err != nil {
-			panic(err)
-		}
-
 		var fr feedsResponse
-
-		json.Unmarshal(body, &fr)
-		if err != nil {
-			panic(err)
-		}
+		get("/feeds", &fr)
 
 		var status, lastUpdate string
 		padding := fr.padding()

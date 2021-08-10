@@ -1,9 +1,7 @@
 package main
 
 import (
-	"encoding/json"
 	"fmt"
-	"io/ioutil"
 	"net/http"
 	"net/url"
 	"os"
@@ -68,23 +66,8 @@ var assetsCmd = &cobra.Command{
 	Use:   "assets",
 	Short: "Retrieve assets",
 	Run: func(cmd *cobra.Command, args []string) {
-		resp, err := client.Get("http://unix/assets")
-		if err != nil {
-			panic(err)
-		}
-		defer resp.Body.Close()
-
-		body, err := ioutil.ReadAll(resp.Body)
-		if err != nil {
-			panic(err)
-		}
-
 		var am assetsMessage
-
-		json.Unmarshal(body, &am)
-		if err != nil {
-			panic(err)
-		}
+		get("/assets", &am)
 
 		for _, venue := range am.venues() {
 			if !am.hasAssets(venue) {

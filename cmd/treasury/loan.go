@@ -1,9 +1,7 @@
 package main
 
 import (
-	"encoding/json"
 	"fmt"
-	"io/ioutil"
 	"net/http"
 	"net/url"
 	"os"
@@ -19,23 +17,8 @@ var loanCmd = &cobra.Command{
 	Use:   "loan",
 	Short: "Retrieve outstanding loan",
 	Run: func(cmd *cobra.Command, args []string) {
-		resp, err := client.Get("http://unix/loan")
-		if err != nil {
-			panic(err)
-		}
-		defer resp.Body.Close()
-
-		body, err := ioutil.ReadAll(resp.Body)
-		if err != nil {
-			panic(err)
-		}
-
 		var lm loanMessage
-
-		json.Unmarshal(body, &lm)
-		if err != nil {
-			panic(err)
-		}
+		get("/loan", &lm)
 
 		fmt.Println(lm.Loan)
 	},

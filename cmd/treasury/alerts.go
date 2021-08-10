@@ -1,9 +1,7 @@
 package main
 
 import (
-	"encoding/json"
 	"fmt"
-	"io/ioutil"
 	"net/http"
 	"net/url"
 	"os"
@@ -20,23 +18,8 @@ var alertsCmd = &cobra.Command{
 	Use:   "alerts",
 	Short: "Retrieve alerts",
 	Run: func(cmd *cobra.Command, args []string) {
-		resp, err := client.Get("http://unix/alerts")
-		if err != nil {
-			panic(err)
-		}
-		defer resp.Body.Close()
-
-		body, err := ioutil.ReadAll(resp.Body)
-		if err != nil {
-			panic(err)
-		}
-
 		var am []alertsMessage
-
-		json.Unmarshal(body, &am)
-		if err != nil {
-			panic(err)
-		}
+		get("/alerts", &am)
 
 		for _, alert := range am {
 			active := "Active  "
