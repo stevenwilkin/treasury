@@ -105,6 +105,15 @@ func TestLoan(t *testing.T) {
 	}
 }
 
+func TestLeverageDeribit(t *testing.T) {
+	s := NewState()
+	s.SetLeverageDeribit(3.0)
+
+	if s.GetLeverageDeribit() != 3.0 {
+		t.Errorf("Expected: 3.0 - Got: %f", s.GetLeverageDeribit())
+	}
+}
+
 func TestTotalValue(t *testing.T) {
 	s := NewState()
 	s.SetAsset(venue.Nexo, asset.BTC, 1.1)

@@ -13,15 +13,16 @@ import (
 )
 
 type State struct {
-	mu           sync.Mutex
-	Cost         float64
-	Assets       map[venue.Venue]map[asset.Asset]float64
-	Symbols      map[symbol.Symbol]float64
-	FundingRate  [2]float64
-	TotalSize    int
-	LoanUSD      float64
-	FundingAlert bool
-	PriceAlerts  []float64
+	mu              sync.Mutex
+	Cost            float64
+	Assets          map[venue.Venue]map[asset.Asset]float64
+	Symbols         map[symbol.Symbol]float64
+	FundingRate     [2]float64
+	TotalSize       int
+	LoanUSD         float64
+	FundingAlert    bool
+	PriceAlerts     []float64
+	LeverageDeribit float64
 }
 
 const (
@@ -117,6 +118,14 @@ func (s *State) Loan() float64 {
 
 func (s *State) SetLoan(loan float64) {
 	s.LoanUSD = loan
+}
+
+func (s *State) GetLeverageDeribit() float64 {
+	return s.LeverageDeribit
+}
+
+func (s *State) SetLeverageDeribit(leverage float64) {
+	s.LeverageDeribit = leverage
 }
 
 func (s *State) Size() int {
