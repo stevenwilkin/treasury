@@ -91,4 +91,11 @@ func initDataFeeds() {
 			state.SetAsset(venue.FTX, asset.BTC, balances[0])
 			state.SetAsset(venue.FTX, asset.USDT, balances[1])
 		})
+
+	feedHandler.Add(
+		feed.LeverageDeribit,
+		venues.Deribit.Leverage,
+		func(leverage float64) {
+			state.SetLeverageDeribit(leverage)
+		})
 }

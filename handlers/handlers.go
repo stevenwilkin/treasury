@@ -206,7 +206,7 @@ func (h *Handler) Leverage(w http.ResponseWriter, r *http.Request) {
 	fm := struct {
 		Value float64 `json:"value"`
 	}{
-		Value: h.v.Deribit.GetLeverage()}
+		Value: h.s.GetLeverageDeribit()}
 
 	b, err := json.Marshal(fm)
 	if err != nil {

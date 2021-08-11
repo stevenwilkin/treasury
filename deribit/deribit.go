@@ -202,18 +202,16 @@ func (d *Deribit) GetSize() int {
 	return int(math.Abs(size))
 }
 
-func (d *Deribit) GetLeverage() float64 {
+func (d *Deribit) GetLeverage() (float64, error) {
 	u := "https://www.deribit.com/api/v2/private/get_account_summary?currency=BTC"
 	req, err := http.NewRequest("GET", u, nil)
 	if err != nil {
-		log.Error(err.Error())
-		return 0
+		return 0, err
 	}
 
 	accessToken, err := d.accessToken()
 	if err != nil {
-		log.Error(err.Error())
-		return 0
+		return 0, err
 	}
 
 	req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", accessToken))
@@ -222,23 +220,49 @@ func (d *Deribit) GetLeverage() float64 {
 	client := &http.Client{}
 	resp, err := client.Do(req)
 	if err != nil {
-		log.Error(err.Error())
-		return 0
+		return 0, err
 	}
 	defer resp.Body.Close()
 
 	body, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
-		log.Error(err.Error())
-		return 0
+		return 0, err
 	}
 
 	var response accountSummaryResponse
 	json.Unmarshal(body, &response)
 
 	if response.Result.Equity == 0 {
-		return 0
+		return 0, err
 	}
 
-	return (response.Result.InitialMargin / response.Result.Equity) * 100
+	return (response.Result.InitialMargin / response.Result.Equity) * 100, nil
+}
+
+func (d *Deribit) Leverage() chan float64 {
+	log.WithField("venue", "deribit").Info("Polling leverage")
+
+	ch := make(chan float64)
+	ticker := time.NewTicker(1 * time.Second)
+
+	go func() {
+		for {
+			leverage, err := d.GetLeverage()
+			if err != nil {
+				log.WithField("venue", "deribit").Warn(err.Error())
+				close(ch)
+				return
+			}
+
+			log.WithFields(log.Fields{
+				"venue":    "deribit",
+				"leverage": leverage,
+			}).Debug("Received leverage")
+
+			ch <- leverage
+			<-ticker.C
+		}
+	}()
+
+	return ch
 }
