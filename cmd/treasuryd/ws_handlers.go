@@ -12,13 +12,14 @@ import (
 )
 
 type stateMessage struct {
-	Assets        map[string]map[string]float64 `json:"assets"`
-	Prices        map[string]float64            `json:"prices"`
-	Exposure      float64                       `json:"exposure"`
-	Cost          float64                       `json:"cost"`
-	Value         float64                       `json:"value"`
-	Pnl           float64                       `json:"pnl"`
-	PnlPercentage float64                       `json:"pnl_percentage"`
+	Assets          map[string]map[string]float64 `json:"assets"`
+	Prices          map[string]float64            `json:"prices"`
+	Exposure        float64                       `json:"exposure"`
+	Cost            float64                       `json:"cost"`
+	Value           float64                       `json:"value"`
+	Pnl             float64                       `json:"pnl"`
+	PnlPercentage   float64                       `json:"pnl_percentage"`
+	LeverageDeribit float64                       `json:"leverage_deribit"`
 }
 
 type authMessage struct {
@@ -37,13 +38,14 @@ func sendState(c *websocket.Conn) error {
 	usdThb := state.Symbol(symbol.USDTHB)
 
 	sm := stateMessage{
-		Assets:        map[string]map[string]float64{},
-		Prices:        map[string]float64{},
-		Exposure:      state.Exposure(),
-		Cost:          state.Cost / usdThb,
-		Value:         state.TotalValue() / usdThb,
-		Pnl:           state.Pnl() / usdThb,
-		PnlPercentage: state.PnlPercentage()}
+		Assets:          map[string]map[string]float64{},
+		Prices:          map[string]float64{},
+		Exposure:        state.Exposure(),
+		Cost:            state.Cost / usdThb,
+		Value:           state.TotalValue() / usdThb,
+		Pnl:             state.Pnl() / usdThb,
+		PnlPercentage:   state.PnlPercentage(),
+		LeverageDeribit: state.GetLeverageDeribit()}
 
 	for v, balances := range state.GetAssets() {
 		sm.Assets[v.String()] = map[string]float64{}
