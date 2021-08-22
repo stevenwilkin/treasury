@@ -62,37 +62,68 @@ func (b *Bybit) timestamp() string {
 	return strconv.FormatInt((time.Now().UnixNano() / int64(time.Millisecond)), 10)
 }
 
-func (b *Bybit) GetEquity() (float64, error) {
-	timestamp := b.timestamp()
-
+func (b *Bybit) signedUrl(path string, addParams map[string]string) string {
 	params := map[string]interface{}{
 		"api_key":   b.ApiKey,
-		"coin":      "BTC",
-		"timestamp": timestamp,
+		"timestamp": b.timestamp()}
+
+	for k, v := range addParams {
+		params[k] = v
 	}
 
-	sign := getSignature(params, b.ApiSecret)
+	keys := make([]string, len(params))
+	i := 0
+	query := ""
+	for k, _ := range params {
+		keys[i] = k
+		i++
+	}
+	sort.Strings(keys)
+	for _, k := range keys {
+		query += fmt.Sprintf("%s=%v&", k, params[k])
+	}
+	query = query[0 : len(query)-1]
+	h := hmac.New(sha256.New, []byte(b.ApiSecret))
+	io.WriteString(h, query)
+	query += fmt.Sprintf("&sign=%x", h.Sum(nil))
 
-	url := fmt.Sprintf(
-		"https://api.bybit.com/v2/private/wallet/balance?api_key=%s&coin=BTC&timestamp=%s&sign=%s",
-		b.ApiKey,
-		timestamp,
-		sign,
-	)
+	u := url.URL{
+		Scheme:   "https",
+		Host:     b.hostname(),
+		Path:     path,
+		RawQuery: query}
 
-	resp, err := http.Get(url)
+	return u.String()
+}
+
+func (b *Bybit) get(path string, params map[string]string, result interface{}) error {
+	u := b.signedUrl(path, params)
+
+	resp, err := http.Get(u)
 	if err != nil {
-		return 0, err
+		return err
 	}
 	defer resp.Body.Close()
 
 	body, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
-		return 0, err
+		return err
 	}
 
+	json.Unmarshal(body, result)
+
+	return nil
+}
+
+func (b *Bybit) GetEquity() (float64, error) {
 	var response equityResponse
-	json.Unmarshal(body, &response)
+
+	err := b.get("/v2/private/wallet/balance",
+		map[string]string{"coin": "BTC"}, &response)
+
+	if err != nil {
+		return 0, err
+	}
 
 	return response.Result.BTC.Equity, nil
 }
@@ -182,38 +213,14 @@ func (b *Bybit) FundingRate() chan [2]float64 {
 }
 
 func (b *Bybit) GetSize() int {
-	timestamp := strconv.FormatInt((time.Now().UnixNano() / int64(time.Millisecond)), 10)
-
-	params := map[string]interface{}{
-		"api_key":   b.ApiKey,
-		"symbol":    "BTCUSD",
-		"timestamp": timestamp,
-	}
-
-	sign := getSignature(params, b.ApiSecret)
-
-	url := fmt.Sprintf(
-		"https://api.bybit.com/v2/private/position/list?api_key=%s&symbol=BTCUSD&timestamp=%s&sign=%s",
-		b.ApiKey,
-		timestamp,
-		sign,
-	)
-
-	resp, err := http.Get(url)
-	if err != nil {
-		log.Error(err.Error())
-		return 0
-	}
-	defer resp.Body.Close()
-
-	body, err := ioutil.ReadAll(resp.Body)
-	if err != nil {
-		log.Error(err.Error())
-		return 0
-	}
-
 	var response positionResponse
-	json.Unmarshal(body, &response)
+
+	err := b.get("/v2/private/position/list",
+		map[string]string{"symbol": "BTCUSD"}, &response)
+
+	if err != nil {
+		return 0
+	}
 
 	return response.Result.Size
 }
