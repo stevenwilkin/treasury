@@ -204,9 +204,11 @@ func (h *Handler) Leverage(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 
 	fm := struct {
-		Value float64 `json:"value"`
+		Deribit float64 `json:"deribit"`
+		Bybit   float64 `json:"bybit"`
 	}{
-		Value: h.s.GetLeverageDeribit()}
+		Deribit: h.s.GetLeverageDeribit(),
+		Bybit:   h.s.GetLeverageBybit()}
 
 	b, err := json.Marshal(fm)
 	if err != nil {

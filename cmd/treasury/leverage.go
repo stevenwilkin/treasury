@@ -7,7 +7,8 @@ import (
 )
 
 type leverageMessage struct {
-	Value float64 `json:"value"`
+	Deribit float64 `json:"deribit"`
+	Bybit   float64 `json:"bybit"`
 }
 
 var leverageCmd = &cobra.Command{
@@ -17,6 +18,12 @@ var leverageCmd = &cobra.Command{
 		var em leverageMessage
 		get("/leverage", &em)
 
-		fmt.Printf("%.2f\n", em.Value)
+		if em.Deribit > 0 {
+			fmt.Printf("Deribit: %.2f\n", em.Deribit)
+		}
+
+		if em.Bybit > 0 {
+			fmt.Printf("Bybit:   %.2f\n", em.Bybit)
+		}
 	},
 }
