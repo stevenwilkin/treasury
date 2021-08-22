@@ -122,7 +122,7 @@ function handlePayload(json) {
     handlePrices(json.prices);
   }
 
-  var stats = ['exposure', 'cost', 'value', 'pnl', 'pnl_percentage', 'leverage_deribit'];
+  var stats = ['exposure', 'cost', 'value', 'pnl', 'pnl_percentage', 'leverage_deribit', 'leverage_bybit'];
   for(var i in stats) {
     var stat = stats[i];
 
@@ -137,7 +137,7 @@ function handlePayload(json) {
       value = value.toLocaleString('en-US', { style: 'currency', currency: 'USD' });
     } else if(stat == 'pnl_percentage') {
       value = value.toFixed(2) + '%';
-    } else if(stat == 'leverage_deribit') {
+    } else if(stat.match(/^leverage_/)) {
       value = value.toFixed(2);
     }
 
