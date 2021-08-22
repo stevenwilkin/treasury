@@ -225,6 +225,26 @@ func (b *Bybit) GetSize() int {
 	return response.Result.Size
 }
 
+func (b *Bybit) GetLeverage() float64 {
+	var response positionResponse
+
+	err := b.get("/v2/private/position/list",
+		map[string]string{"symbol": "BTCUSD"}, &response)
+
+	if err != nil {
+		return 0
+	}
+
+	walletBalance, _ := strconv.ParseFloat(response.Result.WalletBalance, 64)
+	positionValue, _ := strconv.ParseFloat(response.Result.PositionValue, 64)
+
+	if walletBalance == 0 {
+		return 0
+	}
+
+	return positionValue / walletBalance
+}
+
 func (b *Bybit) subscribe(channels []string) (*websocket.Conn, error) {
 	expires := (time.Now().UnixNano() / int64(time.Millisecond)) + 10000
 

@@ -21,7 +21,9 @@ type fundingResponse struct {
 
 type positionResponse struct {
 	Result struct {
-		Size int `json:"size"`
+		Size          int    `json:"size"`
+		PositionValue string `json:"position_value"`
+		WalletBalance string `json:"wallet_balance"`
 	} `json:"result"`
 }
 
