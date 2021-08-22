@@ -233,7 +233,7 @@ func (d *Deribit) GetLeverage() (float64, error) {
 	json.Unmarshal(body, &response)
 
 	if response.Result.Equity == 0 {
-		return 0, err
+		return 0, nil
 	}
 
 	return (response.Result.InitialMargin / response.Result.Equity) * 100, nil
