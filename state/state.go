@@ -23,6 +23,7 @@ type State struct {
 	FundingAlert    bool
 	PriceAlerts     []float64
 	LeverageDeribit float64
+	LeverageBybit   float64
 }
 
 const (
@@ -126,6 +127,13 @@ func (s *State) GetLeverageDeribit() float64 {
 
 func (s *State) SetLeverageDeribit(leverage float64) {
 	s.LeverageDeribit = leverage
+}
+func (s *State) GetLeverageBybit() float64 {
+	return s.LeverageBybit
+}
+
+func (s *State) SetLeverageBybit(leverage float64) {
+	s.LeverageBybit = leverage
 }
 
 func (s *State) Size() int {

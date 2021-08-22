@@ -114,6 +114,15 @@ func TestLeverageDeribit(t *testing.T) {
 	}
 }
 
+func TestLeverageBybit(t *testing.T) {
+	s := NewState()
+	s.SetLeverageBybit(3.0)
+
+	if s.GetLeverageBybit() != 3.0 {
+		t.Errorf("Expected: 3.0 - Got: %f", s.GetLeverageBybit())
+	}
+}
+
 func TestTotalValue(t *testing.T) {
 	s := NewState()
 	s.SetAsset(venue.Nexo, asset.BTC, 1.1)
