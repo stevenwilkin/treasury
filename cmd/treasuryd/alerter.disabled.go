@@ -1,4 +1,4 @@
-// +build !alerter
+// +build noalerter
 
 package main
 
