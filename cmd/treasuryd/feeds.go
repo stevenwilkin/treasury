@@ -98,4 +98,11 @@ func initDataFeeds() {
 		func(leverage float64) {
 			state.SetLeverageDeribit(leverage)
 		})
+
+	feedHandler.Add(
+		feed.LeverageBybit,
+		venues.Bybit.Leverage,
+		func(leverage float64) {
+			state.SetLeverageBybit(leverage)
+		})
 }

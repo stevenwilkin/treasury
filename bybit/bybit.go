@@ -225,24 +225,52 @@ func (b *Bybit) GetSize() int {
 	return response.Result.Size
 }
 
-func (b *Bybit) GetLeverage() float64 {
+func (b *Bybit) GetLeverage() (float64, error) {
 	var response positionResponse
 
 	err := b.get("/v2/private/position/list",
 		map[string]string{"symbol": "BTCUSD"}, &response)
 
 	if err != nil {
-		return 0
+		return 0, err
 	}
 
 	walletBalance, _ := strconv.ParseFloat(response.Result.WalletBalance, 64)
 	positionValue, _ := strconv.ParseFloat(response.Result.PositionValue, 64)
 
 	if walletBalance == 0 {
-		return 0
+		return 0, nil
 	}
 
-	return positionValue / walletBalance
+	return (positionValue / walletBalance), nil
+}
+
+func (d *Bybit) Leverage() chan float64 {
+	log.WithField("venue", "bybit").Info("Polling leverage")
+
+	ch := make(chan float64)
+	ticker := time.NewTicker(1 * time.Second)
+
+	go func() {
+		for {
+			leverage, err := d.GetLeverage()
+			if err != nil {
+				log.WithField("venue", "bybit").Warn(err.Error())
+				close(ch)
+				return
+			}
+
+			log.WithFields(log.Fields{
+				"venue":    "bybit",
+				"leverage": leverage,
+			}).Debug("Received leverage")
+
+			ch <- leverage
+			<-ticker.C
+		}
+	}()
+
+	return ch
 }
 
 func (b *Bybit) subscribe(channels []string) (*websocket.Conn, error) {
