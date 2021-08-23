@@ -41,4 +41,9 @@ func NewLeverageAlert(s *state.State, threshold float64) *LeverageAlert {
 		threshold: threshold}
 }
 
+func (a *Alerter) AddLeverageAlert(threshold float64) {
+	alert := NewLeverageAlert(a.state, threshold)
+	a.AddAlert(alert)
+}
+
 var _ Alert = &LeverageAlert{}

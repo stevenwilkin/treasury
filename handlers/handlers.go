@@ -218,6 +218,18 @@ func (h *Handler) Leverage(w http.ResponseWriter, r *http.Request) {
 	w.Write(b)
 }
 
+func (h *Handler) AddLeverageAlert(w http.ResponseWriter, r *http.Request) {
+	v, err := strconv.ParseFloat(r.FormValue("value"), 64)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+
+	log.Infof("Setting leverage alert - %f", v)
+
+	h.a.AddLeverageAlert(v)
+}
+
 func (h *Handler) Exposure(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 
@@ -340,6 +352,7 @@ func (h *Handler) Mux() *http.ServeMux {
 	mux.HandleFunc("/alerts/clear", h.ClearAlerts)
 	mux.HandleFunc("/alerts/price", h.AddPriceAlert)
 	mux.HandleFunc("/alerts/funding", h.AddFundingAlert)
+	mux.HandleFunc("/alerts/leverage", h.AddLeverageAlert)
 	mux.HandleFunc("/funding", h.Funding)
 	mux.HandleFunc("/exposure", h.Exposure)
 	mux.HandleFunc("/leverage", h.Leverage)

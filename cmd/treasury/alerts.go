@@ -46,6 +46,15 @@ var alertsFundingCmd = &cobra.Command{
 	},
 }
 
+var alertsLeverageCmd = &cobra.Command{
+	Use:   "leverage [value]",
+	Short: "Set leverage alert",
+	Args:  cobra.ExactArgs(1),
+	Run: func(cmd *cobra.Command, args []string) {
+		post("/alerts/leverage", url.Values{"value": {args[0]}})
+	},
+}
+
 var alertsClearCmd = &cobra.Command{
 	Use:   "clear",
 	Short: "Clear alerts",

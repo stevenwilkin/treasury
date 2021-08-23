@@ -24,7 +24,8 @@ func init() {
 	rootCmd.AddCommand(loanCmd)
 
 	assetsCmd.AddCommand(setAssetsCmd)
-	alertsCmd.AddCommand(alertsPriceCmd, alertsClearCmd, alertsFundingCmd)
+	alertsCmd.AddCommand(
+		alertsPriceCmd, alertsClearCmd, alertsFundingCmd, alertsLeverageCmd)
 	pnlCmd.AddCommand(pnlUsdCmd)
 	sizeCmd.AddCommand(sizeUpdateCmd)
 	feedsCmd.AddCommand(feedsReactivateCmd)

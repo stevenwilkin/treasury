@@ -167,6 +167,34 @@ func TestAddFundingAlert(t *testing.T) {
 	}
 }
 
+func TestAddLeverageAlert(t *testing.T) {
+	h.a = alert.NewAlerter(s, &TestNotifier{})
+
+	params := url.Values{"value": {"4"}}
+	body := strings.NewReader(params.Encode())
+
+	r, err := http.NewRequest("POST", "/alerts/leverage", body)
+	if err != nil {
+		t.Fatal(err)
+	}
+	r.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+
+	w := httptest.NewRecorder()
+	handler := http.HandlerFunc(h.AddLeverageAlert)
+	handler.ServeHTTP(w, r)
+
+	if len(h.a.Alerts()) != 1 {
+		t.Fatal("Should set an alert")
+	}
+
+	alert := h.a.Alerts()[0]
+	expected := "Leverage alert at 4.00"
+
+	if alert.Description() != expected {
+		t.Errorf("Expected: '%s', got: '%s'", expected, alert.Description())
+	}
+}
+
 func TestReactivateFeedInvalidFeed(t *testing.T) {
 	params := url.Values{}
 	params.Set("feed", "fake")
