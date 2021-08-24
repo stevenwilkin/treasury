@@ -160,18 +160,23 @@ func (d *Deribit) Equity() chan float64 {
 	return ch
 }
 
-func (d *Deribit) GetSize() int {
-	u := "https://www.deribit.com/api/v2/private/get_positions?currency=BTC&kind=future"
-	req, err := http.NewRequest("GET", u, nil)
+func (d *Deribit) get(path string, params url.Values, result interface{}) error {
+	u := url.URL{
+		Scheme:   "https",
+		Host:     d.hostname(),
+		Path:     path,
+		RawQuery: params.Encode()}
+
+	req, err := http.NewRequest("GET", u.String(), nil)
 	if err != nil {
 		log.Error(err.Error())
-		return 0
+		return err
 	}
 
 	accessToken, err := d.accessToken()
 	if err != nil {
 		log.Error(err.Error())
-		return 0
+		return err
 	}
 
 	req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", accessToken))
@@ -181,18 +186,30 @@ func (d *Deribit) GetSize() int {
 	resp, err := client.Do(req)
 	if err != nil {
 		log.Error(err.Error())
-		return 0
+		return err
 	}
 	defer resp.Body.Close()
 
 	body, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
 		log.Error(err.Error())
-		return 0
+		return err
 	}
 
+	json.Unmarshal(body, result)
+
+	return nil
+}
+
+func (d *Deribit) GetSize() int {
 	var response positionsResponse
-	json.Unmarshal(body, &response)
+
+	err := d.get("/api/v2/private/get_positions",
+		url.Values{"currency": {"BTC"}, "kind": {"future"}}, &response)
+
+	if err != nil {
+		return 0
+	}
 
 	size := 0.0
 	for _, position := range response.Result {
@@ -203,34 +220,14 @@ func (d *Deribit) GetSize() int {
 }
 
 func (d *Deribit) GetLeverage() (float64, error) {
-	u := "https://www.deribit.com/api/v2/private/get_account_summary?currency=BTC"
-	req, err := http.NewRequest("GET", u, nil)
-	if err != nil {
-		return 0, err
-	}
-
-	accessToken, err := d.accessToken()
-	if err != nil {
-		return 0, err
-	}
-
-	req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", accessToken))
-	req.Header.Set("Content-Type", "application/json")
-
-	client := &http.Client{}
-	resp, err := client.Do(req)
-	if err != nil {
-		return 0, err
-	}
-	defer resp.Body.Close()
-
-	body, err := ioutil.ReadAll(resp.Body)
-	if err != nil {
-		return 0, err
-	}
-
 	var response accountSummaryResponse
-	json.Unmarshal(body, &response)
+
+	err := d.get("/api/v2/private/get_account_summary",
+		url.Values{"currency": {"BTC"}}, &response)
+
+	if err != nil {
+		return 0, err
+	}
 
 	if response.Result.Equity == 0 {
 		return 0, nil
