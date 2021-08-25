@@ -238,11 +238,13 @@ func (b *Bybit) GetLeverage() (float64, error) {
 	walletBalance, _ := strconv.ParseFloat(response.Result.WalletBalance, 64)
 	positionValue, _ := strconv.ParseFloat(response.Result.PositionValue, 64)
 
-	if walletBalance == 0 {
+	equity := walletBalance + response.Result.UnrealisedPnl
+
+	if equity == 0 {
 		return 0, nil
 	}
 
-	return (positionValue / walletBalance), nil
+	return (positionValue / equity), nil
 }
 
 func (d *Bybit) Leverage() chan float64 {
