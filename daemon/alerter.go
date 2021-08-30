@@ -1,6 +1,6 @@
 // +build !noalerter
 
-package main
+package daemon
 
 import (
 	"os"
@@ -13,7 +13,7 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
-func initAlerter() {
+func (d *Daemon) initAlerter() {
 	log.Info("Initialising alerter")
 
 	chatId, err := strconv.Atoi(os.Getenv("TELEGRAM_CHAT_ID"))
@@ -25,16 +25,16 @@ func initAlerter() {
 		ApiToken: os.Getenv("TELEGRAM_API_TOKEN"),
 		ChatId:   chatId}
 
-	alerter = alert.NewAlerter(state, notifier)
-	alerter.Retrieve()
+	d.alerter = alert.NewAlerter(d.state, notifier)
+	d.alerter.Retrieve()
 
 	ticker := time.NewTicker(1 * time.Second)
 	go func() {
 		for {
 			<-ticker.C
 			log.Debug("Checking alerts")
-			alerter.CheckAlerts()
-			alerter.Persist()
+			d.alerter.CheckAlerts()
+			d.alerter.Persist()
 		}
 	}()
 }

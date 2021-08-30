@@ -1,6 +1,6 @@
 // +build !noweb
 
-package main
+package daemon
 
 import (
 	"fmt"
@@ -8,22 +8,25 @@ import (
 	"os"
 	"time"
 
+	"github.com/gorilla/websocket"
 	log "github.com/sirupsen/logrus"
 )
 
-func initWS() {
-	http.HandleFunc("/ws", serveWs)
+func (d *Daemon) initWS() {
+	d.conns = map[*websocket.Conn]bool{}
+
+	http.HandleFunc("/ws", d.serveWs)
 
 	ticker := time.NewTicker(1 * time.Second)
 
 	go func() {
 		for {
-			for c, _ := range conns {
-				if err := sendState(c); err != nil {
+			for c, _ := range d.conns {
+				if err := d.sendState(c); err != nil {
 					log.Debug(err)
-					m.Lock()
-					delete(conns, c)
-					m.Unlock()
+					d.m.Lock()
+					delete(d.conns, c)
+					d.m.Unlock()
 				}
 			}
 
@@ -32,7 +35,7 @@ func initWS() {
 	}()
 }
 
-func initWeb() {
+func (d *Daemon) initWeb() {
 	path := "./www"
 	if wwwRoot := os.Getenv("WWW_ROOT"); len(wwwRoot) > 0 {
 		path = wwwRoot
