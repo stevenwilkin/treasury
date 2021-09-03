@@ -50,13 +50,6 @@ func (d *Daemon) initDataFeeds() {
 		})
 
 	d.feedHandler.Add(
-		feed.USDCTHB,
-		curry(d.venues.Bitkub.PriceWS, symbol.USDCTHB),
-		func(usdcThb float64) {
-			d.state.SetSymbol(symbol.USDCTHB, usdcThb)
-		})
-
-	d.feedHandler.Add(
 		feed.USDTHB,
 		d.venues.XE.Price,
 		func(usdThb float64) {
