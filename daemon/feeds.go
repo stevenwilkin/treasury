@@ -65,9 +65,10 @@ func (d *Daemon) initDataFeeds() {
 
 	d.feedHandler.Add(
 		feed.Bybit,
-		d.venues.Bybit.Equity,
-		func(bybitBtc float64) {
-			d.state.SetAsset(venue.Bybit, asset.BTC, bybitBtc)
+		d.venues.Bybit.EquityAndLeverage,
+		func(equityAndLeverage [2]float64) {
+			d.state.SetAsset(venue.Bybit, asset.BTC, equityAndLeverage[0])
+			d.state.SetLeverageBybit(equityAndLeverage[1])
 		})
 
 	d.feedHandler.Add(
@@ -90,12 +91,5 @@ func (d *Daemon) initDataFeeds() {
 		d.venues.Deribit.Leverage,
 		func(leverage float64) {
 			d.state.SetLeverageDeribit(leverage)
-		})
-
-	d.feedHandler.Add(
-		feed.LeverageBybit,
-		d.venues.Bybit.Leverage,
-		func(leverage float64) {
-			d.state.SetLeverageBybit(leverage)
 		})
 }

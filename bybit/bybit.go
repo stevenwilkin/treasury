@@ -115,48 +115,6 @@ func (b *Bybit) get(path string, params map[string]string, result interface{}) e
 	return nil
 }
 
-func (b *Bybit) GetEquity() (float64, error) {
-	var response equityResponse
-
-	err := b.get("/v2/private/wallet/balance",
-		map[string]string{"coin": "BTC"}, &response)
-
-	if err != nil {
-		return 0, err
-	}
-
-	return response.Result.BTC.Equity, nil
-}
-
-func (b *Bybit) Equity() chan float64 {
-	log.WithField("venue", "bybit").Info("Polling equity")
-
-	ch := make(chan float64)
-	ticker := time.NewTicker(1 * time.Second)
-
-	go func() {
-		for {
-			equity, err := b.GetEquity()
-			if err != nil {
-				log.WithField("venue", "bybit").Warn(err.Error())
-				close(ch)
-				return
-			}
-
-			log.WithFields(log.Fields{
-				"venue": "bybit",
-				"asset": "BTC",
-				"value": equity,
-			}).Debug("Received equity")
-
-			ch <- equity
-			<-ticker.C
-		}
-	}()
-
-	return ch
-}
-
 func (b *Bybit) GetFundingRate() (float64, float64, error) {
 	url := "https://api.bybit.com/v2/public/tickers?symbol=BTCUSD"
 	resp, err := http.Get(url)
@@ -225,14 +183,14 @@ func (b *Bybit) GetSize() int {
 	return response.Result.Size
 }
 
-func (b *Bybit) GetLeverage() (float64, error) {
+func (b *Bybit) GetEquityAndLeverage() (float64, float64, error) {
 	var response positionResponse
 
 	err := b.get("/v2/private/position/list",
 		map[string]string{"symbol": "BTCUSD"}, &response)
 
 	if err != nil {
-		return 0, err
+		return 0, 0, err
 	}
 
 	walletBalance, _ := strconv.ParseFloat(response.Result.WalletBalance, 64)
@@ -241,21 +199,21 @@ func (b *Bybit) GetLeverage() (float64, error) {
 	equity := walletBalance + response.Result.UnrealisedPnl
 
 	if equity == 0 {
-		return 0, nil
+		return 0, 0, nil
 	}
 
-	return (positionValue / equity), nil
+	return equity, (positionValue / equity), nil
 }
 
-func (d *Bybit) Leverage() chan float64 {
-	log.WithField("venue", "bybit").Info("Polling leverage")
+func (d *Bybit) EquityAndLeverage() chan [2]float64 {
+	log.WithField("venue", "bybit").Info("Polling equity and leverage")
 
-	ch := make(chan float64)
+	ch := make(chan [2]float64)
 	ticker := time.NewTicker(1 * time.Second)
 
 	go func() {
 		for {
-			leverage, err := d.GetLeverage()
+			equity, leverage, err := d.GetEquityAndLeverage()
 			if err != nil {
 				log.WithField("venue", "bybit").Warn(err.Error())
 				close(ch)
@@ -264,10 +222,11 @@ func (d *Bybit) Leverage() chan float64 {
 
 			log.WithFields(log.Fields{
 				"venue":    "bybit",
+				"equity":   equity,
 				"leverage": leverage,
-			}).Debug("Received leverage")
+			}).Debug("Received equity and leverage")
 
-			ch <- leverage
+			ch <- [2]float64{equity, leverage}
 			<-ticker.C
 		}
 	}()

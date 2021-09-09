@@ -19,7 +19,6 @@ const (
 	FTX
 	Funding
 	LeverageDeribit
-	LeverageBybit
 )
 
 func feeds() []string {
@@ -34,8 +33,7 @@ func feeds() []string {
 		"Bybit",
 		"FTX",
 		"Funding",
-		"LeverageDeribit",
-		"LeverageBybit"}
+		"LeverageDeribit"}
 }
 
 func (s Feed) String() string {

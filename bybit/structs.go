@@ -4,14 +4,6 @@ import (
 	"encoding/json"
 )
 
-type equityResponse struct {
-	Result struct {
-		BTC struct {
-			Equity float64
-		}
-	}
-}
-
 type fundingResponse struct {
 	Result []struct {
 		FundingRate          string `json:"funding_rate"`
