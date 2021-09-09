@@ -108,7 +108,12 @@ function handleAssets(assets) {
 
   for(var venue in filtered) {
     for(var asset in filtered[venue]) {
-      updateElement('.asset-' + venue + '-' + asset, filtered[venue][asset]);
+      value = filtered[venue][asset];
+      if(asset == 'BTC') {
+        value = value.toFixed(8);
+      }
+
+      updateElement('.asset-' + venue + '-' + asset, value);
     }
   }
 }
