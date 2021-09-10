@@ -7,7 +7,6 @@ import (
 	"io/ioutil"
 	"net/http"
 	"strconv"
-	"time"
 
 	"github.com/stevenwilkin/treasury/symbol"
 
@@ -31,6 +30,13 @@ type priceResponse struct {
 }
 
 func (o *Oanda) GetPrice(s symbol.Symbol) (float64, error) {
+	var err error
+	defer func() {
+		if err != nil {
+			log.WithField("venue", "oanda").Warn(err.Error())
+		}
+	}()
+
 	var ticker string
 
 	switch s {
@@ -67,7 +73,8 @@ func (o *Oanda) GetPrice(s symbol.Symbol) (float64, error) {
 	if len(response.Prices) != 1 ||
 		len(response.Prices[0].Bids) != 1 ||
 		len(response.Prices[0].Asks) != 1 {
-		return 0, errors.New("Invalid price response")
+		err = errors.New("Invalid price response")
+		return 0, err
 	}
 
 	bidString := response.Prices[0].Bids[0].Price
@@ -78,36 +85,4 @@ func (o *Oanda) GetPrice(s symbol.Symbol) (float64, error) {
 	price := (bid + ask) / 2
 
 	return price, nil
-}
-
-func (o *Oanda) Price(s symbol.Symbol) chan float64 {
-	log.WithFields(log.Fields{
-		"venue":  "oanda",
-		"symbol": s,
-	}).Info("Polling price")
-
-	ch := make(chan float64)
-	ticker := time.NewTicker(1 * time.Second)
-
-	go func() {
-		for {
-			price, err := o.GetPrice(s)
-			if err != nil {
-				log.WithField("venue", "oanda").Warn(err.Error())
-				close(ch)
-				return
-			}
-
-			log.WithFields(log.Fields{
-				"venue":  "oanda",
-				"symbol": s,
-				"value":  price,
-			}).Debug("Received price")
-
-			ch <- price
-			<-ticker.C
-		}
-	}()
-
-	return ch
 }

@@ -115,59 +115,38 @@ func (b *Bybit) get(path string, params map[string]string, result interface{}) e
 	return nil
 }
 
-func (b *Bybit) GetFundingRate() (float64, float64, error) {
+func (b *Bybit) GetFundingRate() ([2]float64, error) {
+	var err error
+	defer func() {
+		if err != nil {
+			log.WithField("venue", "bybit").Warn(err.Error())
+		}
+	}()
+
 	url := "https://api.bybit.com/v2/public/tickers?symbol=BTCUSD"
 	resp, err := http.Get(url)
 	if err != nil {
-		return 0, 0, err
+		return [2]float64{}, err
 	}
 	defer resp.Body.Close()
 
 	body, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
-		return 0, 0, err
+		return [2]float64{}, err
 	}
 
 	var response fundingResponse
 	json.Unmarshal(body, &response)
 
 	if len(response.Result) != 1 {
-		return 0, 0, errors.New("Empty funding rate response")
+		err = errors.New("Empty funding rate response")
+		return [2]float64{}, err
 	}
 
 	funding, _ := strconv.ParseFloat(response.Result[0].FundingRate, 64)
 	predicted, _ := strconv.ParseFloat(response.Result[0].PredictedFundingRate, 64)
 
-	return funding, predicted, nil
-}
-
-func (b *Bybit) FundingRate() chan [2]float64 {
-	log.WithField("venue", "bybit").Info("Polling funding rate")
-
-	ch := make(chan [2]float64)
-	ticker := time.NewTicker(1 * time.Second)
-
-	go func() {
-		for {
-			current, predicted, err := b.GetFundingRate()
-			if err != nil {
-				log.WithField("venue", "bybit").Warn(err.Error())
-				close(ch)
-				return
-			}
-
-			log.WithFields(log.Fields{
-				"venue":     "bybit",
-				"current":   current,
-				"predicted": predicted,
-			}).Debug("Received funding rate")
-
-			ch <- [2]float64{current, predicted}
-			<-ticker.C
-		}
-	}()
-
-	return ch
+	return [2]float64{funding, predicted}, nil
 }
 
 func (b *Bybit) GetSize() int {
@@ -183,14 +162,15 @@ func (b *Bybit) GetSize() int {
 	return response.Result.Size
 }
 
-func (b *Bybit) GetEquityAndLeverage() (float64, float64, error) {
+func (b *Bybit) GetEquityAndLeverage() ([2]float64, error) {
 	var response positionResponse
 
 	err := b.get("/v2/private/position/list",
 		map[string]string{"symbol": "BTCUSD"}, &response)
 
 	if err != nil {
-		return 0, 0, err
+		log.WithField("venue", "bybit").Warn(err.Error())
+		return [2]float64{0, 0}, err
 	}
 
 	walletBalance, _ := strconv.ParseFloat(response.Result.WalletBalance, 64)
@@ -199,39 +179,10 @@ func (b *Bybit) GetEquityAndLeverage() (float64, float64, error) {
 	equity := walletBalance + response.Result.UnrealisedPnl
 
 	if equity == 0 {
-		return 0, 0, nil
+		return [2]float64{0, 0}, nil
 	}
 
-	return equity, (positionValue / equity), nil
-}
-
-func (d *Bybit) EquityAndLeverage() chan [2]float64 {
-	log.WithField("venue", "bybit").Info("Polling equity and leverage")
-
-	ch := make(chan [2]float64)
-	ticker := time.NewTicker(1 * time.Second)
-
-	go func() {
-		for {
-			equity, leverage, err := d.GetEquityAndLeverage()
-			if err != nil {
-				log.WithField("venue", "bybit").Warn(err.Error())
-				close(ch)
-				return
-			}
-
-			log.WithFields(log.Fields{
-				"venue":    "bybit",
-				"equity":   equity,
-				"leverage": leverage,
-			}).Debug("Received equity and leverage")
-
-			ch <- [2]float64{equity, leverage}
-			<-ticker.C
-		}
-	}()
-
-	return ch
+	return [2]float64{equity, (positionValue / equity)}, nil
 }
 
 func (b *Bybit) subscribe(channels []string) (*websocket.Conn, error) {

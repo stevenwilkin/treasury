@@ -28,6 +28,13 @@ func (f *FTX) sign(s string) string {
 }
 
 func (f *FTX) GetBalances() ([2]float64, error) {
+	var err error
+	defer func() {
+		if err != nil {
+			log.WithField("venue", "ftx").Warn(err.Error())
+		}
+	}()
+
 	timestamp := time.Now().UnixNano() / int64(time.Millisecond)
 	signatureInput := fmt.Sprintf("%dGET/api/wallet/all_balances", timestamp)
 
@@ -69,35 +76,6 @@ func (f *FTX) GetBalances() ([2]float64, error) {
 	}
 
 	return [2]float64{btc, usdt}, nil
-}
-
-func (f *FTX) Balances() chan [2]float64 {
-	log.WithField("venue", "ftx").Info("Polling balances")
-
-	ch := make(chan [2]float64)
-	ticker := time.NewTicker(1 * time.Second)
-
-	go func() {
-		for {
-			balances, err := f.GetBalances()
-			if err != nil {
-				log.WithField("venue", "ftx").Warn(err.Error())
-				close(ch)
-				return
-			}
-
-			log.WithFields(log.Fields{
-				"venue": "ftx",
-				"btc":   balances[0],
-				"usdt":  balances[1],
-			}).Debug("Received balances")
-
-			ch <- balances
-			<-ticker.C
-		}
-	}()
-
-	return ch
 }
 
 func (f *FTX) PlaceOrder(size, price float64, buy bool) (int64, error) {

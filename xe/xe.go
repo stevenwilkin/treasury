@@ -72,6 +72,13 @@ func (x *XE) accessToken() (string, error) {
 }
 
 func (x *XE) GetPrice() (float64, error) {
+	var err error
+	defer func() {
+		if err != nil {
+			log.WithField("venue", "xe").Warn(err.Error())
+		}
+	}()
+
 	accessToken, err := x.accessToken()
 	if err != nil {
 		return 0, err
@@ -100,40 +107,9 @@ func (x *XE) GetPrice() (float64, error) {
 	json.Unmarshal(body, &response)
 
 	if response.Rates.THB == 0 {
-		return 0, errors.New("Empty rate response")
+		err = errors.New("Empty rate response")
+		return 0, err
 	}
 
 	return response.Rates.THB, nil
-}
-
-func (x *XE) Price() chan float64 {
-	log.WithFields(log.Fields{
-		"venue":  "xe",
-		"symbol": "USDTHB",
-	}).Info("Polling price")
-
-	ch := make(chan float64)
-	ticker := time.NewTicker(1 * time.Second)
-
-	go func() {
-		for {
-			price, err := x.GetPrice()
-			if err != nil {
-				log.WithField("venue", "xe").Warn(err.Error())
-				close(ch)
-				return
-			}
-
-			log.WithFields(log.Fields{
-				"venue":  "xe",
-				"symbol": "USDTHB",
-				"value":  price,
-			}).Debug("Received price")
-
-			ch <- price
-			<-ticker.C
-		}
-	}()
-
-	return ch
 }

@@ -84,10 +84,11 @@ func (b *Binance) doRequest(method, path string, values url.Values, sign bool) (
 	return body, nil
 }
 
-func (b *Binance) GetBalances() (float64, float64, float64, error) {
+func (b *Binance) GetBalances() ([3]float64, error) {
 	body, err := b.doRequest("GET", "/api/v3/account", url.Values{}, true)
 	if err != nil {
-		return 0, 0, 0, err
+		log.WithField("venue", "binance").Warn(err.Error())
+		return [3]float64{}, err
 	}
 
 	var response accountResponse
@@ -108,37 +109,7 @@ func (b *Binance) GetBalances() (float64, float64, float64, error) {
 		}
 	}
 
-	return btc, usdt, usdc, nil
-}
-
-func (b *Binance) Balances() chan [3]float64 {
-	log.WithField("venue", "binance").Info("Polling balances")
-
-	ch := make(chan [3]float64)
-	ticker := time.NewTicker(1 * time.Second)
-
-	go func() {
-		for {
-			btc, usdt, usdc, err := b.GetBalances()
-			if err != nil {
-				log.WithField("venue", "binance").Warn(err.Error())
-				close(ch)
-				return
-			}
-
-			log.WithFields(log.Fields{
-				"venue": "binance",
-				"btc":   btc,
-				"usdt":  usdt,
-				"usdc":  usdc,
-			}).Debug("Received balances")
-
-			ch <- [3]float64{btc, usdt, usdc}
-			<-ticker.C
-		}
-	}()
-
-	return ch
+	return [3]float64{btc, usdt, usdc}, nil
 }
 
 func (b *Binance) subscribe(stream string) (*websocket.Conn, error) {
@@ -168,11 +139,6 @@ func (b *Binance) listenKey() (string, error) {
 }
 
 func (b *Binance) Price() chan float64 {
-	log.WithFields(log.Fields{
-		"venue":  "binance",
-		"symbol": "BTCUSDT",
-	}).Info("Subscribing to price")
-
 	ch := make(chan float64)
 
 	c, err := b.subscribe("btcusdt@aggTrade")

@@ -21,7 +21,7 @@ func main() {
 		ApiKey:    os.Getenv("OANDA_API_KEY")}
 
 	usdThb, _ := oanda.GetPrice(symbol.USDTHB)
-	usdtThb := <-bitkub.Price(symbol.USDTTHB)
+	usdtThb, _ := bitkub.GetPrice(symbol.USDTTHB)
 	difference := ((usdtThb - usdThb) / usdThb) * 100
 
 	fmt.Printf("USDTTHB: %.2f\n", usdtThb)

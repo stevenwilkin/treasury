@@ -1,6 +1,9 @@
 package daemon
 
 import (
+	"reflect"
+	"time"
+
 	"github.com/stevenwilkin/treasury/asset"
 	"github.com/stevenwilkin/treasury/feed"
 	"github.com/stevenwilkin/treasury/symbol"
@@ -13,6 +16,36 @@ func curry(f func(s symbol.Symbol) chan float64, s symbol.Symbol) func() chan fl
 	return func() chan float64 {
 		return f(s)
 	}
+}
+
+func poll(feed interface{}) interface{} {
+	returnType := reflect.ValueOf(feed).Type().Out(0)
+	chType := reflect.ChanOf(reflect.BothDir, returnType)
+
+	pollerF := func(_ []reflect.Value) []reflect.Value {
+		ch := reflect.MakeChan(chType, 0)
+		ticker := time.NewTicker(1 * time.Second)
+
+		go func() {
+			for {
+				results := reflect.ValueOf(feed).Call([]reflect.Value{})
+				if !results[1].IsNil() {
+					ch.Close()
+					return
+				}
+
+				ch.Send(results[0])
+				<-ticker.C
+			}
+		}()
+
+		return []reflect.Value{ch}
+	}
+
+	fnType := reflect.FuncOf([]reflect.Type{}, []reflect.Type{chType}, false)
+	fn := reflect.MakeFunc(fnType, pollerF)
+
+	return fn.Interface()
 }
 
 func (d *Daemon) initDataFeeds() {
@@ -28,7 +61,7 @@ func (d *Daemon) initDataFeeds() {
 
 	d.feedHandler.Add(
 		feed.Binance,
-		d.venues.Binance.Balances,
+		poll(d.venues.Binance.GetBalances),
 		func(balances [3]float64) {
 			d.state.SetAsset(venue.Binance, asset.BTC, balances[0])
 			d.state.SetAsset(venue.Binance, asset.USDT, balances[1])
@@ -51,7 +84,7 @@ func (d *Daemon) initDataFeeds() {
 
 	d.feedHandler.Add(
 		feed.USDTHB,
-		d.venues.XE.Price,
+		poll(d.venues.XE.GetPrice),
 		func(usdThb float64) {
 			d.state.SetSymbol(symbol.USDTHB, usdThb)
 		})
@@ -65,7 +98,7 @@ func (d *Daemon) initDataFeeds() {
 
 	d.feedHandler.Add(
 		feed.Bybit,
-		d.venues.Bybit.EquityAndLeverage,
+		poll(d.venues.Bybit.GetEquityAndLeverage),
 		func(equityAndLeverage [2]float64) {
 			d.state.SetAsset(venue.Bybit, asset.BTC, equityAndLeverage[0])
 			d.state.SetLeverageBybit(equityAndLeverage[1])
@@ -73,14 +106,14 @@ func (d *Daemon) initDataFeeds() {
 
 	d.feedHandler.Add(
 		feed.Funding,
-		d.venues.Bybit.FundingRate,
+		poll(d.venues.Bybit.GetFundingRate),
 		func(funding [2]float64) {
 			d.state.SetFunding(funding[0], funding[1])
 		})
 
 	d.feedHandler.Add(
 		feed.FTX,
-		d.venues.Ftx.Balances,
+		poll(d.venues.Ftx.GetBalances),
 		func(balances [2]float64) {
 			d.state.SetAsset(venue.FTX, asset.BTC, balances[0])
 			d.state.SetAsset(venue.FTX, asset.USDT, balances[1])
@@ -88,7 +121,7 @@ func (d *Daemon) initDataFeeds() {
 
 	d.feedHandler.Add(
 		feed.LeverageDeribit,
-		d.venues.Deribit.Leverage,
+		poll(d.venues.Deribit.GetLeverage),
 		func(leverage float64) {
 			d.state.SetLeverageDeribit(leverage)
 		})

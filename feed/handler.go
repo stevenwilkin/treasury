@@ -41,6 +41,7 @@ func (h *Handler) feedStatus(f Feed) FeedStatus {
 }
 
 func (h *Handler) startFeed(f Feed) reflect.Value {
+	log.WithField("feed", f).Info("Starting feed")
 	fn := h.feedStatus(f).inputF
 	return reflect.ValueOf(fn).Call([]reflect.Value{})[0]
 }

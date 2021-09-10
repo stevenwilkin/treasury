@@ -19,7 +19,7 @@ func main() {
 	xe := &xe.XE{}
 
 	usdThb, _ := xe.GetPrice()
-	btcThb := <-bitkub.Price(symbol.BTCTHB)
+	btcThb, _ := bitkub.GetPrice(symbol.BTCTHB)
 	btcUsdt := <-binance.Price()
 
 	equivalent := btcThb / usdThb

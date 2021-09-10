@@ -121,8 +121,6 @@ func (d *Deribit) subscribe(channels []string) (*websocket.Conn, error) {
 }
 
 func (d *Deribit) Equity() chan float64 {
-	log.WithField("venue", "deribit").Info("Subscribing to equity")
-
 	ch := make(chan float64)
 	c, err := d.subscribe([]string{"user.portfolio.BTC"})
 	if err != nil {
@@ -226,6 +224,7 @@ func (d *Deribit) GetLeverage() (float64, error) {
 		url.Values{"currency": {"BTC"}}, &response)
 
 	if err != nil {
+		log.WithField("venue", "deribit").Warn(err.Error())
 		return 0, err
 	}
 
@@ -234,32 +233,4 @@ func (d *Deribit) GetLeverage() (float64, error) {
 	}
 
 	return (response.Result.InitialMargin / response.Result.Equity) * 100, nil
-}
-
-func (d *Deribit) Leverage() chan float64 {
-	log.WithField("venue", "deribit").Info("Polling leverage")
-
-	ch := make(chan float64)
-	ticker := time.NewTicker(1 * time.Second)
-
-	go func() {
-		for {
-			leverage, err := d.GetLeverage()
-			if err != nil {
-				log.WithField("venue", "deribit").Warn(err.Error())
-				close(ch)
-				return
-			}
-
-			log.WithFields(log.Fields{
-				"venue":    "deribit",
-				"leverage": leverage,
-			}).Debug("Received leverage")
-
-			ch <- leverage
-			<-ticker.C
-		}
-	}()
-
-	return ch
 }

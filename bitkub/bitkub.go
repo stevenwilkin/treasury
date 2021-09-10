@@ -6,7 +6,6 @@ import (
 	"io/ioutil"
 	"net/http"
 	"net/url"
-	"time"
 
 	"github.com/stevenwilkin/treasury/symbol"
 
@@ -45,11 +44,6 @@ func (b *Bitkub) subscribeToPrice(s symbol.Symbol) (*websocket.Conn, error) {
 }
 
 func (b *Bitkub) PriceWS(s symbol.Symbol) chan float64 {
-	log.WithFields(log.Fields{
-		"venue":  "bitkub",
-		"symbol": s,
-	}).Info("Subscribing to price")
-
 	ch := make(chan float64)
 
 	c, err := b.subscribeToPrice(s)
@@ -85,6 +79,13 @@ func (b *Bitkub) PriceWS(s symbol.Symbol) chan float64 {
 }
 
 func (b *Bitkub) GetPrice(s symbol.Symbol) (float64, error) {
+	var err error
+	defer func() {
+		if err != nil {
+			log.WithField("venue", "bitkub").Warn(err.Error())
+		}
+	}()
+
 	tickerString := symbolToTicker(s)
 
 	v := url.Values{"sym": {tickerString}}
@@ -116,36 +117,4 @@ func (b *Bitkub) GetPrice(s symbol.Symbol) (float64, error) {
 	json.Unmarshal(body, &response)
 
 	return response[tickerString].Last, nil
-}
-
-func (b *Bitkub) Price(s symbol.Symbol) chan float64 {
-	log.WithFields(log.Fields{
-		"venue":  "bitkub",
-		"symbol": s,
-	}).Info("Polling price")
-
-	ch := make(chan float64)
-	ticker := time.NewTicker(1 * time.Second)
-
-	go func() {
-		for {
-			price, err := b.GetPrice(s)
-			if err != nil {
-				log.WithField("venue", "bitkub").Warn(err.Error())
-				close(ch)
-				return
-			}
-
-			log.WithFields(log.Fields{
-				"venue":  "bitkub",
-				"symbol": s,
-				"value":  price,
-			}).Debug("Received price")
-
-			ch <- price
-			<-ticker.C
-		}
-	}()
-
-	return ch
 }

@@ -8,8 +8,8 @@ import (
 
 func main() {
 	b := &bybit.Bybit{}
-	fundingRate, PredictedFundingRate, _ := b.GetFundingRate()
+	rates, _ := b.GetFundingRate()
 
-	fmt.Printf("Funding:   %f%%\n", fundingRate*100)
-	fmt.Printf("Predicted: %f%%\n", PredictedFundingRate*100)
+	fmt.Printf("Funding:   %f%%\n", rates[0]*100)
+	fmt.Printf("Predicted: %f%%\n", rates[1]*100)
 }
