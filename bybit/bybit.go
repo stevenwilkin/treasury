@@ -14,7 +14,6 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/gorilla/websocket"
 	log "github.com/sirupsen/logrus"
 )
 
@@ -30,32 +29,6 @@ func (b *Bybit) hostname() string {
 	} else {
 		return "api.bybit.com"
 	}
-}
-
-func (b *Bybit) websocketHostname() string {
-	if b.Testnet {
-		return "stream-testnet.bybit.com"
-	} else {
-		return "stream.bybit.com"
-	}
-}
-
-func getSignature(params map[string]interface{}, key string) string {
-	keys := make([]string, len(params))
-	i := 0
-	_val := ""
-	for k, _ := range params {
-		keys[i] = k
-		i++
-	}
-	sort.Strings(keys)
-	for _, k := range keys {
-		_val += fmt.Sprintf("%s=%v&", k, params[k])
-	}
-	_val = _val[0 : len(_val)-1]
-	h := hmac.New(sha256.New, []byte(key))
-	io.WriteString(h, _val)
-	return fmt.Sprintf("%x", h.Sum(nil))
 }
 
 func (b *Bybit) timestamp() string {
@@ -183,36 +156,4 @@ func (b *Bybit) GetEquityAndLeverage() ([2]float64, error) {
 	}
 
 	return [2]float64{equity, (positionValue / equity)}, nil
-}
-
-func (b *Bybit) subscribe(channels []string) (*websocket.Conn, error) {
-	expires := (time.Now().UnixNano() / int64(time.Millisecond)) + 10000
-
-	signatureInput := fmt.Sprintf("GET/realtime%d", expires)
-	h := hmac.New(sha256.New, []byte(b.ApiSecret))
-	io.WriteString(h, signatureInput)
-	signature := fmt.Sprintf("%x", h.Sum(nil))
-
-	v := url.Values{}
-	v.Set("api_key", b.ApiKey)
-	v.Set("expires", strconv.FormatInt(expires, 10))
-	v.Set("signature", signature)
-
-	u := url.URL{
-		Scheme:   "wss",
-		Host:     b.websocketHostname(),
-		Path:     "/realtime",
-		RawQuery: v.Encode()}
-
-	c, _, err := websocket.DefaultDialer.Dial(u.String(), nil)
-	if err != nil {
-		return &websocket.Conn{}, err
-	}
-
-	command := wsCommand{Op: "subscribe", Args: channels}
-	if err = c.WriteJSON(command); err != nil {
-		return &websocket.Conn{}, err
-	}
-
-	return c, nil
 }

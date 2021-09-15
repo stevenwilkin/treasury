@@ -33,35 +33,3 @@ type accountSummaryResponse struct {
 		InitialMargin float64 `json:"initial_margin"`
 	} `json:"result"`
 }
-
-type quoteMessage struct {
-	Method string `json:"method"`
-	Params struct {
-		Data struct {
-			BestBidPrice float64 `json:"best_bid_price"`
-			BestAskPrice float64 `json:"best_ask_price"`
-		} `json:"data"`
-	} `json:"params"`
-}
-
-type orderMessage struct {
-	Method string `json:"method"`
-	Params struct {
-		Data struct {
-			OrderId      string  `json:"order_id"`
-			OrderState   string  `json:"order_state"`
-			FilledAmount float64 `json:"filled_amount"`
-		} `json:"data"`
-	} `json:"params"`
-}
-
-type orderResponse struct {
-	Result struct {
-		Order struct {
-			OrderId string `json:"order_id"`
-		} `json:"order"`
-	} `json:"result"`
-	Error struct {
-		Message string `json:"message"`
-	} `json:"error"`
-}

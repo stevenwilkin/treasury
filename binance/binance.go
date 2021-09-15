@@ -126,18 +126,6 @@ func (b *Binance) subscribe(stream string) (*websocket.Conn, error) {
 	return c, nil
 }
 
-func (b *Binance) listenKey() (string, error) {
-	body, err := b.doRequest("POST", "/api/v3/userDataStream", url.Values{}, false)
-	if err != nil {
-		return "", err
-	}
-
-	var response listenKeyResponse
-	json.Unmarshal(body, &response)
-
-	return response.ListenKey, nil
-}
-
 func (b *Binance) Price() chan float64 {
 	ch := make(chan float64)
 
