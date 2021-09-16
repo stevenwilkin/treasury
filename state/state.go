@@ -18,8 +18,8 @@ type State struct {
 	Assets          map[venue.Venue]map[asset.Asset]float64
 	Symbols         map[symbol.Symbol]float64
 	FundingRate     [2]float64
-	TotalSize       int
-	LoanUSD         float64
+	Size            int
+	Loan            float64
 	FundingAlert    bool
 	PriceAlerts     []float64
 	LeverageDeribit float64
@@ -47,7 +47,7 @@ func (s *State) SetAsset(v venue.Venue, a asset.Asset, q float64) {
 	s.Assets[v][a] = q
 }
 
-func (s *State) Asset(v venue.Venue, a asset.Asset) float64 {
+func (s *State) GetAsset(v venue.Venue, a asset.Asset) float64 {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
@@ -101,24 +101,24 @@ func (s *State) SetCost(c float64) {
 	s.Cost = c
 }
 
-func (s *State) SetFunding(current, predicted float64) {
+func (s *State) SetFundingRate(current, predicted float64) {
 	s.FundingRate = [2]float64{current, predicted}
 }
 
-func (s *State) Funding() (float64, float64) {
+func (s *State) GetFundingRate() (float64, float64) {
 	return s.FundingRate[0], s.FundingRate[1]
 }
 
 func (s *State) SetSize(size int) {
-	s.TotalSize = size
+	s.Size = size
 }
 
-func (s *State) Loan() float64 {
-	return s.LoanUSD
+func (s *State) GetLoan() float64 {
+	return s.Loan
 }
 
 func (s *State) SetLoan(loan float64) {
-	s.LoanUSD = loan
+	s.Loan = loan
 }
 
 func (s *State) GetLeverageDeribit() float64 {
@@ -136,8 +136,8 @@ func (s *State) SetLeverageBybit(leverage float64) {
 	s.LeverageBybit = leverage
 }
 
-func (s *State) Size() int {
-	return s.TotalSize
+func (s *State) GetSize() int {
+	return s.Size
 }
 
 func (s *State) TotalValue() float64 {
@@ -155,8 +155,8 @@ func (s *State) TotalValue() float64 {
 		}
 	}
 
-	if s.LoanUSD > 0 {
-		total -= (s.LoanUSD * s.Symbols[symbol.USDTHB])
+	if s.Loan > 0 {
+		total -= (s.Loan * s.Symbols[symbol.USDTHB])
 	}
 
 	return total
@@ -188,7 +188,7 @@ func (s *State) TotalEquity() float64 {
 }
 
 func (s *State) Exposure() float64 {
-	equivalentEquity := float64(s.Size()) / s.Symbol(symbol.BTCUSDT)
+	equivalentEquity := float64(s.GetSize()) / s.Symbol(symbol.BTCUSDT)
 	return s.TotalEquity() - equivalentEquity
 }
 

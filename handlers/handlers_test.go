@@ -91,7 +91,7 @@ func TestSetAsset(t *testing.T) {
 	handler := http.HandlerFunc(h.SetAsset)
 	handler.ServeHTTP(w, r)
 
-	if h.s.Asset(venue.Nexo, asset.BTC) != 1.23 {
+	if h.s.GetAsset(venue.Nexo, asset.BTC) != 1.23 {
 		t.Errorf("Unexpected asset value %f", h.s.Assets[venue.Nexo][asset.BTC])
 	}
 }
@@ -253,7 +253,7 @@ func TestSetLoan(t *testing.T) {
 	handler := http.HandlerFunc(h.SetLoan)
 	handler.ServeHTTP(w, r)
 
-	if h.s.Loan() != 123.45 {
-		t.Errorf("Unexpected loan %f", h.s.Loan())
+	if h.s.GetLoan() != 123.45 {
+		t.Errorf("Unexpected loan %f", h.s.GetLoan())
 	}
 }

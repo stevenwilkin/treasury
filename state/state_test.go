@@ -32,7 +32,7 @@ func TestAsset(t *testing.T) {
 	s := NewState()
 	s.SetAsset(venue.Nexo, asset.BTC, 1.2)
 
-	if s.Asset(venue.Nexo, asset.BTC) != 1.2 {
+	if s.GetAsset(venue.Nexo, asset.BTC) != 1.2 {
 		t.Error("Asset quantity should be returned")
 	}
 }
@@ -78,9 +78,9 @@ func TestGetSymbols(t *testing.T) {
 
 func TestFunding(t *testing.T) {
 	s := NewState()
-	s.SetFunding(1.1, 2.2)
+	s.SetFundingRate(1.1, 2.2)
 
-	current, predicted := s.Funding()
+	current, predicted := s.GetFundingRate()
 
 	if current != 1.1 || predicted != 2.2 {
 		t.Errorf("Expected: 1.1, 2.2 - Got: %f, %f", current, predicted)
@@ -91,8 +91,8 @@ func TestSize(t *testing.T) {
 	s := NewState()
 	s.SetSize(10000)
 
-	if s.Size() != 10000 {
-		t.Errorf("Expected: 10000 - Got: %d", s.Size())
+	if s.GetSize() != 10000 {
+		t.Errorf("Expected: 10000 - Got: %d", s.GetSize())
 	}
 }
 
@@ -100,8 +100,8 @@ func TestLoan(t *testing.T) {
 	s := NewState()
 	s.SetLoan(100000)
 
-	if s.Loan() != 100000 {
-		t.Errorf("Expected: 100000 - Got: %f", s.Loan())
+	if s.GetLoan() != 100000 {
+		t.Errorf("Expected: 100000 - Got: %f", s.GetLoan())
 	}
 }
 

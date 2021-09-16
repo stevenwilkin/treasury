@@ -179,7 +179,7 @@ func (h *Handler) AddPriceAlert(w http.ResponseWriter, r *http.Request) {
 func (h *Handler) Funding(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 
-	current, predicted := h.s.Funding()
+	current, predicted := h.s.GetFundingRate()
 
 	fm := fundingMessage{
 		Current:   current,
@@ -252,7 +252,7 @@ func (h *Handler) Size(w http.ResponseWriter, r *http.Request) {
 	fm := struct {
 		Size int `json:"size"`
 	}{
-		Size: h.s.Size()}
+		Size: h.s.GetSize()}
 
 	b, err := json.Marshal(fm)
 	if err != nil {
@@ -318,7 +318,7 @@ func (h *Handler) Loan(w http.ResponseWriter, r *http.Request) {
 	fm := struct {
 		Loan float64 `json:"loan"`
 	}{
-		Loan: h.s.Loan()}
+		Loan: h.s.GetLoan()}
 
 	b, err := json.Marshal(fm)
 	if err != nil {

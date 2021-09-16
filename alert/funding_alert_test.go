@@ -6,7 +6,7 @@ import (
 	"github.com/stevenwilkin/treasury/state"
 )
 
-func TestFundingAlertDeactivate(t *testing.T) {
+func TestFundingRateAlertDeactivate(t *testing.T) {
 	state := state.NewState()
 	alert := NewFundingAlert(state)
 
@@ -21,11 +21,11 @@ func TestFundingAlertDeactivate(t *testing.T) {
 	}
 }
 
-func TestFundingAlertMessage(t *testing.T) {
+func TestFundingRateAlertMessage(t *testing.T) {
 	state := state.NewState()
 	alert := NewFundingAlert(state)
 
-	state.SetFunding(0.001, 0.001)
+	state.SetFundingRate(0.001, 0.001)
 
 	expected := "Funding: 0.100000%, Predicted: 0.100000%"
 	if alert.Message() != expected {
@@ -33,33 +33,33 @@ func TestFundingAlertMessage(t *testing.T) {
 	}
 }
 
-func TestCheckOnPositiveFunding(t *testing.T) {
+func TestCheckOnPositiveFundingRate(t *testing.T) {
 	state := state.NewState()
 	alert := NewFundingAlert(state)
 
-	state.SetFunding(0.1, 0.1)
+	state.SetFundingRate(0.1, 0.1)
 
 	if alert.Check() {
 		t.Error("Alert should not be triggered")
 	}
 }
 
-func TestCheckOnNegativeFunding(t *testing.T) {
+func TestCheckOnNegativeFundingRate(t *testing.T) {
 	state := state.NewState()
 	alert := NewFundingAlert(state)
 
-	state.SetFunding(-0.1, 0.0)
+	state.SetFundingRate(-0.1, 0.0)
 
 	if !alert.Check() {
 		t.Error("Alert should be triggered")
 	}
 }
 
-func TestCheckOnNegativePredictedFunding(t *testing.T) {
+func TestCheckOnNegativePredictedFundingRate(t *testing.T) {
 	state := state.NewState()
 	alert := NewFundingAlert(state)
 
-	state.SetFunding(0.1, -0.1)
+	state.SetFundingRate(0.1, -0.1)
 
 	if !alert.Check() {
 		t.Error("Alert should be triggered")

@@ -108,7 +108,7 @@ func (d *Daemon) initDataFeeds() {
 		feed.Funding,
 		poll(d.venues.Bybit.GetFundingRate),
 		func(funding [2]float64) {
-			d.state.SetFunding(funding[0], funding[1])
+			d.state.SetFundingRate(funding[0], funding[1])
 		})
 
 	d.feedHandler.Add(
