@@ -73,7 +73,11 @@ var assetsCmd = &cobra.Command{
 			}
 			fmt.Println(venue)
 			for _, aq := range am.venueAssets(venue) {
-				fmt.Printf("\t%s: %.8f\n", aq.asset, aq.quantity)
+				if aq.asset == "BTC" {
+					fmt.Printf("\t%s: %.8f\n", aq.asset, aq.quantity)
+				} else {
+					fmt.Printf("\t%s: %.2f\n", aq.asset, aq.quantity)
+				}
 			}
 		}
 	},

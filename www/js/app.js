@@ -111,6 +111,8 @@ function handleAssets(assets) {
       value = filtered[venue][asset];
       if(asset == 'BTC') {
         value = value.toFixed(8);
+      } else {
+        value = value.toFixed(2);
       }
 
       updateElement('.asset-' + venue + '-' + asset, value);
