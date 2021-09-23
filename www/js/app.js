@@ -76,7 +76,12 @@ function filterAssets(assets) {
   for(var venue in assets) {
     var hasAssets = false;
     for(var asset in assets[venue]) {
-      if(assets[venue][asset] > 0) {
+      var threshold = 0;
+      if(asset.match(/USD/)) {
+        threshold = 0.01;
+      }
+
+      if(assets[venue][asset] > threshold) {
         hasAssets = true;
         break;
       }
@@ -89,7 +94,12 @@ function filterAssets(assets) {
     filtered[venue] = {};
 
     for(var asset in assets[venue]) {
-      if(assets[venue][asset] > 0) {
+      var threshold = 0;
+      if(asset.match(/USD/)) {
+        threshold = 0.01;
+      }
+
+      if(assets[venue][asset] > threshold) {
         filtered[venue][asset] = assets[venue][asset];
       }
     }

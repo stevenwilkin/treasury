@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"net/url"
 	"sort"
+	"strings"
 
 	"github.com/spf13/cobra"
 )
@@ -34,18 +35,27 @@ func (am *assetsMessage) hasAssets(venue string) bool {
 		return false
 	}
 
-	total := 0.0
-	for _, quantity := range am.Assets[venue] {
-		total += quantity
+	for asset, quantity := range am.Assets[venue] {
+		if strings.HasPrefix(asset, "USD") && quantity < 0.01 {
+			continue
+		}
+
+		if quantity > 0 {
+			return true
+		}
 	}
 
-	return total > 0
+	return false
 }
 
 func (am *assetsMessage) venueAssets(venue string) []assetQuantity {
 	assets := []string{}
 	for asset, quantity := range am.Assets[venue] {
-		if quantity != 0 {
+		if strings.HasPrefix(asset, "USD") && quantity < 0.01 {
+			continue
+		}
+
+		if quantity > 0 {
 			assets = append(assets, asset)
 		}
 	}
