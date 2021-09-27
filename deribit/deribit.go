@@ -167,7 +167,7 @@ func (d *Deribit) get(path string, params url.Values, result interface{}) error 
 
 	req, err := http.NewRequest("GET", u.String(), nil)
 	if err != nil {
-		log.Error(err.Error())
+		log.Warn(err.Error())
 		return err
 	}
 
@@ -183,14 +183,14 @@ func (d *Deribit) get(path string, params url.Values, result interface{}) error 
 	client := &http.Client{}
 	resp, err := client.Do(req)
 	if err != nil {
-		log.Error(err.Error())
+		log.Warn(err.Error())
 		return err
 	}
 	defer resp.Body.Close()
 
 	body, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
-		log.Error(err.Error())
+		log.Warn(err.Error())
 		return err
 	}
 
