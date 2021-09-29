@@ -48,6 +48,46 @@ func TestGetAssets(t *testing.T) {
 	}
 }
 
+func TestGetAssetsFiltersZeroBalanceAssets(t *testing.T) {
+	s := NewState()
+	s.SetAsset(venue.Nexo, asset.BTC, 1.2)
+	s.SetAsset(venue.Nexo, asset.USDT, 0)
+
+	assets := s.GetAssets()[venue.Nexo]
+
+	if len(assets) != 1 {
+		t.Fatal("Should have 1 asset")
+	}
+
+	if _, ok := assets[asset.BTC]; !ok {
+		t.Error("Should contain expected asset")
+	}
+}
+
+func TestGetAssetsFiltersStablecoinBalancesBelowOneCent(t *testing.T) {
+	s := NewState()
+	s.SetAsset(venue.Nexo, asset.BTC, 1.2)
+	s.SetAsset(venue.Nexo, asset.USDT, 0.009)
+
+	if _, ok := s.GetAssets()[venue.Nexo][asset.USDT]; ok {
+		t.Error("Should not contain asset")
+	}
+}
+
+func TestGetAssetsFiltersVenuesWithoutAssets(t *testing.T) {
+	s := NewState()
+	s.SetAsset(venue.Nexo, asset.BTC, 1.2)
+	s.SetAsset(venue.Binance, asset.BTC, 0)
+
+	if len(s.GetAssets()) != 1 {
+		t.Fatal("Should have 1 venue")
+	}
+
+	if _, ok := s.GetAssets()[venue.Nexo]; !ok {
+		t.Error("Should contain expected venue")
+	}
+}
+
 func TestSetSymbol(t *testing.T) {
 	s := NewState()
 	s.SetSymbol(symbol.BTCTHB, 300000)

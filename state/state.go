@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"os"
+	"strings"
 	"sync"
 
 	"github.com/stevenwilkin/treasury/asset"
@@ -61,9 +62,20 @@ func (s *State) GetAssets() map[venue.Venue]map[asset.Asset]float64 {
 	results := map[venue.Venue]map[asset.Asset]float64{}
 
 	for v, balances := range s.Assets {
-		results[v] = map[asset.Asset]float64{}
+		venueAssets := map[asset.Asset]float64{}
+
 		for a, q := range balances {
-			results[v][a] = q
+			if strings.HasPrefix(a.String(), "USD") && q < 0.01 {
+				continue
+			}
+
+			if q > 0 {
+				venueAssets[a] = q
+			}
+		}
+
+		if len(venueAssets) > 0 {
+			results[v] = venueAssets
 		}
 	}
 

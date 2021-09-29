@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"net/url"
 	"sort"
-	"strings"
 
 	"github.com/spf13/cobra"
 )
@@ -30,34 +29,10 @@ func (am *assetsMessage) venues() []string {
 	return result
 }
 
-func (am *assetsMessage) hasAssets(venue string) bool {
-	if len(am.Assets[venue]) == 0 {
-		return false
-	}
-
-	for asset, quantity := range am.Assets[venue] {
-		if strings.HasPrefix(asset, "USD") && quantity < 0.01 {
-			continue
-		}
-
-		if quantity > 0 {
-			return true
-		}
-	}
-
-	return false
-}
-
 func (am *assetsMessage) venueAssets(venue string) []assetQuantity {
 	assets := []string{}
-	for asset, quantity := range am.Assets[venue] {
-		if strings.HasPrefix(asset, "USD") && quantity < 0.01 {
-			continue
-		}
-
-		if quantity > 0 {
-			assets = append(assets, asset)
-		}
+	for asset, _ := range am.Assets[venue] {
+		assets = append(assets, asset)
 	}
 	sort.Strings(assets)
 
@@ -78,9 +53,6 @@ var assetsCmd = &cobra.Command{
 		get("/assets", &am)
 
 		for _, venue := range am.venues() {
-			if !am.hasAssets(venue) {
-				continue
-			}
 			fmt.Println(venue)
 			for _, aq := range am.venueAssets(venue) {
 				if aq.asset == "BTC" {

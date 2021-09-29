@@ -70,55 +70,15 @@ function initAssets(assets) {
   }
 }
 
-function filterAssets(assets) {
-  var filtered = {};
-
-  for(var venue in assets) {
-    var hasAssets = false;
-    for(var asset in assets[venue]) {
-      var threshold = 0;
-      if(asset.match(/USD/)) {
-        threshold = 0.01;
-      }
-
-      if(assets[venue][asset] > threshold) {
-        hasAssets = true;
-        break;
-      }
-    }
-
-    if(!hasAssets) {
-      continue;
-    }
-
-    filtered[venue] = {};
-
-    for(var asset in assets[venue]) {
-      var threshold = 0;
-      if(asset.match(/USD/)) {
-        threshold = 0.01;
-      }
-
-      if(assets[venue][asset] > threshold) {
-        filtered[venue][asset] = assets[venue][asset];
-      }
-    }
-  }
-
-  return filtered;
-}
-
 function handleAssets(assets) {
-  var filtered = filterAssets(assets);
-
   if(!$('.assets').children().length) {
-    initAssets(filtered);
+    initAssets(assets);
     return;
   }
 
-  for(var venue in filtered) {
-    for(var asset in filtered[venue]) {
-      value = filtered[venue][asset];
+  for(var venue in assets) {
+    for(var asset in assets[venue]) {
+      value = assets[venue][asset];
       if(asset == 'BTC') {
         value = value.toFixed(8);
       } else {
