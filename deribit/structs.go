@@ -29,7 +29,7 @@ type positionsResponse struct {
 
 type accountSummaryResponse struct {
 	Result struct {
-		Equity        float64 `json:"equity"`
-		InitialMargin float64 `json:"initial_margin"`
+		Equity            float64 `json:"equity"`
+		MaintenanceMargin float64 `json:"maintenance_margin"`
 	} `json:"result"`
 }
