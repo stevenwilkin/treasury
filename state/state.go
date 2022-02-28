@@ -69,6 +69,10 @@ func (s *State) GetAssets() map[venue.Venue]map[asset.Asset]float64 {
 				continue
 			}
 
+			if a == asset.BTC && q <= 0.00000100 {
+				continue
+			}
+
 			if q > 0 {
 				venueAssets[a] = q
 			}

@@ -64,6 +64,16 @@ func TestGetAssetsFiltersZeroBalanceAssets(t *testing.T) {
 	}
 }
 
+func TestGetAssetsFiltersBitcoinBalancesBelowThreshold(t *testing.T) {
+	s := NewState()
+	s.SetAsset(venue.Nexo, asset.BTC, 0.00000100)
+	s.SetAsset(venue.Nexo, asset.USDT, 1.0)
+
+	if _, ok := s.GetAssets()[venue.Nexo][asset.BTC]; ok {
+		t.Error("Should not contain asset")
+	}
+}
+
 func TestGetAssetsFiltersStablecoinBalancesBelowOneCent(t *testing.T) {
 	s := NewState()
 	s.SetAsset(venue.Nexo, asset.BTC, 1.2)
