@@ -85,9 +85,9 @@ func (d *Daemon) serveWs(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
+	d.sendState(c)
+
 	d.m.Lock()
 	d.conns[c] = true
 	d.m.Unlock()
-
-	d.sendState(c)
 }
