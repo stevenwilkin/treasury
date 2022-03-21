@@ -63,7 +63,11 @@ func (d *Daemon) sendState(c *websocket.Conn) error {
 func (d *Daemon) serveWs(w http.ResponseWriter, r *http.Request) {
 	log.Debug("Accepting connection")
 
-	upgrader := &websocket.Upgrader{}
+	upgrader := &websocket.Upgrader{
+		CheckOrigin: func(r *http.Request) bool {
+			return true
+		}}
+
 	c, err := upgrader.Upgrade(w, r, nil)
 	if err != nil {
 		log.Warn(err)
