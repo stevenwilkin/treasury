@@ -82,7 +82,6 @@ func (d *Daemon) Run() {
 	d.initDataFeeds()
 	d.initControlSocket()
 	d.initWS()
-	d.initWeb()
 }
 
 func NewDaemon() *Daemon {

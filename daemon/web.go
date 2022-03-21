@@ -1,5 +1,3 @@
-// +build !noweb
-
 package daemon
 
 import (
@@ -33,21 +31,11 @@ func (d *Daemon) initWS() {
 			<-ticker.C
 		}
 	}()
-}
-
-func (d *Daemon) initWeb() {
-	path := "./www"
-	if wwwRoot := os.Getenv("WWW_ROOT"); len(wwwRoot) > 0 {
-		path = wwwRoot
-	}
 
 	port := "8080"
 	if wwwPort := os.Getenv("WWW_PORT"); len(wwwPort) > 0 {
 		port = wwwPort
 	}
-
-	fs := http.FileServer(http.Dir(path))
-	http.Handle("/", fs)
 
 	go func() {
 		log.Infof("Listening on 0.0.0.0:%s", port)
