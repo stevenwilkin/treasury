@@ -1,4 +1,4 @@
-// +build noalerter
+//go:build noalerter
 
 package daemon
 
