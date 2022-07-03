@@ -18,10 +18,11 @@ const (
 	Ledn
 	Wasabi
 	Celsius
+	Ledger
 )
 
 func venues() []string {
-	return []string{"FTX", "Nexo", "Blockfi", "Hodlnaut", "Deribit", "Bybit", "Binance", "Ledn", "Wasabi", "Celsius"}
+	return []string{"FTX", "Nexo", "Blockfi", "Hodlnaut", "Deribit", "Bybit", "Binance", "Ledn", "Wasabi", "Celsius", "Ledger"}
 }
 
 func (v Venue) String() string {
