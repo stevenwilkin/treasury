@@ -125,4 +125,11 @@ func (d *Daemon) initDataFeeds() {
 		func(leverage float64) {
 			d.state.SetLeverageDeribit(leverage)
 		})
+
+	d.feedHandler.Add(
+		feed.BinanceF,
+		poll(d.venues.BinanceF.GetBalance),
+		func(balance float64) {
+			d.state.SetAsset(venue.BinanceF, asset.BTC, balance)
+		})
 }
