@@ -4,6 +4,7 @@ import (
 	"os"
 
 	"github.com/stevenwilkin/treasury/binance"
+	"github.com/stevenwilkin/treasury/binance_futures"
 	"github.com/stevenwilkin/treasury/bitkub"
 	"github.com/stevenwilkin/treasury/bybit"
 	"github.com/stevenwilkin/treasury/deribit"
@@ -12,18 +13,22 @@ import (
 )
 
 type Venues struct {
-	Binance *binance.Binance
-	Bitkub  *bitkub.Bitkub
-	Deribit *deribit.Deribit
-	Bybit   *bybit.Bybit
-	Ftx     *ftx.FTX
-	XE      *xe.XE
+	Binance  *binance.Binance
+	BinanceF *binance_futures.BinanceFutures
+	Bitkub   *bitkub.Bitkub
+	Deribit  *deribit.Deribit
+	Bybit    *bybit.Bybit
+	Ftx      *ftx.FTX
+	XE       *xe.XE
 }
 
 func NewVenues() Venues {
 	venues := Venues{}
 
 	venues.Binance = &binance.Binance{
+		ApiKey:    os.Getenv("BINANCE_API_KEY"),
+		ApiSecret: os.Getenv("BINANCE_API_SECRET")}
+	venues.BinanceF = &binance_futures.BinanceFutures{
 		ApiKey:    os.Getenv("BINANCE_API_KEY"),
 		ApiSecret: os.Getenv("BINANCE_API_SECRET")}
 	venues.Bitkub = &bitkub.Bitkub{}

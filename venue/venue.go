@@ -19,10 +19,22 @@ const (
 	Wasabi
 	Celsius
 	Ledger
+	BinanceF
 )
 
 func venues() []string {
-	return []string{"FTX", "Nexo", "Blockfi", "Hodlnaut", "Deribit", "Bybit", "Binance", "Ledn", "Wasabi", "Celsius", "Ledger"}
+	return []string{"FTX",
+		"Nexo",
+		"Blockfi",
+		"Hodlnaut",
+		"Deribit",
+		"Bybit",
+		"Binance",
+		"Ledn",
+		"Wasabi",
+		"Celsius",
+		"Ledger",
+		"BinanceF"}
 }
 
 func (v Venue) String() string {
