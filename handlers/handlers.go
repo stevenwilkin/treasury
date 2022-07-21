@@ -263,7 +263,7 @@ func (h *Handler) Size(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *Handler) UpdateSize(w http.ResponseWriter, r *http.Request) {
-	size := h.v.Deribit.GetSize() + h.v.Bybit.GetSize()
+	size := h.v.Deribit.GetSize() + h.v.Bybit.GetSize() + h.v.BinanceF.GetSize()
 	log.Infof("Setting size to %d", size)
 
 	h.s.SetSize(size)

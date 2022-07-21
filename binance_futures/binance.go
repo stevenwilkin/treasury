@@ -98,3 +98,21 @@ func (b *BinanceFutures) GetBalance() (float64, error) {
 
 	return 0, nil
 }
+
+func (b *BinanceFutures) GetSize() int {
+	body, err := b.doRequest("GET", "/dapi/v1/account", url.Values{}, true)
+	if err != nil {
+		return 0
+	}
+
+	var response accountResponse
+	json.Unmarshal(body, &response)
+
+	size := 0
+	for _, position := range response.Positions {
+		amt, _ := strconv.Atoi(position.PositionAmt)
+		size += amt
+	}
+
+	return size * 100
+}
