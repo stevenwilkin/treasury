@@ -9,19 +9,16 @@ type Venue int
 
 const (
 	Nexo Venue = iota
-	Blockfi
-	Hodlnaut
 	Deribit
 	Bybit
 	Binance
 	Ledn
 	Wasabi
-	Celsius
 	Ledger
 )
 
 func venues() []string {
-	return []string{"Nexo", "Blockfi", "Hodlnaut", "Deribit", "Bybit", "Binance", "Ledn", "Wasabi", "Celsius", "Ledger"}
+	return []string{"Nexo", "Deribit", "Bybit", "Binance", "Ledn", "Wasabi", "Ledger"}
 }
 
 func (v Venue) String() string {
