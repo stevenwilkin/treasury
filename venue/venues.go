@@ -7,7 +7,6 @@ import (
 	"github.com/stevenwilkin/treasury/bitkub"
 	"github.com/stevenwilkin/treasury/bybit"
 	"github.com/stevenwilkin/treasury/deribit"
-	"github.com/stevenwilkin/treasury/ftx"
 	"github.com/stevenwilkin/treasury/xe"
 )
 
@@ -16,7 +15,6 @@ type Venues struct {
 	Bitkub  *bitkub.Bitkub
 	Deribit *deribit.Deribit
 	Bybit   *bybit.Bybit
-	Ftx     *ftx.FTX
 	XE      *xe.XE
 }
 
@@ -33,9 +31,6 @@ func NewVenues() Venues {
 	venues.Bybit = &bybit.Bybit{
 		ApiKey:    os.Getenv("BYBIT_API_KEY"),
 		ApiSecret: os.Getenv("BYBIT_API_SECRET")}
-	venues.Ftx = &ftx.FTX{
-		ApiKey:    os.Getenv("FTX_API_KEY"),
-		ApiSecret: os.Getenv("FTX_API_SECRET")}
 	venues.XE = &xe.XE{}
 
 	return venues

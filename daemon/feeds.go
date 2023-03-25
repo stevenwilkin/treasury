@@ -112,14 +112,6 @@ func (d *Daemon) initDataFeeds() {
 		})
 
 	d.feedHandler.Add(
-		feed.FTX,
-		poll(d.venues.Ftx.GetBalances),
-		func(balances [2]float64) {
-			d.state.SetAsset(venue.FTX, asset.BTC, balances[0])
-			d.state.SetAsset(venue.FTX, asset.USDT, balances[1])
-		})
-
-	d.feedHandler.Add(
 		feed.LeverageDeribit,
 		poll(d.venues.Deribit.GetLeverage),
 		func(leverage float64) {

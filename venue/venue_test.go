@@ -3,7 +3,7 @@ package venue
 import "testing"
 
 func TestVenueToString(t *testing.T) {
-	tests := map[Venue]string{Nexo: "Nexo", FTX: "FTX"}
+	tests := map[Venue]string{Nexo: "Nexo", Binance: "Binance"}
 
 	for venue, venueString := range tests {
 		if venue.String() != venueString {

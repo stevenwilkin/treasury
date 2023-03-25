@@ -8,8 +8,7 @@ import (
 type Venue int
 
 const (
-	FTX Venue = iota
-	Nexo
+	Nexo Venue = iota
 	Blockfi
 	Hodlnaut
 	Deribit
@@ -22,7 +21,7 @@ const (
 )
 
 func venues() []string {
-	return []string{"FTX", "Nexo", "Blockfi", "Hodlnaut", "Deribit", "Bybit", "Binance", "Ledn", "Wasabi", "Celsius", "Ledger"}
+	return []string{"Nexo", "Blockfi", "Hodlnaut", "Deribit", "Bybit", "Binance", "Ledn", "Wasabi", "Celsius", "Ledger"}
 }
 
 func (v Venue) String() string {

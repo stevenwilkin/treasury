@@ -177,7 +177,7 @@ func TestTotalValue(t *testing.T) {
 	s := NewState()
 	s.SetAsset(venue.Nexo, asset.BTC, 1.1)
 	s.SetAsset(venue.Nexo, asset.USDT, 1000)
-	s.SetAsset(venue.FTX, asset.BTC, 0.1)
+	s.SetAsset(venue.Binance, asset.BTC, 0.1)
 	s.SetSymbol(symbol.BTCTHB, 300000)
 	s.SetSymbol(symbol.USDTTHB, 31)
 
@@ -202,7 +202,7 @@ func TestTotalEquity(t *testing.T) {
 	s := NewState()
 	s.SetAsset(venue.Nexo, asset.BTC, 1)
 	s.SetAsset(venue.Nexo, asset.USDT, 1000)
-	s.SetAsset(venue.FTX, asset.BTC, 2)
+	s.SetAsset(venue.Binance, asset.BTC, 2)
 
 	if s.TotalEquity() != 3 {
 		t.Errorf("Expected total equity to be %f, got %f", 3.0, s.TotalEquity())
