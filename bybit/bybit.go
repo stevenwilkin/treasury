@@ -96,30 +96,22 @@ func (b *Bybit) GetFundingRate() ([2]float64, error) {
 		}
 	}()
 
-	url := "https://api.bybit.com/v2/public/tickers?symbol=BTCUSD"
-	resp, err := http.Get(url)
-	if err != nil {
-		return [2]float64{}, err
-	}
-	defer resp.Body.Close()
-
-	body, err := ioutil.ReadAll(resp.Body)
-	if err != nil {
-		return [2]float64{}, err
-	}
-
 	var response fundingResponse
-	json.Unmarshal(body, &response)
 
-	if len(response.Result) != 1 {
+	err = b.get("/v5/market/tickers",
+		map[string]string{"category": "inverse", "symbol": "BTCUSD"}, &response)
+	if err != nil {
+		return [2]float64{}, err
+	}
+
+	if len(response.Result.List) != 1 {
 		err = errors.New("Empty funding rate response")
 		return [2]float64{}, err
 	}
 
-	funding, _ := strconv.ParseFloat(response.Result[0].FundingRate, 64)
-	predicted, _ := strconv.ParseFloat(response.Result[0].PredictedFundingRate, 64)
+	funding, _ := strconv.ParseFloat(response.Result.List[0].FundingRate, 64)
 
-	return [2]float64{funding, predicted}, nil
+	return [2]float64{funding, 0}, nil
 }
 
 func (b *Bybit) GetSize() int {

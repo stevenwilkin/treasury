@@ -1,9 +1,10 @@
 package bybit
 
 type fundingResponse struct {
-	Result []struct {
-		FundingRate          string `json:"funding_rate"`
-		PredictedFundingRate string `json:"predicted_funding_rate"`
+	Result struct {
+		List []struct {
+			FundingRate string `json:"fundingRate"`
+		} `json:"list"`
 	} `json:"result"`
 }
 
