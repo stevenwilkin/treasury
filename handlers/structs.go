@@ -23,8 +23,7 @@ type alertMessage struct {
 }
 
 type fundingMessage struct {
-	Current   float64 `float64:"current"`
-	Predicted float64 `float64:"predicted"`
+	Value float64 `float64:"value"`
 }
 
 type feedsResponseItem struct {

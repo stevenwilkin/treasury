@@ -75,7 +75,7 @@ func (b *Bybit) get(path string, params url.Values, result interface{}) error {
 	return nil
 }
 
-func (b *Bybit) GetFundingRate() ([2]float64, error) {
+func (b *Bybit) GetFundingRate() (float64, error) {
 	var err error
 	defer func() {
 		if err != nil {
@@ -88,17 +88,17 @@ func (b *Bybit) GetFundingRate() ([2]float64, error) {
 	err = b.get("/v5/market/tickers",
 		url.Values{"category": {"inverse"}, "symbol": {"BTCUSD"}}, &response)
 	if err != nil {
-		return [2]float64{}, err
+		return 0, err
 	}
 
 	if len(response.Result.List) != 1 {
 		err = errors.New("Empty funding rate response")
-		return [2]float64{}, err
+		return 0, err
 	}
 
 	funding, _ := strconv.ParseFloat(response.Result.List[0].FundingRate, 64)
 
-	return [2]float64{funding, 0}, nil
+	return funding, nil
 }
 
 func (b *Bybit) positionRequest() (positionResponse, error) {

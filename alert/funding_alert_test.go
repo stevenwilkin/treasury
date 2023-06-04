@@ -25,9 +25,9 @@ func TestFundingRateAlertMessage(t *testing.T) {
 	state := state.NewState()
 	alert := NewFundingAlert(state)
 
-	state.SetFundingRate(0.001, 0.001)
+	state.SetFundingRate(0.001)
 
-	expected := "Funding: 0.100000%, Predicted: 0.100000%"
+	expected := "Funding: 0.100000%"
 	if alert.Message() != expected {
 		t.Errorf("Expected: '%s', got: '%s'", expected, alert.Message())
 	}
@@ -37,7 +37,7 @@ func TestCheckOnPositiveFundingRate(t *testing.T) {
 	state := state.NewState()
 	alert := NewFundingAlert(state)
 
-	state.SetFundingRate(0.1, 0.1)
+	state.SetFundingRate(0.1)
 
 	if alert.Check() {
 		t.Error("Alert should not be triggered")
@@ -48,18 +48,7 @@ func TestCheckOnNegativeFundingRate(t *testing.T) {
 	state := state.NewState()
 	alert := NewFundingAlert(state)
 
-	state.SetFundingRate(-0.1, 0.0)
-
-	if !alert.Check() {
-		t.Error("Alert should be triggered")
-	}
-}
-
-func TestCheckOnNegativePredictedFundingRate(t *testing.T) {
-	state := state.NewState()
-	alert := NewFundingAlert(state)
-
-	state.SetFundingRate(0.1, -0.1)
+	state.SetFundingRate(-0.1)
 
 	if !alert.Check() {
 		t.Error("Alert should be triggered")

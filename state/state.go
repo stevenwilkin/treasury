@@ -18,7 +18,7 @@ type State struct {
 	Cost            float64
 	Assets          map[venue.Venue]map[asset.Asset]float64
 	Symbols         map[symbol.Symbol]float64
-	FundingRate     [2]float64
+	FundingRate     float64
 	Size            int
 	Loan            float64
 	FundingAlert    bool
@@ -117,12 +117,12 @@ func (s *State) SetCost(c float64) {
 	s.Cost = c
 }
 
-func (s *State) SetFundingRate(current, predicted float64) {
-	s.FundingRate = [2]float64{current, predicted}
+func (s *State) SetFundingRate(funding float64) {
+	s.FundingRate = funding
 }
 
-func (s *State) GetFundingRate() (float64, float64) {
-	return s.FundingRate[0], s.FundingRate[1]
+func (s *State) GetFundingRate() float64 {
+	return s.FundingRate
 }
 
 func (s *State) SetSize(size int) {

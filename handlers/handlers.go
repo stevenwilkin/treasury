@@ -179,12 +179,9 @@ func (h *Handler) AddPriceAlert(w http.ResponseWriter, r *http.Request) {
 func (h *Handler) Funding(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 
-	current, predicted := h.s.GetFundingRate()
+	funding := h.s.GetFundingRate()
 
-	fm := fundingMessage{
-		Current:   current,
-		Predicted: predicted,
-	}
+	fm := fundingMessage{Value: funding}
 
 	b, err := json.Marshal(fm)
 	if err != nil {

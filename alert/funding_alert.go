@@ -16,10 +16,9 @@ func (a *FundingAlert) Description() string {
 }
 
 func (a *FundingAlert) Message() string {
-	current, expected := a.state.GetFundingRate()
+	funding := a.state.GetFundingRate()
 
-	return fmt.Sprintf(
-		"Funding: %f%%, Predicted: %f%%", current*100, expected*100)
+	return fmt.Sprintf("Funding: %f%%", funding*100)
 }
 
 func (a *FundingAlert) Active() bool {
@@ -31,9 +30,9 @@ func (a *FundingAlert) Deactivate() {
 }
 
 func (a *FundingAlert) Check() bool {
-	current, expected := a.state.GetFundingRate()
+	funding := a.state.GetFundingRate()
 
-	return current < 0 || expected < 0
+	return funding < 0
 }
 
 func NewFundingAlert(s *state.State) *FundingAlert {

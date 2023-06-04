@@ -128,12 +128,12 @@ func TestGetSymbols(t *testing.T) {
 
 func TestFunding(t *testing.T) {
 	s := NewState()
-	s.SetFundingRate(1.1, 2.2)
+	s.SetFundingRate(1.1)
 
-	current, predicted := s.GetFundingRate()
+	funding := s.GetFundingRate()
 
-	if current != 1.1 || predicted != 2.2 {
-		t.Errorf("Expected: 1.1, 2.2 - Got: %f, %f", current, predicted)
+	if funding != 1.1 {
+		t.Errorf("Expected: 1.1 - Got: %f", funding)
 	}
 }
 
