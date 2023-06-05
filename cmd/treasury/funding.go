@@ -17,6 +17,6 @@ var fundingCmd = &cobra.Command{
 		var pm fundingMessage
 		get("/funding", &pm)
 
-		fmt.Printf("Funding: %f%%\n", pm.Value*100)
+		fmt.Printf("%f%%\n", pm.Value*100)
 	},
 }
