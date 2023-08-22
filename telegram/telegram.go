@@ -7,8 +7,12 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net/http"
+	"os"
+	"strconv"
 
 	"github.com/stevenwilkin/treasury/alert"
+
+	log "github.com/sirupsen/logrus"
 )
 
 type Telegram struct {
@@ -62,6 +66,17 @@ func (t *Telegram) Notify(text string) error {
 	} else {
 		return errors.New("Error sending message")
 	}
+}
+
+func NewFromEnv() *Telegram {
+	chatId, err := strconv.Atoi(os.Getenv("TELEGRAM_CHAT_ID"))
+	if err != nil {
+		log.Fatal(err.Error())
+	}
+
+	return &Telegram{
+		ApiToken: os.Getenv("TELEGRAM_API_TOKEN"),
+		ChatId:   chatId}
 }
 
 var _ alert.Notifier = &Telegram{}

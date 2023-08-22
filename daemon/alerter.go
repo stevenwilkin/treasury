@@ -3,8 +3,6 @@
 package daemon
 
 import (
-	"os"
-	"strconv"
 	"time"
 
 	"github.com/stevenwilkin/treasury/alert"
@@ -16,14 +14,7 @@ import (
 func (d *Daemon) initAlerter() {
 	log.Info("Initialising alerter")
 
-	chatId, err := strconv.Atoi(os.Getenv("TELEGRAM_CHAT_ID"))
-	if err != nil {
-		log.Fatal(err.Error())
-	}
-
-	notifier := &telegram.Telegram{
-		ApiToken: os.Getenv("TELEGRAM_API_TOKEN"),
-		ChatId:   chatId}
+	notifier := telegram.NewFromEnv()
 
 	d.alerter = alert.NewAlerter(d.state, notifier)
 	d.alerter.Retrieve()
