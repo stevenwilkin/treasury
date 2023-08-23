@@ -29,10 +29,10 @@ type sendMessageResponse struct {
 	Ok bool
 }
 
-func (t *Telegram) Notify(text string) error {
+func (t *Telegram) Notify(a alert.Alert) error {
 	url := fmt.Sprintf("https://api.telegram.org/bot%s/sendMessage", t.ApiToken)
 
-	params := sendMessageParams{ChatId: t.ChatId, Text: text}
+	params := sendMessageParams{ChatId: t.ChatId, Text: a.Message()}
 	jsonParams, err := json.Marshal(params)
 	if err != nil {
 		return err

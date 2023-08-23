@@ -14,10 +14,6 @@ type Alert interface {
 	Message() string
 }
 
-type Notifier interface {
-	Notify(string) error
-}
-
 type Alerter struct {
 	state    *state.State
 	notifier Notifier
@@ -50,7 +46,7 @@ func (a *Alerter) CheckAlerts() {
 			continue
 		}
 		if alert.Check() {
-			if err := a.notifier.Notify(alert.Message()); err != nil {
+			if err := a.notifier.Notify(alert); err != nil {
 				log.Error(err.Error())
 			}
 			alert.Deactivate()

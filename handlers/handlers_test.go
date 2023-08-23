@@ -16,7 +16,7 @@ import (
 
 type TestNotifier struct{}
 
-func (t *TestNotifier) Notify(s string) error { return nil }
+func (t *TestNotifier) Notify(_ alert.Alert) error { return nil }
 
 var (
 	s = state.NewState()

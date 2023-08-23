@@ -24,7 +24,7 @@ type errorResponse struct {
 	Message string `json:"message"`
 }
 
-func (t *Twilio) Notify(_ string) error {
+func (t *Twilio) Notify(_ alert.Alert) error {
 	v := url.Values{
 		"Twiml": {"<Response><Say>Alert</Say></Response>"},
 		"From":  {t.From},
