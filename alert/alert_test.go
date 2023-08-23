@@ -8,12 +8,14 @@ import (
 
 type TestAlert struct {
 	active    bool
+	priority  bool
 	triggered bool
 	checked   bool
 }
 
 func (a *TestAlert) Check() bool         { a.checked = true; return a.triggered }
 func (a *TestAlert) Active() bool        { return a.active }
+func (a *TestAlert) Priority() bool      { return a.priority }
 func (a *TestAlert) Deactivate()         { a.active = false }
 func (a *TestAlert) Description() string { return "" }
 func (a *TestAlert) Message() string     { return "" }

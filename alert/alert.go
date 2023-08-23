@@ -9,6 +9,7 @@ import (
 type Alert interface {
 	Check() bool
 	Active() bool
+	Priority() bool
 	Deactivate()
 	Description() string
 	Message() string

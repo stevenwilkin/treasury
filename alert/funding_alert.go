@@ -25,6 +25,10 @@ func (a *FundingAlert) Active() bool {
 	return a.active
 }
 
+func (a *FundingAlert) Priority() bool {
+	return true
+}
+
 func (a *FundingAlert) Deactivate() {
 	a.active = false
 }

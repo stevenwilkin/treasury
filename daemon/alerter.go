@@ -7,6 +7,7 @@ import (
 
 	"github.com/stevenwilkin/treasury/alert"
 	"github.com/stevenwilkin/treasury/telegram"
+	"github.com/stevenwilkin/treasury/twilio"
 
 	log "github.com/sirupsen/logrus"
 )
@@ -14,7 +15,8 @@ import (
 func (d *Daemon) initAlerter() {
 	log.Info("Initialising alerter")
 
-	notifier := telegram.NewFromEnv()
+	notifier := alert.NewPriorityNotifier(
+		twilio.NewFromEnv(), telegram.NewFromEnv())
 
 	d.alerter = alert.NewAlerter(d.state, notifier)
 	d.alerter.Retrieve()

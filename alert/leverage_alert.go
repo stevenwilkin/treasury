@@ -25,6 +25,10 @@ func (a *LeverageAlert) Active() bool {
 	return a.active
 }
 
+func (a *LeverageAlert) Priority() bool {
+	return false
+}
+
 func (a *LeverageAlert) Deactivate() {
 	a.active = false
 }

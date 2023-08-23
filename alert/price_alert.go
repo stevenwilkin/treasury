@@ -33,6 +33,11 @@ func (a *PriceAlert) Message() string {
 func (a *PriceAlert) Active() bool {
 	return a.active
 }
+
+func (a *PriceAlert) Priority() bool {
+	return false
+}
+
 func (a *PriceAlert) Deactivate() {
 	a.active = false
 }
