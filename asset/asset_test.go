@@ -12,16 +12,6 @@ func TestToString(t *testing.T) {
 	}
 }
 
-func TestExists(t *testing.T) {
-	tests := map[string]bool{"USDT": true, "usdt": true, "Fake": false}
-
-	for name, exists := range tests {
-		if Exists(name) != exists {
-			t.Errorf("Exists(\"%s\") should equal %t", name, exists)
-		}
-	}
-}
-
 func TestFromStringInvalidAsset(t *testing.T) {
 	_, err := FromString("fake")
 	if err == nil {

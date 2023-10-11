@@ -25,15 +25,6 @@ func (v Venue) String() string {
 	return venues()[v]
 }
 
-func Exists(name string) bool {
-	for _, venue := range venues() {
-		if strings.ToLower(name) == strings.ToLower(venue) {
-			return true
-		}
-	}
-	return false
-}
-
 func FromString(s string) (Venue, error) {
 	for i, venue := range venues() {
 		if strings.ToLower(s) == strings.ToLower(venue) {

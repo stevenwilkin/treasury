@@ -24,15 +24,6 @@ func (a Asset) String() string {
 	return assets()[a]
 }
 
-func Exists(name string) bool {
-	for _, asset := range assets() {
-		if strings.ToLower(name) == strings.ToLower(asset) {
-			return true
-		}
-	}
-	return false
-}
-
 func FromString(s string) (Asset, error) {
 	for i, asset := range assets() {
 		if strings.ToLower(s) == strings.ToLower(asset) {
