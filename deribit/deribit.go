@@ -232,5 +232,5 @@ func (d *Deribit) GetLeverage() (float64, error) {
 		return 0, nil
 	}
 
-	return (response.Result.MaintenanceMargin / response.Result.Equity) * 100, nil
+	return ((response.Result.MaintenanceMargin / 2) / response.Result.Equity) * 100, nil
 }
