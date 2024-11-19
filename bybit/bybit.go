@@ -132,7 +132,7 @@ func (b *Bybit) GetEquityAndLeverage() ([2]float64, error) {
 	var response walletResponse
 
 	err := b.get("/v5/account/wallet-balance",
-		url.Values{"accountType": {"CONTRACT"}, "coin": {"BTC"}}, &response)
+		url.Values{"accountType": {"UNIFIED"}, "coin": {"BTC"}}, &response)
 
 	if err != nil {
 		return [2]float64{}, err
