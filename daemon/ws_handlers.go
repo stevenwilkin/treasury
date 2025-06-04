@@ -26,6 +26,10 @@ type authMessage struct {
 	Auth string `json:"auth"`
 }
 
+type authResponseMessage struct {
+	Error string `json:"error"`
+}
+
 func (d *Daemon) sendState(c *websocket.Conn) error {
 	log.Debug("Sending state")
 
@@ -83,10 +87,12 @@ func (d *Daemon) serveWs(w http.ResponseWriter, r *http.Request) {
 
 		if am.Auth != authToken {
 			log.Info("Unauthenticated")
-			c.WriteMessage(websocket.TextMessage, []byte(`{"error":"unauthenticated"}`))
+			c.WriteJSON(authResponseMessage{Error: "unauthenticated"})
 			c.Close()
 			return
 		}
+
+		c.WriteJSON(authResponseMessage{})
 	}
 
 	d.sendState(c)
