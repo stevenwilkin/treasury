@@ -57,14 +57,13 @@ func (x *XE) accessToken() (string, error) {
 		return "", err
 	}
 
-	re = regexp.MustCompile(`concat\("(\w+)"\)\)\)`)
+	re = regexp.MustCompile(`"(lodestar:\w+)"`)
 	matches := re.FindSubmatch(body)
 	if matches == nil {
 		return "", errors.New("Could not find secret")
 	}
 
-	secret := []byte(fmt.Sprintf("lodestar:%s", matches[1]))
-	x._accessToken = base64.StdEncoding.EncodeToString(secret)
+	x._accessToken = base64.StdEncoding.EncodeToString(matches[1])
 	x.expiresIn = time.Now().Add(time.Hour)
 
 	return x._accessToken, nil
