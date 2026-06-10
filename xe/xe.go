@@ -29,7 +29,7 @@ func (x *XE) accessToken() (string, error) {
 		return x._accessToken, nil
 	}
 
-	resp, err := http.Get("https://xe.com/currencyconverter/")
+	resp, err := http.Get("https://xe.com/")
 	if err != nil {
 		return "", err
 	}
